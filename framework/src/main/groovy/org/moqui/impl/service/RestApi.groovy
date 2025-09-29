@@ -231,36 +231,43 @@ class RestApi {
             serviceName = serviceNode.attribute("name")
         }
         RestResult run(List<String> pathList, ExecutionContext ec) {
-            // Debug logging for JWT authentication flow
-            logger.info("[JWT DEBUG] MethodService.run() called for service: ${serviceName}")
-            logger.info("[JWT DEBUG] requireAuthentication value: ${requireAuthentication}")
-            logger.info("[JWT DEBUG] Current user: ${ec.getUser().getUsername()}")
-            logger.info("[JWT DEBUG] Path node name: ${pathNode.name}")
-            logger.info("[JWT DEBUG] Full path list: ${pathNode.fullPathList}")
-            logger.info("[JWT DEBUG] Method: ${method}")
+            // Debug logging for JWT authentication flow - only if debug logging is enabled
+            boolean debugLogging = "true".equals(System.getProperty("moqui.jwt.debug.logging"))
+            if (debugLogging) {
+                logger.info("[JWT DEBUG] MethodService.run() called for service: ${serviceName}")
+                logger.info("[JWT DEBUG] requireAuthentication value: ${requireAuthentication}")
+                logger.info("[JWT DEBUG] Current user: ${ec.getUser().getUsername()}")
+                logger.info("[JWT DEBUG] Path node name: ${pathNode.name}")
+                logger.info("[JWT DEBUG] Full path list: ${pathNode.fullPathList}")
+                logger.info("[JWT DEBUG] Method: ${method}")
 
-            // Detailed authentication debugging
-            logger.info("[JWT DEBUG] About to check authentication condition:")
-            logger.info("[JWT DEBUG]   requireAuthentication == null: ${requireAuthentication == null}")
-            logger.info("[JWT DEBUG]   requireAuthentication.length() == 0: ${requireAuthentication?.length() == 0}")
-            logger.info("[JWT DEBUG]   'true'.equals(requireAuthentication): ${'true'.equals(requireAuthentication)}")
-            logger.info("[JWT DEBUG]   Combined auth required: ${(requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication))}")
-            logger.info("[JWT DEBUG]   ec.getUser().getUsername(): ${ec.getUser().getUsername()}")
-            logger.info("[JWT DEBUG]   !ec.getUser().getUsername(): ${!ec.getUser().getUsername()}")
-            logger.info("[JWT DEBUG]   Final authentication check result: ${(requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication)) && !ec.getUser().getUsername()}")
+                // Detailed authentication debugging
+                logger.info("[JWT DEBUG] About to check authentication condition:")
+                logger.info("[JWT DEBUG]   requireAuthentication == null: ${requireAuthentication == null}")
+                logger.info("[JWT DEBUG]   requireAuthentication.length() == 0: ${requireAuthentication?.length() == 0}")
+                logger.info("[JWT DEBUG]   'true'.equals(requireAuthentication): ${'true'.equals(requireAuthentication)}")
+                logger.info("[JWT DEBUG]   Combined auth required: ${(requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication))}")
+                logger.info("[JWT DEBUG]   ec.getUser().getUsername(): ${ec.getUser().getUsername()}")
+                logger.info("[JWT DEBUG]   !ec.getUser().getUsername(): ${!ec.getUser().getUsername()}")
+                logger.info("[JWT DEBUG]   Final authentication check result: ${(requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication)) && !ec.getUser().getUsername()}")
+            }
 
             if ((requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication)) &&
                     !ec.getUser().getUsername()) {
-                logger.error("[JWT DEBUG] Authentication required but no user found - throwing AuthenticationRequiredException")
-                logger.error("[JWT DEBUG] Service name: ${serviceName}")
-                logger.error("[JWT DEBUG] Path node name: ${pathNode.name}")
-                logger.error("[JWT DEBUG] Full path: ${pathNode.fullPathList}")
+                if (debugLogging) {
+                    logger.error("[JWT DEBUG] Authentication required but no user found - throwing AuthenticationRequiredException")
+                    logger.error("[JWT DEBUG] Service name: ${serviceName}")
+                    logger.error("[JWT DEBUG] Path node name: ${pathNode.name}")
+                    logger.error("[JWT DEBUG] Full path: ${pathNode.fullPathList}")
+                }
                 throw new AuthenticationRequiredException("User must be logged in to call service ${serviceName}")
             }
 
-            logger.info("[JWT DEBUG] Authentication check passed, proceeding with service call")
-            logger.info("[JWT DEBUG] About to call service: ${serviceName}")
-            logger.info("[JWT DEBUG] Service parameters: ${ec.context}")
+            if (debugLogging) {
+                logger.info("[JWT DEBUG] Authentication check passed, proceeding with service call")
+                logger.info("[JWT DEBUG] About to call service: ${serviceName}")
+                logger.info("[JWT DEBUG] Service parameters: ${ec.context}")
+            }
 
             boolean loggedInAnonymous = false
             if ("anonymous-all".equals(requireAuthentication)) {
@@ -617,12 +624,15 @@ class RestApi {
             if (isId) pathParameters.add(name)
             requireAuthentication = node.attribute("require-authentication") ?: parent?.requireAuthentication ?: "true"
 
-            // Debug logging for authentication inheritance
-            logger.info("[JWT DEBUG] PathNode created - name: ${name}, isId: ${isId}")
-            logger.info("[JWT DEBUG] Node require-authentication: ${node.attribute("require-authentication")}")
-            logger.info("[JWT DEBUG] Parent requireAuthentication: ${parent?.requireAuthentication}")
-            logger.info("[JWT DEBUG] Final requireAuthentication: ${requireAuthentication}")
-            logger.info("[JWT DEBUG] Full path: ${fullPathList}")
+            // Debug logging for authentication inheritance - only if debug logging is enabled
+            boolean debugLogging = "true".equals(System.getProperty("moqui.jwt.debug.logging"))
+            if (debugLogging) {
+                logger.info("[JWT DEBUG] PathNode created - name: ${name}, isId: ${isId}")
+                logger.info("[JWT DEBUG] Node require-authentication: ${node.attribute("require-authentication")}")
+                logger.info("[JWT DEBUG] Parent requireAuthentication: ${parent?.requireAuthentication}")
+                logger.info("[JWT DEBUG] Final requireAuthentication: ${requireAuthentication}")
+                logger.info("[JWT DEBUG] Full path: ${fullPathList}")
+            }
 
             for (MNode childNode in node.children) {
                 if (childNode.name == "method") {
@@ -678,18 +688,23 @@ class RestApi {
 
             // push onto artifact stack, check authz
             String curPath = getFullPathName([])
-            logger.info("[JWT DEBUG] visitChildOrRun() - path: ${curPath}")
-            logger.info("[JWT DEBUG] requireAuthentication: ${requireAuthentication}")
-            logger.info("[JWT DEBUG] moreInPath: ${moreInPath}")
-            logger.info("[JWT DEBUG] pathList: ${pathList}")
-            logger.info("[JWT DEBUG] pathIndex: ${pathIndex}")
+            boolean debugLogging = "true".equals(System.getProperty("moqui.jwt.debug.logging"))
+            if (debugLogging) {
+                logger.info("[JWT DEBUG] visitChildOrRun() - path: ${curPath}")
+                logger.info("[JWT DEBUG] requireAuthentication: ${requireAuthentication}")
+                logger.info("[JWT DEBUG] moreInPath: ${moreInPath}")
+                logger.info("[JWT DEBUG] pathList: ${pathList}")
+                logger.info("[JWT DEBUG] pathIndex: ${pathIndex}")
+            }
 
             ArtifactExecutionInfoImpl aei = new ArtifactExecutionInfoImpl(curPath, ArtifactExecutionInfo.AT_REST_PATH, getActionFromMethod(ec), null)
             // for now don't track/count artifact hits for REST path
             aei.setTrackArtifactHit(false)
             // NOTE: consider setting parameters on aei, but don't like setting entire context, currently used for entity/service calls
             boolean requireAuth = !moreInPath ? (requireAuthentication == null || requireAuthentication.length() == 0 || "true".equals(requireAuthentication)) : false
-            logger.info("[JWT DEBUG] pushInternal requireAuth parameter: ${requireAuth}")
+            if (debugLogging) {
+                logger.info("[JWT DEBUG] pushInternal requireAuth parameter: ${requireAuth}")
+            }
             ec.artifactExecutionFacade.pushInternal(aei, requireAuth, true)
 
             boolean loggedInAnonymous = false
