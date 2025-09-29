@@ -267,6 +267,21 @@ class MoquiShiroRealm implements Realm, Authorizer {
         boolean successful = false
         boolean isForceLogin = token instanceof ForceLoginToken
 
+        // JWT-only security for REST API: Only allow ForceLoginToken for REST API requests
+        // Block traditional authentication tokens for REST API paths but allow them for UI
+        if (!isForceLogin) {
+            // Check if this is a REST API request by examining the request path
+            javax.servlet.http.HttpServletRequest request = eci?.getWebImpl()?.getRequest()
+            String requestPath = request?.getPathInfo() ?: request?.getRequestURI()
+            boolean isRestApiRequest = requestPath != null && requestPath.startsWith("/rest/")
+
+            if (isRestApiRequest) {
+                logger.debug("JWT-only mode for REST API: Blocking authentication token of type ${token.getClass().simpleName} for username ${username}")
+                throw new AuthenticationException("Only JWT authentication is supported. Basic authentication and other methods are disabled.")
+            }
+            // Allow traditional authentication for UI paths
+        }
+
         SaltedAuthenticationInfo info = null
         try {
             EntityValue newUserAccount = loginPrePassword(eci, username)

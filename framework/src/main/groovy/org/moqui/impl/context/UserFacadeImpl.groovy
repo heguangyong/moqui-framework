@@ -143,11 +143,77 @@ class UserFacadeImpl implements UserFacade {
 
         this.visitId = session.getAttribute("moqui.visitId")
 
-        // check for HTTP Basic Authorization for Authentication purposes
-        // NOTE: do this even if there is another user logged in, will go on stack
+        // Get basic information for authentication
         Map secureParameters = eci.webImpl != null ? eci.webImpl.getSecureRequestParameters() :
                 WebUtilities.simplifyRequestParameters(request, true)
         String authzHeader = request.getHeader("Authorization")
+        String requestPath = request.getPathInfo() ?: request.getRequestURI()
+
+        // Check if this is a REST API request (JWT-only mode)
+        boolean isRestApiRequest = requestPath.startsWith("/rest/")
+
+        // JWT Authentication - Primary method for REST API and optional for UI
+        if (currentInfo.username == null && authzHeader != null && authzHeader.length() > 7 && authzHeader.startsWith("Bearer ")) {
+            String jwtToken = authzHeader.substring(7).trim()
+            try {
+                // Use UnifiedAuthService to authenticate with JWT
+                org.moqui.jwt.UnifiedAuthService.AuthResult authResult = org.moqui.jwt.UnifiedAuthService.authenticateWithJWT(request)
+                if (authResult.isAuthenticated()) {
+                    // JWT authentication successful - login the user
+                    String userId = authResult.getUserId()
+                    String username = authResult.getUsername()
+                    if (userId != null && username != null) {
+                        // Internal login using the validated JWT information
+                        internalLoginUser(username)
+                        if (logger.traceEnabled) logger.trace("JWT authentication successful for user [${username}]")
+                    }
+                } else {
+                    if (logger.debugEnabled) logger.debug("JWT authentication failed: ${authResult.getMessage()}")
+                }
+            } catch (Exception e) {
+                logger.warn("JWT authentication error: ${e.getMessage()}")
+            }
+        }
+
+        // REST API: ONLY JWT authentication is allowed
+        if (isRestApiRequest && currentInfo.username == null && authzHeader != null) {
+            // For REST API, if there's an authorization header but JWT failed, block other methods
+            if (authzHeader.startsWith("Basic ") || authzHeader.startsWith("Digest ")) {
+                eci.messageFacade.addError("Only JWT authentication is supported. Basic authentication and other methods are disabled.")
+                return
+            }
+        }
+
+        // UI REQUESTS: Allow traditional authentication methods (Basic Auth, form parameters)
+        if (!isRestApiRequest) {
+            // HTTP Basic Authorization for UI
+            if (currentInfo.username == null && authzHeader != null && authzHeader.length() > 6 && authzHeader.startsWith("Basic ")) {
+                String basicAuthEncoded = authzHeader.substring(6).trim()
+                String basicAuthAsString = new String(basicAuthEncoded.decodeBase64())
+                int indexOfColon = basicAuthAsString.indexOf(":")
+                if (indexOfColon > 0) {
+                    String username = basicAuthAsString.substring(0, indexOfColon)
+                    String password = basicAuthAsString.substring(indexOfColon + 1)
+                    this.loginUser(username, password)
+                } else {
+                    logger.warn("For HTTP Basic Authorization got bad credentials string. Base64 encoded is [${basicAuthEncoded}] and after decoding is [${basicAuthAsString}].")
+                }
+            }
+
+            // Username/password parameter authentication for UI login forms
+            if (currentInfo.username == null && (secureParameters.authUsername || secureParameters.username)) {
+                // try the Moqui-specific parameters for instant login
+                // if we have credentials coming in anywhere other than URL parameters, try logging in
+                String authUsername = secureParameters.authUsername ?: secureParameters.username
+                String authPassword = secureParameters.authPassword ?: secureParameters.password
+                this.loginUser(authUsername, authPassword)
+            }
+        }
+
+        // API Key authentication is COMPLETELY DISABLED for all requests
+        // (This maintains JWT-only for API access while allowing UI login)
+        /*
+        // DISABLED: HTTP Basic Authorization
         if (authzHeader != null && authzHeader.length() > 6 && authzHeader.startsWith("Basic ")) {
             String basicAuthEncoded = authzHeader.substring(6).trim()
             String basicAuthAsString = new String(basicAuthEncoded.decodeBase64())
@@ -160,18 +226,21 @@ class UserFacadeImpl implements UserFacade {
                 logger.warn("For HTTP Basic Authorization got bad credentials string. Base64 encoded is [${basicAuthEncoded}] and after decoding is [${basicAuthAsString}].")
             }
         }
+        // DISABLED: API Key authentication via headers
         if (currentInfo.username == null && (request.getHeader("api_key") || request.getHeader("login_key"))) {
             String loginKey = request.getHeader("api_key") ?: request.getHeader("login_key")
             loginKey = loginKey.trim()
             if (loginKey != null && !loginKey.isEmpty() && !"null".equals(loginKey) && !"undefined".equals(loginKey))
                 this.loginUserKey(loginKey)
         }
+        // DISABLED: API Key authentication via parameters
         if (currentInfo.username == null && (secureParameters.api_key || secureParameters.login_key)) {
             String loginKey = secureParameters.api_key ?: secureParameters.login_key
             loginKey = loginKey.trim()
             if (loginKey != null && !loginKey.isEmpty() && !"null".equals(loginKey) && !"undefined".equals(loginKey))
                 this.loginUserKey(loginKey)
         }
+        // DISABLED: Username/password parameter authentication
         if (currentInfo.username == null && secureParameters.authUsername) {
             // try the Moqui-specific parameters for instant login
             // if we have credentials coming in anywhere other than URL parameters, try logging in
@@ -179,6 +248,7 @@ class UserFacadeImpl implements UserFacade {
             String authPassword = secureParameters.authPassword
             this.loginUser(authUsername, authPassword)
         }
+        */
         if (eci.messageFacade.hasError()) request.setAttribute("moqui.login.error", "true")
 
         // NOTE: only tracking Visitor and Visit if there is a WebFacadeImpl in place
@@ -283,6 +353,34 @@ class UserFacadeImpl implements UserFacade {
         Map<String, List<String>> headers = request.getHeaders()
         Map<String, List<String>> parameters = request.getParameterMap()
         String authzHeader = headers.get("Authorization") ? headers.get("Authorization").get(0) : null
+
+        // JWT-only Authentication: Only allow JWT Bearer tokens for WebSocket connections
+        if (currentInfo.username == null && authzHeader != null && authzHeader.length() > 7 && authzHeader.startsWith("Bearer ")) {
+            String jwtToken = authzHeader.substring(7).trim()
+            try {
+                // Use UnifiedAuthService to authenticate with JWT
+                org.moqui.jwt.UnifiedAuthService.AuthResult authResult = org.moqui.jwt.UnifiedAuthService.authenticateWithJWT(request)
+                if (authResult.isAuthenticated()) {
+                    // JWT authentication successful - login the user
+                    String userId = authResult.getUserId()
+                    String username = authResult.getUsername()
+                    if (userId != null && username != null) {
+                        // Internal login using the validated JWT information
+                        internalLoginUser(username)
+                        if (logger.traceEnabled) logger.trace("WebSocket JWT authentication successful for user [${username}]")
+                    }
+                } else {
+                    if (logger.debugEnabled) logger.debug("WebSocket JWT authentication failed: ${authResult.getMessage()}")
+                }
+            } catch (Exception e) {
+                logger.warn("WebSocket JWT authentication error: ${e.getMessage()}")
+            }
+        }
+
+        // ALL OTHER AUTHENTICATION METHODS ARE DISABLED FOR JWT-ONLY SECURITY
+        // Basic Auth, API Keys, and form parameters are no longer supported for WebSocket connections
+        /*
+        // DISABLED: HTTP Basic Authorization for WebSocket
         if (authzHeader != null && authzHeader.length() > 6 && authzHeader.substring(0, 6).equals("Basic ")) {
             String basicAuthEncoded = authzHeader.substring(6).trim()
             String basicAuthAsString = new String(basicAuthEncoded.decodeBase64())
@@ -294,12 +392,14 @@ class UserFacadeImpl implements UserFacade {
                 logger.warn("For HTTP Basic Authorization got bad credentials string. Base64 encoded is [${basicAuthEncoded}] and after decoding is [${basicAuthAsString}].")
             }
         }
+        // DISABLED: API Key authentication via headers for WebSocket
         if (currentInfo.username == null && (headers.api_key || headers.login_key)) {
             String loginKey = headers.api_key ? headers.api_key.get(0) : (headers.login_key ? headers.login_key.get(0) : null)
             loginKey = loginKey.trim()
             if (loginKey != null && !loginKey.isEmpty() && !"null".equals(loginKey) && !"undefined".equals(loginKey))
                 this.loginUserKey(loginKey)
         }
+        // DISABLED: API Key authentication via parameters for WebSocket
         if (currentInfo.username == null && (parameters.api_key || parameters.login_key)) {
             String loginKey = parameters.api_key ? parameters.api_key.get(0) : (parameters.login_key ? parameters.login_key.get(0) : null)
             loginKey = loginKey.trim()
@@ -307,6 +407,7 @@ class UserFacadeImpl implements UserFacade {
             if (loginKey != null && !loginKey.isEmpty() && !"null".equals(loginKey) && !"undefined".equals(loginKey))
                 this.loginUserKey(loginKey)
         }
+        // DISABLED: Username/password parameter authentication for WebSocket
         if (currentInfo.username == null && parameters.authUsername) {
             // try the Moqui-specific parameters for instant login
             // if we have credentials coming in anywhere other than URL parameters, try logging in
@@ -314,6 +415,7 @@ class UserFacadeImpl implements UserFacade {
             String authPassword = parameters.authPassword ? parameters.authPassword.get(0) : null
             this.loginUser(authUsername, authPassword)
         }
+        */
     }
     void initFromHttpSession(HttpSession session) {
         this.session = session

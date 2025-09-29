@@ -978,4 +978,197 @@ along with this software (see the LICENSE.md file). If not, see
             </iterate>
         </actions>
     </service>
+
+    <!-- JWT 统一认证服务 -->
+    <service verb="login" noun="UnifiedAuth" allow-remote="true" authenticate="anonymous-all">
+        <description>统一认证登录，返回访问令牌和刷新令牌对</description>
+        <in-parameters>
+            <parameter name="username" required="true"/>
+            <parameter name="password" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="accessToken"/>
+            <parameter name="refreshToken"/>
+            <parameter name="expiresIn" type="Long"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                import javax.servlet.http.HttpServletRequest
+                import java.security.SecureRandom
+                import java.util.Base64
+                import javax.crypto.Mac
+                import javax.crypto.spec.SecretKeySpec
+                import java.time.Instant
+                import java.nio.charset.StandardCharsets
+                import groovy.json.JsonBuilder
+
+                // 尝试登录用户
+                try {
+                    // 使用Moqui内置的登录方法验证用户
+                    if (ec.user.loginUser(username, password)) {
+                        // 登录成功，生成JWT Token
+                        def userId = ec.user.userId
+                        def now = Instant.now()
+                        def accessExpiryTime = now.plusSeconds(3600) // 1小时
+                        def refreshExpiryTime = now.plusSeconds(604800) // 7天
+
+                        // JWT 密钥（生产环境中应该从配置中读取）
+                        def jwtSecret = "MoquiJWTSecretKey123456789012345678901234567890"
+
+                        // 创建Access Token payload
+                        def accessPayload = new JsonBuilder([
+                            sub: userId,
+                            iat: now.epochSecond,
+                            exp: accessExpiryTime.epochSecond,
+                            type: "access"
+                        ]).toString()
+
+                        // 创建Refresh Token payload
+                        def refreshPayload = new JsonBuilder([
+                            sub: userId,
+                            iat: now.epochSecond,
+                            exp: refreshExpiryTime.epochSecond,
+                            type: "refresh"
+                        ]).toString()
+
+                        // 生成JWT Header
+                        def header = new JsonBuilder([
+                            alg: "HS256",
+                            typ: "JWT"
+                        ]).toString()
+
+                        // Base64编码
+                        def encodedHeader = Base64.urlEncoder.withoutPadding().encodeToString(header.getBytes(StandardCharsets.UTF_8))
+                        def encodedAccessPayload = Base64.urlEncoder.withoutPadding().encodeToString(accessPayload.getBytes(StandardCharsets.UTF_8))
+                        def encodedRefreshPayload = Base64.urlEncoder.withoutPadding().encodeToString(refreshPayload.getBytes(StandardCharsets.UTF_8))
+
+                        // 创建签名
+                        def mac = Mac.getInstance("HmacSHA256")
+                        def secretKey = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256")
+                        mac.init(secretKey)
+
+                        // Access Token签名
+                        def accessTokenData = encodedHeader + "." + encodedAccessPayload
+                        def accessSignature = Base64.urlEncoder.withoutPadding().encodeToString(mac.doFinal(accessTokenData.getBytes(StandardCharsets.UTF_8)))
+
+                        // Refresh Token签名
+                        mac.reset()
+                        mac.init(secretKey)
+                        def refreshTokenData = encodedHeader + "." + encodedRefreshPayload
+                        def refreshSignature = Base64.urlEncoder.withoutPadding().encodeToString(mac.doFinal(refreshTokenData.getBytes(StandardCharsets.UTF_8)))
+
+                        // 组装完整的JWT Token
+                        accessToken = accessTokenData + "." + accessSignature
+                        refreshToken = refreshTokenData + "." + refreshSignature
+                        expiresIn = 3600L
+                        success = true
+                        message = "登录成功"
+                    } else {
+                        success = false
+                        message = "用户名或密码错误"
+                    }
+                } catch (Exception e) {
+                    ec.logger.error("JWT登录失败", e)
+                    success = false
+                    message = "登录过程中发生错误: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <service verb="verify" noun="UnifiedAuth" allow-remote="true" authenticate="anonymous-all">
+        <description>统一认证验证，支持JWT、API Key、Session三种方式</description>
+        <out-parameters>
+            <parameter name="authenticated" type="Boolean"/>
+            <parameter name="userId"/>
+            <parameter name="username"/>
+            <parameter name="authMethod"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                import org.moqui.jwt.UnifiedAuthService
+                import org.moqui.jwt.UnifiedAuthService.AuthResult
+                import javax.servlet.http.HttpServletRequest
+
+                HttpServletRequest request = (HttpServletRequest) context.get("httpServletRequest")
+                AuthResult authResult = UnifiedAuthService.authenticate(request)
+
+                authenticated = authResult.isAuthenticated()
+                userId = authResult.getUserId()
+                username = authResult.getUsername()
+                authMethod = authResult.getResult().name()
+                message = authResult.getMessage()
+            ]]></script>
+        </actions>
+    </service>
+
+    <service verb="refresh" noun="AuthToken" allow-remote="true" authenticate="anonymous-all">
+        <description>使用刷新令牌获取新的访问令牌</description>
+        <in-parameters>
+            <parameter name="refreshToken" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="accessToken"/>
+            <parameter name="refreshToken"/>
+            <parameter name="expiresIn" type="Long"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                import org.moqui.jwt.JwtAuthService
+                import org.moqui.jwt.TokenPair
+                import javax.servlet.http.HttpServletRequest
+
+                HttpServletRequest request = (HttpServletRequest) context.get("httpServletRequest")
+                TokenPair tokenPair = JwtAuthService.refreshToken(refreshToken, request)
+
+                if (tokenPair != null) {
+                    accessToken = tokenPair.getAccessToken()
+                    refreshToken = tokenPair.getRefreshToken()
+                    expiresIn = tokenPair.getExpiresIn()
+                    success = true
+                    message = "Token刷新成功"
+                } else {
+                    success = false
+                    message = "刷新令牌无效或已过期"
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <service verb="logout" noun="UnifiedAuth" allow-remote="true" authenticate="anonymous-all">
+        <description>统一认证退出，撤销所有认证状态</description>
+        <out-parameters>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                import org.moqui.jwt.JwtAuthService
+                import org.moqui.jwt.UnifiedAuthService
+                import javax.servlet.http.HttpServletRequest
+
+                HttpServletRequest request = (HttpServletRequest) context.get("httpServletRequest")
+
+                // 获取Token并撤销
+                String authHeader = request.getHeader("Authorization")
+                boolean tokenRevoked = false
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7)
+                    tokenRevoked = JwtAuthService.logout(token)
+                }
+
+                // 强制重新认证（清除所有认证状态）
+                UnifiedAuthService.forceReAuthentication(request)
+
+                success = true
+                message = "退出登录成功"
+            ]]></script>
+        </actions>
+    </service>
+
 </services>
