@@ -2,7 +2,7 @@
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
 
     <!-- 统一认证登录服务 -->
-    <service verb="login" noun="UnifiedAuth">
+    <service verb="login" noun="UnifiedAuth" authenticate="false">
         <description>统一认证登录，返回访问令牌和刷新令牌对</description>
         <in-parameters>
             <parameter name="username" required="true"/>

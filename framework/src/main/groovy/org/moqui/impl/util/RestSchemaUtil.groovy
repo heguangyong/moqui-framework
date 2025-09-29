@@ -393,14 +393,14 @@ class RestSchemaUtil {
         Map listResponses = ["200":[description:'Success', schema:[type:"array", items:['$ref':"#/definitions/${refDefName}".toString()]]]] as Map<String, Object>
         listResponses.putAll(responses)
         entityResourceMap.put("get", [summary:("Get ${ed.getFullEntityName()}".toString()), description:entityDescription,
-                parameters:listParameters, security:[[basicAuth:[]]], responses:listResponses])
+                parameters:listParameters, security:[[jwtAuth:[]]], responses:listResponses])
 
         // post - create
         Map createResponses = ["200":[description:'Success', schema:['$ref':"#/definitions/${refDefNamePk}".toString()]]] as Map<String, Object>
         createResponses.putAll(responses)
         entityResourceMap.put("post", [summary:("Create ${ed.getFullEntityName()}".toString()), description:entityDescription,
                 parameters:[name:'body', in:'body', required:true, schema:['$ref':"#/definitions/${refDefName}".toString()]],
-                security:[[basicAuth:[]]], responses:createResponses])
+                security:[[jwtAuth:[]]], responses:createResponses])
 
         // entity plus ID path
         StringBuilder entityIdPathSb = new StringBuilder(entityPath)
@@ -420,7 +420,7 @@ class RestSchemaUtil {
         Map oneResponses = ["200":[name:'body', in:'body', required:false, schema:['$ref':"#/definitions/${refDefName}".toString()]]] as Map<String, Object>
         oneResponses.putAll(responses)
         entityIdResourceMap.put("get", [summary:("Create ${ed.getFullEntityName()}".toString()),
-                description:entityDescription, security:[[basicAuth:[]], [api_key:[]]], parameters:parameters, responses:oneResponses])
+                description:entityDescription, security:[[jwtAuth:[]]], parameters:parameters, responses:oneResponses])
 
         // under id: patch - update
         List<Map> updateParameters = new LinkedList<Map>(parameters)
@@ -434,7 +434,7 @@ class RestSchemaUtil {
 
         // under id: delete - delete
         entityIdResourceMap.put("delete", [summary:("Delete ${ed.getFullEntityName()}".toString()),
-                description:entityDescription, security:[[basicAuth:[]], [api_key:[]]], parameters:parameters, responses:responses])
+                description:entityDescription, security:[[jwtAuth:[]]], parameters:parameters, responses:responses])
 
         // add a definition for entity fields
         definitionsMap.put(refDefName, getJsonSchema(ed, false, false, definitionsMap, null, null, null, false, masterName, null))
@@ -757,7 +757,7 @@ class RestSchemaUtil {
 
         eci.webImpl.response.setHeader("Access-Control-Allow-Origin", "*")
         eci.webImpl.response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
-        eci.webImpl.response.setHeader("Access-Control-Allow-Headers", "Content-Type, api_key, Authorization")
+        eci.webImpl.response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
         String fullHost = WebFacadeImpl.makeWebappHost(eci.webImpl.webappMoquiName, eci, eci.webImpl, true)
         String scheme = fullHost.substring(0, fullHost.indexOf("://"))
@@ -766,8 +766,7 @@ class RestSchemaUtil {
         Map<String, Object> swaggerMap = [swagger:'2.0',
             info:[title:("${filename} REST API"), version:eci.factory.moquiVersion], host:hostName, basePath:basePath,
             schemes:[scheme], consumes:['application/json', 'multipart/form-data'], produces:['application/json'],
-            securityDefinitions:[basicAuth:[type:'basic', description:'HTTP Basic Authentication'],
-                api_key:[type:"apiKey", name:"api_key", in:"header", description:'HTTP Header api_key']],
+            securityDefinitions:[jwtAuth:[type:"apiKey", name:"Authorization", in:"header", description:'JWT Token (format: Bearer <token>)']],
             paths:[:], definitions:definitionsMap
         ]
 
@@ -838,7 +837,7 @@ class RestSchemaUtil {
 
         eci.webImpl.response.setHeader("Access-Control-Allow-Origin", "*")
         eci.webImpl.response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
-        eci.webImpl.response.setHeader("Access-Control-Allow-Headers", "Content-Type, api_key, Authorization")
+        eci.webImpl.response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
         String fullHost = WebFacadeImpl.makeWebappHost(eci.webImpl.webappMoquiName, eci, eci.webImpl, true)
         String scheme = fullHost.substring(0, fullHost.indexOf("://"))

@@ -275,11 +275,18 @@ class MoquiShiroRealm implements Realm, Authorizer {
             String requestPath = request?.getPathInfo() ?: request?.getRequestURI()
             boolean isRestApiRequest = requestPath != null && requestPath.startsWith("/rest/")
 
-            if (isRestApiRequest) {
+            // Allow traditional authentication for JWT login endpoints (needed to get JWT tokens)
+            boolean isJwtLoginEndpoint = requestPath != null && (
+                requestPath.contains("/auth/login") ||
+                requestPath.contains("/jwt/login") ||
+                requestPath.contains("/login")
+            )
+
+            if (isRestApiRequest && !isJwtLoginEndpoint) {
                 logger.debug("JWT-only mode for REST API: Blocking authentication token of type ${token.getClass().simpleName} for username ${username}")
                 throw new AuthenticationException("Only JWT authentication is supported. Basic authentication and other methods are disabled.")
             }
-            // Allow traditional authentication for UI paths
+            // Allow traditional authentication for UI paths and JWT login endpoints
         }
 
         SaltedAuthenticationInfo info = null

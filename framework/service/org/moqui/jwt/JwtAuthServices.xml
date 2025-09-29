@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- JWT Authentication Services -->
+
+    <!-- 统一认证登录服务 -->
+    <service verb="login" noun="UnifiedAuth" authenticate="false">
+        <description>Unified authentication login, returns access and refresh token pair</description>
+        <in-parameters>
+            <parameter name="username" required="true"/>
+            <parameter name="password" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="accessToken"/>
+            <parameter name="refreshToken"/>
+            <parameter name="expiresIn" type="Long"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                import javax.servlet.http.HttpServletRequest
+
+                // Try to login user using Moqui's authentication
+                try {
+                    if (ec.user.loginUser(username, password)) {
+                        // Login successful, generate JWT Token using enterprise JwtUtil
+                        def userId = ec.user.userId
+
+                        // Get client IP for enhanced security
+                        def clientIp = null
+                        if (ec.web?.request) {
+                            clientIp = ec.web.request.getRemoteAddr()
+                        }
+
+                        // Use JwtUtil's enterprise token generation
+                        org.moqui.jwt.JwtUtil.TokenPair tokenPair = org.moqui.jwt.JwtUtil.generateTokenPair(userId, clientIp)
+
+                        accessToken = tokenPair.getAccessToken()
+                        refreshToken = tokenPair.getRefreshToken()
+                        expiresIn = tokenPair.getExpiresIn()
+                        success = true
+                        message = "Login successful"
+
+                        ec.logger.info("JWT login successful for user: ${username}")
+                    } else {
+                        success = false
+                        message = "Invalid username or password"
+                    }
+                } catch (Exception e) {
+                    ec.logger.error("JWT login failed for user: ${username}", e)
+                    success = false
+                    message = "Error during login process: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- Token refresh service -->
+    <service verb="refresh" noun="AuthToken">
+        <description>Refresh access token using refresh token</description>
+        <in-parameters>
+            <parameter name="refreshToken" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="accessToken"/>
+            <parameter name="refreshToken"/>
+            <parameter name="expiresIn" type="Long"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                // Use enterprise JwtUtil for token refresh
+                try {
+                    // Get client IP for enhanced security
+                    def clientIp = null
+                    if (ec.web?.request) {
+                        clientIp = ec.web.request.getRemoteAddr()
+                    }
+
+                    // Use JwtUtil's enterprise token refresh
+                    org.moqui.jwt.JwtUtil.TokenPair newTokenPair = org.moqui.jwt.JwtUtil.refreshAccessToken(refreshToken, clientIp)
+
+                    if (newTokenPair != null) {
+                        accessToken = newTokenPair.getAccessToken()
+                        refreshToken = newTokenPair.getRefreshToken()
+                        expiresIn = newTokenPair.getExpiresIn()
+                        success = true
+                        message = "Token refresh successful"
+                        ec.logger.info("JWT token refresh successful")
+                    } else {
+                        success = false
+                        message = "Invalid or expired refresh token"
+                        ec.logger.warn("JWT token refresh failed: invalid or expired refresh token")
+                    }
+                } catch (Exception e) {
+                    ec.logger.error("JWT token refresh failed", e)
+                    success = false
+                    message = "Token refresh failed: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- Unified auth verification service -->
+    <service verb="verify" noun="UnifiedAuth">
+        <description>Verify authentication using JWT, API Key, or Session</description>
+        <out-parameters>
+            <parameter name="authenticated" type="Boolean"/>
+            <parameter name="userId"/>
+            <parameter name="username"/>
+            <parameter name="authMethod"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                // Use enterprise JwtUtil for token verification
+                try {
+                    // Get JWT token from request headers
+                    def jwtToken = null
+                    def clientIp = null
+
+                    if (ec.web?.request) {
+                        def authHeader = ec.web.request.getHeader("Authorization")
+                        if (authHeader && authHeader.startsWith("Bearer ")) {
+                            jwtToken = authHeader.substring(7)
+                        }
+                        clientIp = ec.web.request.getRemoteAddr()
+                    }
+
+                    if (jwtToken) {
+                        // Use JwtUtil's enterprise token validation
+                        org.moqui.jwt.JwtUtil.ValidationResult result = org.moqui.jwt.JwtUtil.validateToken(jwtToken, clientIp)
+
+                        if (result.isValid()) {
+                            authenticated = true
+                            userId = result.getUserId()
+
+                            // Get username from userId
+                            def userAccount = ec.entity.find("moqui.security.UserAccount")
+                                .condition("userId", userId)
+                                .disableAuthz()
+                                .one()
+                            username = userAccount?.username
+                            authMethod = "JWT"
+                            message = "JWT authentication successful"
+                            ec.logger.info("JWT verification successful for user: ${username}")
+                        } else {
+                            authenticated = false
+                            authMethod = "JWT"
+                            message = result.getMessage()
+                            ec.logger.warn("JWT verification failed: ${result.getMessage()}")
+                        }
+                    } else {
+                        authenticated = false
+                        message = "No JWT token provided"
+                        ec.logger.debug("No JWT token found in request")
+                    }
+                } catch (Exception e) {
+                    ec.logger.error("JWT verification failed", e)
+                    authenticated = false
+                    message = "Authentication verification failed: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- Logout service -->
+    <service verb="logout" noun="UnifiedAuth">
+        <description>Logout and revoke all authentication states</description>
+        <out-parameters>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                // Use enterprise JwtUtil for token revocation
+                try {
+                    // Get JWT token from request headers for revocation
+                    def jwtToken = null
+                    if (ec.web?.request) {
+                        def authHeader = ec.web.request.getHeader("Authorization")
+                        if (authHeader && authHeader.startsWith("Bearer ")) {
+                            jwtToken = authHeader.substring(7)
+                        }
+                    }
+
+                    // Revoke JWT token if present
+                    if (jwtToken) {
+                        boolean revoked = org.moqui.jwt.JwtUtil.revokeToken(jwtToken)
+                        if (revoked) {
+                            ec.logger.info("JWT token revoked during logout")
+                        }
+                    }
+
+                    // Perform regular Moqui logout
+                    ec.user.logoutUser()
+
+                    success = true
+                    message = "Logout successful"
+                    ec.logger.info("Unified logout successful")
+                } catch (Exception e) {
+                    ec.logger.error("Logout failed", e)
+                    success = false
+                    message = "Logout failed: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+</services>

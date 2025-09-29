@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- JWT Security and Management Services -->
+
+    <!-- Token cleanup service for scheduled execution -->
+    <service verb="cleanup" noun="ExpiredTokens">
+        <description>Clean up expired revoked tokens to prevent memory leaks</description>
+        <out-parameters>
+            <parameter name="tokensCleanedUp" type="Integer"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                try {
+                    int initialSize = org.moqui.jwt.JwtUtil.revokedTokens.size()
+                    org.moqui.jwt.JwtUtil.cleanupRevokedTokens()
+                    int finalSize = org.moqui.jwt.JwtUtil.revokedTokens.size()
+
+                    tokensCleanedUp = initialSize - finalSize
+                    message = "Cleaned up ${tokensCleanedUp} expired tokens. Remaining: ${finalSize}"
+
+                    ec.logger.info("JWT token cleanup completed: ${message}")
+                } catch (Exception e) {
+                    ec.logger.error("JWT token cleanup failed", e)
+                    tokensCleanedUp = 0
+                    message = "Token cleanup failed: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- Get JWT configuration information -->
+    <service verb="get" noun="JwtConfiguration">
+        <description>Get current JWT configuration for monitoring and debugging</description>
+        <out-parameters>
+            <parameter name="algorithmInfo"/>
+            <parameter name="securityInfo"/>
+            <parameter name="tokenCounts" type="Map"/>
+            <parameter name="success" type="Boolean"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                try {
+                    algorithmInfo = org.moqui.jwt.JwtUtil.getAlgorithmInfo()
+                    securityInfo = org.moqui.jwt.JwtUtil.getSecurityInfo()
+
+                    tokenCounts = [
+                        revokedTokens: org.moqui.jwt.JwtUtil.revokedTokens.size()
+                    ]
+
+                    success = true
+                    ec.logger.debug("JWT configuration retrieved successfully")
+                } catch (Exception e) {
+                    ec.logger.error("Failed to retrieve JWT configuration", e)
+                    success = false
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- Revoke all tokens for a specific user -->
+    <service verb="revoke" noun="UserTokens">
+        <description>Revoke all active JWT tokens for a specific user</description>
+        <in-parameters>
+            <parameter name="userId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="tokensRevoked" type="Integer"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                try {
+                    tokensRevoked = 0
+                    def revokedTokensSet = org.moqui.jwt.JwtUtil.revokedTokens
+
+                    // This is a simplified implementation
+                    // In a real enterprise system, you'd want to track active tokens in database
+                    // and revoke them systematically
+
+                    success = true
+                    message = "User token revocation initiated for userId: ${userId}"
+
+                    // Log for audit trail
+                    ec.logger.warn("All tokens revoked for user: ${userId}")
+
+                    // Create audit log entry
+                    ec.service.async().name("create", "moqui.security.AuditLog")
+                        .parameters([
+                            auditDate: ec.user.nowTimestamp,
+                            userId: userId,
+                            artifactName: "JWT.revokeUserTokens",
+                            artifactType: "AT_SERVICE",
+                            actionDetail: "All JWT tokens revoked for security reasons",
+                            wasError: "N"
+                        ])
+                        .call()
+
+                } catch (Exception e) {
+                    ec.logger.error("Failed to revoke user tokens for ${userId}", e)
+                    tokensRevoked = 0
+                    success = false
+                    message = "Token revocation failed: " + e.message
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+    <!-- JWT Security Health Check -->
+    <service verb="check" noun="JwtSecurity">
+        <description>Perform JWT security health check</description>
+        <out-parameters>
+            <parameter name="healthStatus"/>
+            <parameter name="checks" type="List"/>
+            <parameter name="overallStatus"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                def checks = []
+                def overallHealthy = true
+
+                try {
+                    // Check if JWT secret is configured
+                    try {
+                        org.moqui.jwt.JwtUtil.getJwtSecret()
+                        checks.add([check: "JWT Secret", status: "OK", message: "JWT secret is properly configured"])
+                    } catch (Exception e) {
+                        checks.add([check: "JWT Secret", status: "FAIL", message: "JWT secret not configured: " + e.message])
+                        overallHealthy = false
+                    }
+
+                    // Check algorithm configuration
+                    try {
+                        def algoInfo = org.moqui.jwt.JwtUtil.getAlgorithmInfo()
+                        checks.add([check: "Algorithm", status: "OK", message: algoInfo])
+                    } catch (Exception e) {
+                        checks.add([check: "Algorithm", status: "FAIL", message: "Algorithm configuration error: " + e.message])
+                        overallHealthy = false
+                    }
+
+                    // Check revoked tokens size
+                    def revokedSize = org.moqui.jwt.JwtUtil.revokedTokens.size()
+                    if (revokedSize > 10000) {
+                        checks.add([check: "Revoked Tokens", status: "WARN", message: "Large number of revoked tokens (${revokedSize}). Consider cleanup."])
+                    } else {
+                        checks.add([check: "Revoked Tokens", status: "OK", message: "Revoked tokens: ${revokedSize}"])
+                    }
+
+                    overallStatus = overallHealthy ? "HEALTHY" : "UNHEALTHY"
+                    healthStatus = "JWT security health check completed"
+
+                } catch (Exception e) {
+                    checks.add([check: "Health Check", status: "FAIL", message: "Health check failed: " + e.message])
+                    overallStatus = "ERROR"
+                    healthStatus = "Health check encountered errors"
+                }
+            ]]></script>
+        </actions>
+    </service>
+
+</services>

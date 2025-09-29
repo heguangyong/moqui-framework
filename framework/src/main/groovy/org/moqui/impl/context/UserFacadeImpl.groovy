@@ -152,12 +152,17 @@ class UserFacadeImpl implements UserFacade {
         // Check if this is a REST API request (JWT-only mode)
         boolean isRestApiRequest = requestPath.startsWith("/rest/")
 
+        // DEBUG: Log authorization header details
+        if (logger.infoEnabled) logger.info("[JWT SERVICE DEBUG] authzHeader: [${authzHeader}], isRestApiRequest: ${isRestApiRequest}, requestPath: ${requestPath}, currentUser: ${currentInfo.username}")
+
         // JWT Authentication - Primary method for REST API and optional for UI
         if (currentInfo.username == null && authzHeader != null && authzHeader.length() > 7 && authzHeader.startsWith("Bearer ")) {
             String jwtToken = authzHeader.substring(7).trim()
+            if (logger.infoEnabled) logger.info("[JWT SERVICE DEBUG] Starting JWT authentication for token: ${jwtToken.substring(0, 20)}...")
             try {
                 // Use UnifiedAuthService to authenticate with JWT
                 org.moqui.jwt.UnifiedAuthService.AuthResult authResult = org.moqui.jwt.UnifiedAuthService.authenticateWithJWT(request)
+                if (logger.infoEnabled) logger.info("[JWT SERVICE DEBUG] JWT authentication result: authenticated=${authResult.isAuthenticated()}, userId=${authResult.getUserId()}, username=${authResult.getUsername()}, message=${authResult.getMessage()}")
                 if (authResult.isAuthenticated()) {
                     // JWT authentication successful - login the user
                     String userId = authResult.getUserId()

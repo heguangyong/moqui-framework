@@ -204,6 +204,17 @@ public class ServiceCallSyncImpl extends ServiceCallImpl implements ServiceCallS
             if (!userLoggedIn) return null;
         }
 
+        // DEBUG: JWT authentication debugging
+        if (serviceName.contains("UnifiedAuth")) {
+            logger.info("[JWT SERVICE DEBUG] Service: " + serviceName);
+            logger.info("[JWT SERVICE DEBUG] sd != null: " + (sd != null));
+            logger.info("[JWT SERVICE DEBUG] sd.authenticate value: " + (sd != null ? sd.authenticate : "null"));
+            logger.info("[JWT SERVICE DEBUG] \"true\".equals(sd.authenticate): " + (sd != null ? "true".equals(sd.authenticate) : "false"));
+            logger.info("[JWT SERVICE DEBUG] eci.userFacade.getUsername(): " + eci.userFacade.getUsername());
+            logger.info("[JWT SERVICE DEBUG] !eci.userFacade.getLoggedInAnonymous(): " + !eci.userFacade.getLoggedInAnonymous());
+            logger.info("[JWT SERVICE DEBUG] Final auth check result: " + (sd != null && "true".equals(sd.authenticate) && eci.userFacade.getUsername() == null && !eci.userFacade.getLoggedInAnonymous()));
+        }
+
         if (sd != null && "true".equals(sd.authenticate) && eci.userFacade.getUsername() == null && !eci.userFacade.getLoggedInAnonymous()) {
             if (ignorePreviousError) eci.messageFacade.popErrors();
             throw new AuthenticationRequiredException("User must be logged in to call service " + serviceName);
