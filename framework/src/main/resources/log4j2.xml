@@ -67,6 +67,11 @@ https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout
         <!-- show SQL generated for crud ops: -->
         <Logger name="org.moqui.impl.entity.EntityQueryBuilder" level="warn"/>
 
+        <!-- Allow important startup/shutdown messages at info level -->
+        <Logger name="org.moqui.impl.webapp.MoquiContextListener" level="info"/>
+        <!-- Allow important JWT authentication messages -->
+        <Logger name="org.moqui.impl.service.RestApi" level="warn"/>
+        <!-- General Moqui framework at warn to reduce noise -->
         <Logger name="org.moqui" level="warn"/>
 
         <Root level="warn">

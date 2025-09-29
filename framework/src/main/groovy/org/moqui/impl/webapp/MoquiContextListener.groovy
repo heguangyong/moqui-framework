@@ -191,6 +191,23 @@ class MoquiContextListener implements ServletContextListener {
             }
 
             logger.info("Moqui Framework initialized in ${(System.currentTimeMillis() - initStartTime)/1000} seconds")
+
+            // Display access information for user convenience
+            String port = "8080" // Default port, could be different if configured
+            try {
+                // Try to get the actual port from system properties or context
+                if (System.getProperty("jetty.port")) port = System.getProperty("jetty.port")
+                else if (System.getProperty("server.port")) port = System.getProperty("server.port")
+            } catch (Exception e) {
+                // Use default port if unable to determine actual port
+            }
+
+            logger.info("")
+            logger.info("=== Access Application ===")
+            logger.info("Web UI: http://localhost:${port}")
+            logger.info("REST API: http://localhost:${port}/rest/")
+            logger.info("Default Admin: john.doe / moqui")
+            logger.info("============================")
         } catch (Throwable t) {
             logger.error("Error initializing webapp context: ${t.toString()}", t)
             throw t
