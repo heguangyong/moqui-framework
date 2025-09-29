@@ -96,11 +96,16 @@ class GroovyShellEndpoint extends MoquiAbstractEndpoint implements ActionListene
             if (groovyshThread.isAlive()) {
                 logger.warn("groovysh Thread ${groovyshThread.getId()}:${groovyshThread.getName()} still alive")
                 try {
-                    // this is deprecated, but Groovysh doesn't seem to have other reliable ways to stop it
-                    // TODO: find other ways to stop Groovysh
-                    //     note that also tried interrupting run loop but didn't work: groovysh.runner.running = false
-                    // NOTE: destroy() throws java.lang.NoSuchMethodError
-                    groovyshThread.stop()
+                    // Interrupt the thread instead of using deprecated stop() method
+                    groovyshThread.interrupt()
+                    // Wait for thread to finish with timeout
+                    groovyshThread.join(1000) // Wait up to 1 second
+                    if (groovyshThread.isAlive()) {
+                        logger.warn("GroovyShell thread did not terminate gracefully after interrupt")
+                    }
+                } catch (InterruptedException e) {
+                    logger.warn("Interrupted while waiting for GroovyShell thread to finish")
+                    Thread.currentThread().interrupt() // Restore interrupted status
                 } catch (Exception e) {
                     logger.error("Error destroying GroovyShell thread", e)
                 }

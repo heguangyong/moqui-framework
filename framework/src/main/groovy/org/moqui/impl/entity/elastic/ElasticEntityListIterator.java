@@ -191,7 +191,6 @@ public class ElasticEntityListIterator implements EntityListIterator {
             Integer hitsTotal = (Integer) totalMap.get("value");
             String relation = (String) totalMap.get("relation");
 
-            // TODO remove this log message, only for testing behavior
             if (!"eq".equals(relation)) logger.warn("Got non eq total relation " + relation + " with value " + hitsTotal + " for entity " + entityDefinition.fullEntityName);
 
             if (hitsTotal != null && "eq".equals(relation))

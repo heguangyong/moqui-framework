@@ -281,6 +281,6 @@ war {
 
 task copyDependencies { doLast {
     delete file(projectDir.absolutePath + '/dependencies')
-    copy { from configurations.runtime; into file(projectDir.absolutePath + '/dependencies') }
-    copy { from configurations.testCompile; into file(projectDir.absolutePath + '/dependencies') }
+    copy { from configurations.runtimeClasspath; into file(projectDir.absolutePath + '/dependencies') }
+    copy { from configurations.testRuntimeClasspath; into file(projectDir.absolutePath + '/dependencies') }
 } }
