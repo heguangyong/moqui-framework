@@ -378,6 +378,7 @@ public class EntityListIteratorImpl implements EntityListIterator {
     }
 
     @Override
+    @SuppressWarnings("removal") // finalize() is deprecated in JDK 9+, but still used for resource cleanup safety
     protected void finalize() throws Throwable {
         try {
             if (!closed) {

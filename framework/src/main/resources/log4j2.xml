@@ -71,6 +71,10 @@ https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout
         <Logger name="org.moqui.impl.webapp.MoquiContextListener" level="info"/>
         <!-- Allow important JWT authentication messages -->
         <Logger name="org.moqui.impl.service.RestApi" level="warn"/>
+        <!-- Suppress MinIO lastModified warnings for directories (expected behavior) -->
+        <Logger name="org.moqui.impl.service.minio.MinioElFinderConnector" level="error"/>
+        <!-- Suppress ElasticSearch warnings when not configured (optional feature) -->
+        <Logger name="org.moqui.impl.webapp.ElasticRequestLogFilter" level="warn"/>
         <!-- General Moqui framework at warn to reduce noise -->
         <Logger name="org.moqui" level="warn"/>
 

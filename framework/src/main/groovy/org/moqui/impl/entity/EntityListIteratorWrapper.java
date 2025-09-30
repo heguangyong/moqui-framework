@@ -187,7 +187,9 @@ class EntityListIteratorWrapper implements EntityListIterator {
         // TODO implement this
     }
 
-    @Override protected void finalize() throws Throwable {
+    @Override
+    @SuppressWarnings("removal") // finalize() is deprecated in JDK 9+, but still used for resource cleanup safety
+    protected void finalize() throws Throwable {
         if (!closed) {
             this.close();
             logger.error("EntityListIteratorWrapper not closed for entity " + entityDefinition.fullEntityName + ", caught in finalize()");

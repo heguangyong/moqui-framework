@@ -57,7 +57,7 @@ import java.sql.Timestamp
 class WebFacadeImpl implements WebFacade {
     protected final static Logger logger = LoggerFactory.getLogger(WebFacadeImpl.class)
 
-    static SimpleSigner qzSigner = new SimpleSigner("qz-private-key.pem")
+    static SimpleSigner qzSigner = null
     // Not using shared root URL cache because causes issues when requests come to server through different hosts/etc:
     // protected static final Map<String, String> webappRootUrlByParms = new HashMap()
 
@@ -854,6 +854,7 @@ class WebFacadeImpl implements WebFacade {
 
     void sendQzSignedResponse(String message) {
         try {
+            if (qzSigner == null) qzSigner = new SimpleSigner("qz-private-key.pem")
             String signature = qzSigner.sign(message)
             response.setContentType("text/plain")
             response.getWriter().write(signature)

@@ -53,7 +53,8 @@ class ElasticRequestLogFilter implements Filter {
 
         elasticClient = (ElasticClientImpl) (ecfi.elasticFacade.getClient("logger") ?: ecfi.elasticFacade.getDefault())
         if (elasticClient == null) {
-            logger.error("In ElasticRequestLogFilter init could not find ElasticClient with name logger or default, not starting")
+            logger.info("ElasticRequestLogFilter: No ElasticSearch client configured, HTTP request logging disabled")
+            disabled = true
             return
         }
         if (elasticClient.esVersionUnder7) {

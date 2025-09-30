@@ -62,8 +62,19 @@ groovydoc {
 // tasks.withType(GroovyCompile) { options.compilerArgs << "-Xlint:deprecation" }
 
 // Log4J has annotation processors, disable to avoid warning
-tasks.withType(JavaCompile) { options.compilerArgs << "-proc:none" }
-tasks.withType(GroovyCompile) { options.compilerArgs << "-proc:none" }
+// Configure all Java compilation tasks to suppress warnings and notes
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll([
+        "-proc:none",
+        "-Xlint:none"
+    ])
+}
+tasks.withType(GroovyCompile).configureEach {
+    options.compilerArgs.addAll([
+        "-proc:none",
+        "-Xlint:none"
+    ])
+}
 
 // NOTE: for dependency types and 'api' definition see: https://docs.gradle.org/current/userguide/java_library_plugin.html
 dependencies {

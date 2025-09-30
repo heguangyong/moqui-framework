@@ -556,6 +556,7 @@ public class ElasticEntityListIterator implements EntityListIterator {
     }
 
     @Override
+    @SuppressWarnings("removal") // finalize() is deprecated in JDK 9+, but still used for resource cleanup safety
     protected void finalize() throws Throwable {
         try {
             if (!closed) {
@@ -574,6 +575,7 @@ public class ElasticEntityListIterator implements EntityListIterator {
             logger.error("Error closing the ResultSet or Connection in finalize EntityListIterator", e);
         }
 
+        // Note: super.finalize() also deprecated in JDK 9+
         super.finalize();
     }
 }
