@@ -71,18 +71,28 @@ This is an enhanced version of Moqui Framework with enterprise-grade improvement
 ### 🔧 Technical Implementation
 
 #### JWT Authentication Features
-**Configuration-Driven Security**:
-```xml
-<!-- Development Environment -->
-<default-property name="moqui.jwt.algorithm" value="HS256"/>
-<default-property name="moqui.jwt.access.expire.minutes" value="120"/>
-<default-property name="moqui.jwt.debug.logging" value="false"/>
+**System Property Configuration**:
+```bash
+# Development Environment (defaults)
+export MOQUI_JWT_ALGORITHM="HS256"
+export MOQUI_JWT_SECRET="dev_jwt_secret_key_for_development_only_change_in_production_12345"
+export MOQUI_JWT_ACCESS_EXPIRE_MINUTES="60"
+export MOQUI_JWT_DEBUG_LOGGING="false"
 
-<!-- Production Environment -->
-<default-property name="moqui.jwt.algorithm" value="${MOQUI_JWT_ALGORITHM:RS256}"/>
-<default-property name="moqui.jwt.ip.validation.enabled" value="${MOQUI_JWT_IP_VALIDATION:true}"/>
-<default-property name="moqui.jwt.rate.limit.enabled" value="${MOQUI_JWT_RATE_LIMIT:true}"/>
+# Production Environment
+export MOQUI_JWT_ALGORITHM="RS256"
+export MOQUI_JWT_PRIVATE_KEY_PATH="/path/to/private.key"
+export MOQUI_JWT_PUBLIC_KEY_PATH="/path/to/public.key"
+export MOQUI_JWT_IP_VALIDATION_ENABLED="true"
+export MOQUI_JWT_RATE_LIMIT_ENABLED="true"
+export MOQUI_JWT_AUDIT_ENABLED="true"
 ```
+
+**Framework Integration**:
+- Complete session-to-JWT migration for web authentication
+- Framework-level centralized authentication handling
+- Token visibility in both response headers and cookies
+- Enterprise-grade security with audit trail integration
 
 **Enterprise Security Features**:
 - **Rate Limiting**: Configurable request throttling per user/IP
@@ -92,20 +102,22 @@ This is an enhanced version of Moqui Framework with enterprise-grade improvement
 
 #### Core Framework Modifications
 
-**Authentication & Security**:
-- `framework/src/main/java/org/moqui/jwt/JwtUtil.java` - Enterprise JWT implementation
-- `framework/service/org/moqui/jwt/JwtServices.xml` - JWT service definitions
-- `framework/service/org/moqui/jwt/JwtAuthServices.xml` - Authentication services
-- `framework/src/main/groovy/org/moqui/impl/service/RestApi.groovy` - REST API integration
+**Framework-Level JWT Authentication**:
+- `framework/src/main/java/org/moqui/jwt/JwtUtil.java` - Enterprise JWT utility class with multi-algorithm support
+- `framework/service/org/moqui/jwt/JwtSecurityServices.xml` - JWT security and management services
+- `runtime/base-component/webroot/screen/webroot/Login.xml` - Unified JWT login implementation
+
+**Enhanced REST API**:
+- `framework/src/main/groovy/org/moqui/impl/service/RestApi.groovy` - JWT-enabled REST API with conditional debug logging
 
 **Build & Compatibility**:
-- `framework/build.gradle` - JDK 21 compatibility settings
-- `gradle/wrapper/gradle-wrapper.properties` - Gradle 8.10 upgrade
-- `framework/src/main/resources/log4j2.xml` - Optimized logging configuration
+- `build.gradle` - JDK 21 compatibility and Gradle 8.10 support
+- `framework/src/main/resources/log4j2.xml` - Optimized logging with minimal console noise
 
-**Configuration**:
-- `runtime/conf/MoquiDevConf.xml` - Development JWT configuration
-- `runtime/conf/MoquiProductionConf.xml` - Production JWT configuration
+**Configuration Architecture**:
+- System property-based configuration for all JWT parameters
+- Environment-specific settings via system properties or configuration files
+- Framework-level centralized authentication handling
 
 ### 🛡️ Security Benefits
 
@@ -148,18 +160,41 @@ This is an enhanced version of Moqui Framework with enterprise-grade improvement
    - REST API: http://localhost:8080/rest/
    - Default Admin: john.doe / moqui
 
+### 🔐 JWT Authentication Details
+
+#### Token Management
+- **Access Tokens**: Short-lived tokens (default: 1 hour) for API access
+- **Refresh Tokens**: Long-lived tokens (default: 30 days) for token renewal
+- **Token Rotation**: Optional refresh token rotation for enhanced security
+- **Revocation Support**: Global token blacklist with automatic cleanup
+
+#### Token Visibility
+- **Response Headers**: `Authorization`, `X-Access-Token`, `X-Refresh-Token`
+- **Cookies**: `jwt_access_token` cookie for browser compatibility
+- **Developer Tools**: Easily inspect tokens in browser F12 console
+- **REST API**: Direct token access via JSON response
+
+#### Security Features
+- **Multi-Algorithm Support**: HMAC (HS256/384/512) and RSA (RS256/384/512)
+- **IP Validation**: Optional client IP binding for enhanced security
+- **Rate Limiting**: Configurable request throttling to prevent abuse
+- **Audit Logging**: Complete authentication event tracking
+- **Token Expiration**: Automatic cleanup of expired revoked tokens
+
 ### 🔄 Migration Notes
 
 **From Standard Moqui**:
 - ✅ **Zero Breaking Changes**: All existing functionality preserved
 - ✅ **Backward Compatible**: Existing UI authentication continues to work
 - ✅ **Enhanced Security**: REST APIs now use JWT by default
-- ✅ **Configuration Driven**: All security features configurable via XML
+- ✅ **Configuration Driven**: All security features configurable via system properties
 
 **For API Clients**:
-- REST API clients should migrate to JWT Bearer tokens
-- JWT tokens obtained via `/rest/s1/moqui/auth/login` endpoint
-- Token refresh available via `/rest/s1/moqui/auth/refresh` endpoint
+- REST API JWT authentication: `POST /rest/s1/moqui/auth/login`
+- Request body: `{"username": "john.doe", "password": "moqui"}`
+- Response includes: `accessToken`, `refreshToken`, `expiresIn`
+- Token refresh: `POST /rest/s1/moqui/auth/refresh` with valid refresh token
+- Tokens available in both response headers and cookies for maximum compatibility
 
 ### 📊 Performance Improvements
 
