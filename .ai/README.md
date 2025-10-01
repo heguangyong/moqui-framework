@@ -1,4 +1,4 @@
-# Moqui组件开发文档索引
+# Moqui企业级开发文档索引
 
 ## 📋 快速导航
 
@@ -6,125 +6,127 @@
 
 | 文档名称 | 适用场景 | 最后更新 |
 |---------|---------|----------|
-| [Moqui认证与权限配置速查手册](./Moqui认证与权限配置速查手册.md) | 认证权限配置、模板错误修复 | 2025-10-01 |
-| [Moqui-MinIO组件开发精品化实战指南](./Moqui-MinIO组件开发精品化实战指南.md) | MinIO组件开发和精品化升级 | 2025-09-28 |
-| [Moqui 组件开发标准模板集(实战版)](./Moqui%20组件开发标准模板集(实战版).md) | 开发新组件时的标准模板参考 | 2025-09-27 |
+| [Moqui-JWT企业级认证实战指南](./Moqui-JWT企业级认证实战指南.md) | JWT认证系统实施、配置和故障排除 | 2025-10-02 |
+| [Moqui-Marketplace组件认证与权限配置实战指南](./Moqui-Marketplace组件认证与权限配置实战指南.md) | 组件认证权限配置、错误修复 | 2025-10-01 |
+| [Moqui-MinIO组件开发精品化实战指南](./Moqui-MinIO组件开发精品化实战指南.md) | MinIO组件开发和企业级架构 | 2025-09-28 |
 | [Moqui组件开发实战规范](./Moqui组件开发实战规范.md) | 开发规范和质量标准 | 2025-09-27 |
-| [Moqui表单字段问题诊断与修复实战指南](./Moqui表单字段问题诊断与修复实战指南.md) | 遇到表单、菜单问题时的诊断修复 | 2025-09-27 |
 
-### 🔧 辅助文档
+### 🗃️ 归档文档
 
-| 文档名称 | 用途 | 使用时机 |
-|---------|-----|----------|
-| [文档蒸馏与优化指南](./文档蒸馏与优化指南.md) | 维护文档质量的方法论 | 定期文档整理时 |
-
-### 📁 归档文档
-
-归档的文档保存在 `archive/` 目录下，包含早期版本和已整合的内容，仅供历史参考。
+保存在 `archive/` 目录下，包含详细的技术细节和历史参考资料。
 
 ## 🚀 快速开始指南
 
-### 新组件开发流程
-1. 📖 **通用组件开发**：阅读 **标准模板集(实战版)** 了解组件结构
-2. 🎯 **MinIO类组件开发**：参考 **MinIO组件精品化指南** 了解企业级架构设计
-3. 📋 使用 **实战规范** 进行质量检查
-4. 🔍 遇到问题时参考 **问题诊断指南**
+### JWT认证系统部署流程
+1. 📖 **系统了解**：阅读 **JWT企业级认证实战指南** 了解架构设计
+2. ⚙️ **环境配置**：参考配置示例设置开发/生产环境
+3. 🔧 **API集成**：使用REST API进行令牌获取和验证
+4. 🛡️ **安全加固**：启用IP验证、速率限制、审计日志
 
-### MinIO组件专项流程
-1. 🏗️ **架构设计**：配置管理 → 连接池 → 异常处理 → 集成层
-2. 🔧 **技术难点**：API兼容性 → ElFinder集成 → 虚拟目录处理
-3. 📈 **质量提升**：性能优化 → 错误处理 → 监控诊断
-4. 📚 **文档完善**：实战指南 → 问题解决方案 → 最佳实践
+### 组件开发流程
+1. 🎯 **权限配置**：使用 **Marketplace组件认证指南** 解决权限问题
+2. 🏗️ **架构设计**：参考 **MinIO组件指南** 了解企业级设计模式
+3. 📋 **质量检查**：使用 **实战规范** 进行代码质量验证
 
-### 问题解决流程
-1. 🎯 根据问题类型定位对应章节：
-   - 表单字段问题 → 问题诊断指南 第2-3节
-   - XML语法错误 → 实战规范 第2节
-   - 菜单显示问题 → 问题诊断指南 附录
-2. 📝 按照检查清单逐项排查
-3. 💡 使用提供的代码模板快速修复
+## 🔐 JWT认证快速配置
 
-### 开发质量保证
-- ✅ IDE零容忍标红错误
-- ✅ 遵循XML语法规范
-- ✅ 使用标准表单模板
-- ✅ 完整的错误处理
-
-## 📊 文档质量控制
-
-### 蒸馏原则
-- **保留**：实战经验、解决方案、验证模板
-- **精简**：重复内容、过时信息、冗长描述
-- **突出**：常见问题、快速解决、核心模板
-
-### 更新机制
-- **触发条件**：新问题发现、功能完成、用户反馈
-- **更新频率**：月度检查、季度蒸馏、年度重构
-- **质量标准**：准确性、完整性、简洁性、实用性
-
-## 🎯 最佳实践速查
-
-### XML开发规范
-```xml
-<!-- ✅ 正确：使用conditional-field控制条件 -->
-<field name="bucketId">
-    <conditional-field condition="isCreate == 'true'" title="...">
-        <text-line size="30"/>
-    </conditional-field>
-    <default-field><hidden/></default-field>
-</field>
-
-<!-- ❌ 错误：field不支持condition属性 -->
-<field name="bucketId" condition="isCreate == 'true'">
+### 开发环境（零配置）
+```bash
+# 无需配置，使用默认设置：
+# - 算法: HS256
+# - 访问令牌: 1小时过期
+# - 刷新令牌: 30天过期
+./gradlew run
 ```
 
-### MinIO组件开发规范
-```java
-// ✅ 正确：使用连接池获取客户端
-MinioClient client = MinioClientPool.getClient(ec.getFactory());
-
-// ❌ 错误：直接创建客户端（性能差，资源浪费）
-MinioClient client = MinioClient.builder()
-    .endpoint("http://localhost:9000")
-    .credentials("admin", "admin123")
-    .build();
-
-// ✅ 正确：统一异常处理
-try {
-    // MinIO操作
-} catch (Exception e) {
-    throw MinioExceptionUtils.convertException("operation", e);
-}
+### 生产环境配置
+```bash
+# RSA算法 + 完整安全功能
+export MOQUI_JWT_ALGORITHM="RS256"
+export MOQUI_JWT_PRIVATE_KEY_PATH="/path/to/private.key"
+export MOQUI_JWT_PUBLIC_KEY_PATH="/path/to/public.key"
+export MOQUI_JWT_IP_VALIDATION_ENABLED="true"
+export MOQUI_JWT_RATE_LIMIT_ENABLED="true"
 ```
 
-### 常见错误速查
-| 错误类型 | 正确做法 | 文档位置 |
+### API快速测试
+```bash
+# 获取JWT令牌
+curl -X POST http://localhost:8080/rest/s1/moqui/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john.doe", "password": "moqui"}'
+
+# 使用令牌访问API
+curl -X GET http://localhost:8080/rest/s1/your-endpoint \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## 💡 常见问题速查
+
+### JWT认证问题
+| 问题类型 | 解决方案 | 文档位置 |
 |---------|---------|----------|
-| **服务认证错误** | 使用 `authenticate="false"` | 认证权限速查 §一 |
-| **实体权限错误** | 添加匿名权限 + `.disableAuthz()` | 认证权限速查 §二 |
-| **FormConfigUser错误** | form-list改HTML表格 | 认证权限速查 §三 |
-| set标签位置错误 | 使用hidden字段 | 实战规范 2.1.A |
-| field条件错误 | 使用conditional-field | 问题诊断指南 2.2.B |
-| required属性错误 | 在service层验证 | 实战规范 2.1.C |
-| field-layout位置错误 | 放在所有field后 | 问题诊断指南 2.3.F |
-| ElFinder目录错误 | 区分虚拟目录处理 | MinIO指南 4.2 |
-| MinIO API兼容性 | 使用ec.getFactory() | MinIO指南 4.1 |
-| 连接性能问题 | 使用连接池 | MinIO指南 5.1 |
+| **令牌验证失败** | 检查算法配置和密钥 | JWT指南 §4.1 |
+| **令牌不可见** | 查看Cookie和Response Headers | JWT指南 §3 |
+| **IP验证失败** | 配置IP验证规则 | JWT指南 §5.1 |
+| **速率限制触发** | 调整限制参数 | JWT指南 §5.2 |
 
-## 💡 AI使用建议
+### 组件开发问题
+| 问题类型 | 解决方案 | 文档位置 |
+|---------|---------|----------|
+| **服务认证错误** | 使用 `authenticate="false"` | Marketplace指南 §一 |
+| **实体权限错误** | 添加匿名权限 + `.disableAuthz()` | Marketplace指南 §二 |
+| **FormConfigUser错误** | form-list改HTML表格 | Marketplace指南 §三 |
 
-### 为AI提供上下文时
-1. 明确说明问题类型（表单/服务/菜单/语法）
-2. 引用具体的文档章节（如"参考实战规范2.1节"）
-3. 提供错误信息和相关代码片段
+## 🏗️ 企业级架构特性
 
-### AI辅助开发时
-1. 要求AI遵循文档中的标准模板
-2. 让AI进行质量检查清单验证
-3. 要求AI解释选择特定解决方案的原因
+### JWT认证系统架构
+- **框架级集成**: `framework/src/main/java/org/moqui/jwt/JwtUtil.java`
+- **安全服务**: `framework/service/org/moqui/jwt/JwtSecurityServices.xml`
+- **统一登录**: `runtime/base-component/webroot/screen/webroot/Login.xml`
+- **REST API**: `framework/src/main/groovy/org/moqui/impl/service/RestApi.groovy`
+
+### 安全特性
+- ✅ **多算法支持**: HMAC和RSA算法族
+- ✅ **IP绑定验证**: 防止令牌盗用
+- ✅ **速率限制**: 防暴力破解攻击
+- ✅ **审计日志**: 完整认证事件记录
+- ✅ **令牌撤销**: 全局黑名单管理
+- ✅ **自动清理**: 过期令牌自动清理
+
+### 性能优化
+- ✅ **算法缓存**: 5分钟缓存避免重复初始化
+- ✅ **异步审计**: 非阻塞日志写入
+- ✅ **条件调试**: 零性能影响的调试日志
+
+## 🎯 最佳实践总结
+
+### ✅ 架构设计要点
+1. **框架级统一**: 避免组件级分散实现
+2. **配置驱动**: 系统属性灵活配置
+3. **向后兼容**: 零破坏性升级
+4. **双模式支持**: Headers + Cookies兼容不同客户端
+
+### ❌ 常见陷阱避免
+1. 不要在组件级实现认证功能
+2. 不要硬编码敏感配置信息
+3. 不要忽略生产环境安全配置
+4. 不要忘记定期清理撤销令牌
+
+## 💻 AI使用建议
+
+### 开发JWT功能时
+1. 明确说明是否为框架级还是组件级需求
+2. 引用具体的JWT指南章节（如"参考JWT指南§5.1"）
+3. 提供完整的错误信息和配置内容
+
+### 组件开发时
+1. 要求AI遵循企业级架构模式
+2. 让AI参考MinIO组件的设计原则
+3. 要求AI进行安全性和性能检查
 
 ---
 
+**框架版本**: Moqui Framework + Java 21 + JWT企业级认证
 **文档维护**: 开发团队共同维护
-**最后蒸馏**: 2025-09-28
-**下次蒸馏**: 根据项目进展确定
+**最后更新**: 2025-10-02
