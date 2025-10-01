@@ -348,7 +348,7 @@ public class JwtUtil {
                 auditParams.put("clientIpAddress", clientIp);
                 auditParams.put("wasError", success ? "N" : "Y");
 
-                ec.getService().async().name("create", "moqui.security.AuditLog")
+                ec.getService().async().name("create", "moqui.entity.EntityAuditLog")
                     .parameters(auditParams)
                     .call();
             }

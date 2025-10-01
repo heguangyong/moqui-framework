@@ -87,7 +87,7 @@
                     ec.logger.warn("All tokens revoked for user: ${userId}")
 
                     // Create audit log entry
-                    ec.service.async().name("create", "moqui.security.AuditLog")
+                    ec.service.async().name("create", "moqui.entity.EntityAuditLog")
                         .parameters([
                             auditDate: ec.user.nowTimestamp,
                             userId: userId,
