@@ -9,7 +9,7 @@
 | [Moqui-JWT企业级认证实战指南](./Moqui-JWT企业级认证实战指南.md) | JWT认证系统实施、配置和故障排除 | 2025-10-02 |
 | [Moqui-Marketplace组件认证与权限配置实战指南](./Moqui-Marketplace组件认证与权限配置实战指南.md) | 组件认证权限配置、错误修复 | 2025-10-01 |
 | [Moqui-MinIO组件开发精品化实战指南](./Moqui-MinIO组件开发精品化实战指南.md) | MinIO组件开发和企业级架构 | 2025-09-28 |
-| [Moqui组件开发实战规范](./Moqui组件开发实战规范.md) | 开发规范和质量标准 | 2025-09-27 |
+| [Vue3-Quasar2-升级监测工具链指南](./Vue3-Quasar2-升级监测工具链指南.md) | **Vue 3 + Quasar 2 升级修复完整指南** | 2025-10-04 |
 
 ### 🗃️ 归档文档
 
@@ -22,6 +22,15 @@
 2. ⚙️ **环境配置**：参考配置示例设置开发/生产环境
 3. 🔧 **API集成**：使用REST API进行令牌获取和验证
 4. 🛡️ **安全加固**：启用IP验证、速率限制、审计日志
+
+### Vue 3升级监测工具链
+1. 📖 **系统了解**：阅读 **Vue3-Quasar2-升级监测工具链指南** 了解完整技术修复
+2. 🛠️ **主控制台**：打开 `Vue3_Monitor_Dashboard.html` 进行实时监控
+3. 🤖 **自动化测试**：使用 `Vue3_Automated_Tests.html` 运行完整测试套件
+4. 🔧 **专业诊断**：使用专业诊断工具进行深度问题分析
+   - `vue3_test_verification.html` - Vue 3组件注册验证器
+   - `vue3_actual_test.html` - 实际页面测试工具
+   - `page_blank_diagnosis.html` - 页面白板诊断工具
 
 ### 组件开发流程
 1. 🎯 **权限配置**：使用 **Marketplace组件认证指南** 解决权限问题
@@ -61,7 +70,15 @@ curl -X GET http://localhost:8080/rest/s1/your-endpoint \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-## 💡 常见问题速查
+### 💡 常见问题速查
+
+### Vue 3升级专项问题
+| 问题类型 | 解决方案 | 文档位置 |
+|---------|---------|----------|
+| **组件解析失败** | 检查组件注册时机是否在mount前 | Vue3指南 §1 |
+| **路由器未定义** | 确保router在使用前定义 | Vue3指南 §2 |
+| **模板编译错误** | 使用null安全操作符 | Vue3指南 §3 |
+| **页面白板问题** | 使用诊断工具分析认证重定向 | Vue3指南 §4 |
 
 ### JWT认证问题
 | 问题类型 | 解决方案 | 文档位置 |
@@ -127,6 +144,6 @@ curl -X GET http://localhost:8080/rest/s1/your-endpoint \
 
 ---
 
-**框架版本**: Moqui Framework + Java 21 + JWT企业级认证
+**框架版本**: Moqui Framework + Java 21 + JWT企业级认证 + Vue 3 + Quasar 2
 **文档维护**: 开发团队共同维护
-**最后更新**: 2025-10-02
+**最后更新**: 2025-10-04

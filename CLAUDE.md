@@ -206,4 +206,136 @@ curl -X POST "http://localhost:8080/rest/s1/marketplace/process/AllMatching" \
 
 ---
 
-*Last updated: Based on moqui-marketplace development session - Critical authentication attribute discovery*
+## 🔧 Frontend JavaScript & CSP Troubleshooting
+
+### JavaScript Execution Issues After Login
+
+**Problem**: After successful login, navigation menus and user interface elements don't display correctly.
+
+**Root Cause Analysis Process**:
+1. **Initial Symptoms**: Vue.js components not initializing, empty navigation areas
+2. **JavaScript Console Check**: Dependencies (Vue, moqui, Quasar) showing as undefined
+3. **Network Analysis**: JavaScript files loading but not executing
+4. **CSP Investigation**: Content Security Policy blocking script execution
+
+**Solution**: Content Security Policy (CSP) Configuration
+
+The default Moqui CSP configuration is too restrictive for JavaScript frameworks:
+```xml
+<!-- RESTRICTIVE (Blocks JavaScript) -->
+<response-header type="screen-render" name="Content-Security-Policy"
+                value="frame-ancestors 'none'; form-action 'self';"/>
+```
+
+**Fix in MoquiDevConf.xml**:
+```xml
+<webapp-list>
+    <webapp name="webroot">
+        <!-- Development Mode: More permissive CSP to allow JavaScript execution -->
+        <response-header type="screen-render" name="Content-Security-Policy"
+                       value="frame-ancestors 'none'; form-action 'self'; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;"/>
+    </webapp>
+</webapp-list>
+```
+
+**Key CSP Directives**:
+- `'unsafe-inline'`: Allows inline JavaScript (required for Vue.js)
+- `'unsafe-eval'`: Allows eval() function (required for template compilation)
+- `https://cdnjs.cloudflare.com`: Allows external CDN resources
+
+---
+
+## 🗺️ Navigation & Routing Issues
+
+### Missing /apps Route Handler
+
+**Problem**: Frontend making requests to `/apps/getAppNavMenu` and `/apps/menuData` returning 404 errors.
+
+**Error Logs**:
+```
+WARN  .webapp.MoquiServlet Web Resource Not Found: Could not find subscreen or transition or file/content [getAppNavMenu] under screen [component://webroot/screen/webroot.xml] while finding url for path [apps, getAppNavMenu]
+```
+
+**Root Cause**: Missing screen configuration for `/apps` path routing.
+
+**Solution**: Create missing screen definitions and routing configuration.
+
+**1. Add apps subscreens-item to webroot.xml**:
+```xml
+<screen location="component://webroot/screen/webroot.xml">
+    <subscreens-item name="apps" location="component://webroot/screen/webroot/apps.xml"/>
+    <subscreens-item name="qapps" location="component://webroot/screen/webroot/qapps.xml"/>
+    <!-- other items -->
+</screen>
+```
+
+**2. Create apps.xml screen definition** (if missing):
+```xml
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/screen-3.xsd"
+        require-authentication="false" allow-extra-path="true" include-child-content="true">
+
+    <always-actions>
+        <set field="appHeader" value="Moqui Applications"/>
+    </always-actions>
+
+    <transition name="getAppNavMenu" read-only="true">
+        <actions>
+            <!-- Navigation menu logic -->
+        </actions>
+    </transition>
+
+    <subscreens default-item="dashboard">
+        <subscreens-item name="tools" menu-title="Tools" menu-index="1"
+                        location="component://tools/screen/Tools.xml"/>
+        <subscreens-item name="simple" menu-title="SimpleScreens" menu-index="2"
+                        location="component://SimpleScreens/screen/SimpleScreens.xml"/>
+    </subscreens>
+</screen>
+```
+
+**Verification**: Check that requests to `/apps/getAppNavMenu` return 401 (auth required) instead of 404 (not found).
+
+---
+
+## 🔍 Debugging Methodology
+
+### Systematic Frontend Debugging Process
+
+1. **JavaScript Execution Check**:
+   ```javascript
+   // Browser console verification
+   console.log("Vue:", typeof Vue);
+   console.log("moqui:", typeof moqui);
+   console.log("Quasar:", typeof Quasar);
+   ```
+
+2. **Network Request Analysis**:
+   - Check Developer Tools → Network tab for failed requests
+   - Look for 404 errors on navigation endpoints
+   - Verify CSP violations in Security tab
+
+3. **Log File Analysis**:
+   ```bash
+   # Monitor real-time logs
+   tail -f /Users/demo/Workspace/moqui/runtime/log/moqui.log
+
+   # Filter for specific errors
+   grep "Web Resource Not Found" /Users/demo/Workspace/moqui/runtime/log/moqui.log
+   ```
+
+4. **Configuration Verification**:
+   - Check `MoquiActualConf.xml` for final merged configuration
+   - Verify CSP headers in browser Developer Tools → Security
+
+### Common Error Patterns & Solutions
+
+| Error Pattern | Root Cause | Solution |
+|---------------|------------|----------|
+| `Vue is not defined` | CSP blocking scripts | Add script-src to CSP |
+| `Web Resource Not Found: [path]` | Missing screen definition | Create screen file & routing |
+| `Cannot set preference...no user logged in` | Session/auth issues | Check login state & tokens |
+| JavaScript loads but doesn't execute | CSP restrictions | Allow 'unsafe-inline' & 'unsafe-eval' |
+
+---
+
+*Last updated: October 2025 - CSP and Navigation Routing Troubleshooting Session*
