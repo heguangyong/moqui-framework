@@ -10,6 +10,7 @@
 | [Moqui-Marketplace组件认证与权限配置实战指南](./Moqui-Marketplace组件认证与权限配置实战指南.md) | 组件认证权限配置、错误修复 | 2025-10-01 |
 | [Moqui-MinIO组件开发精品化实战指南](./Moqui-MinIO组件开发精品化实战指南.md) | MinIO组件开发和企业级架构 | 2025-09-28 |
 | [Vue3-Quasar2-升级监测工具链指南](./Vue3-Quasar2-升级监测工具链指南.md) | **Vue 3 + Quasar 2 升级修复完整指南** | 2025-10-04 |
+| [应用列表组件自动化配置实战指南](./应用列表组件自动化配置实战指南.md) | 应用列表自动发现、组件配置优化 | 2025-10-09 |
 
 ### 🗃️ 归档文档
 
@@ -36,6 +37,7 @@
 1. 🎯 **权限配置**：使用 **Marketplace组件认证指南** 解决权限问题
 2. 🏗️ **架构设计**：参考 **MinIO组件指南** 了解企业级设计模式
 3. 📋 **质量检查**：使用 **实战规范** 进行代码质量验证
+4. 📂 **组件文档**：查看各组件docs目录下的具体配置文档
 
 ## 🔐 JWT认证快速配置
 
@@ -94,6 +96,20 @@ curl -X GET http://localhost:8080/rest/s1/your-endpoint \
 | **服务认证错误** | 使用 `authenticate="false"` | Marketplace指南 §一 |
 | **实体权限错误** | 添加匿名权限 + `.disableAuthz()` | Marketplace指南 §二 |
 | **FormConfigUser错误** | form-list改HTML表格 | Marketplace指南 §三 |
+| **应用列表不显示** | 添加menu-image配置 | 应用列表指南 §二 |
+
+## 📂 组件级文档索引
+
+各组件的具体配置文档位于对应的docs目录：
+
+### Marketplace组件
+- 📍 `runtime/component/moqui-marketplace/docs/应用列表自动配置.md`
+
+### MinIO组件
+- 📍 `runtime/component/moqui-minio/docs/菜单配置优化.md`
+
+### Webroot组件
+- 📍 `runtime/base-component/webroot/docs/应用列表配置指南.md`
 
 ## 🏗️ 企业级架构特性
 
@@ -144,6 +160,6 @@ curl -X GET http://localhost:8080/rest/s1/your-endpoint \
 
 ---
 
-**框架版本**: Moqui Framework + Java 21 + JWT企业级认证 + Vue 3 + Quasar 2
+**框架版本**: Moqui Framework + Java 21 + JWT企业级认证 + Vue 2.7.14 + Quasar 1.22.10（迁移基线）
 **文档维护**: 开发团队共同维护
-**最后更新**: 2025-10-04
+**最后更新**: 2025-10-09
