@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>纯JWT认证测试</title>
+    <script src="http://localhost:8080/libs/jquery/jquery.min.js"></script>
+</head>
+<body>
+    <h1>纯JWT认证测试</h1>
+
+    <div id="login-section">
+        <h2>登录</h2>
+        <form id="jwt-login-form">
+            <input type="text" id="username" value="john.doe" placeholder="用户名">
+            <input type="password" id="password" value="moqui" placeholder="密码">
+            <button type="submit">JWT登录</button>
+        </form>
+    </div>
+
+    <div id="test-section" style="display:none;">
+        <h2>JWT测试</h2>
+        <button id="test-menu-data">测试菜单数据</button>
+        <button id="test-qapps-page">测试qapps页面</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // JWT工具函数
+        function getJwtToken() {
+            return localStorage.getItem('jwt_access_token');
+        }
+
+        function setJwtToken(token) {
+            localStorage.setItem('jwt_access_token', token);
+        }
+
+        function clearJwtToken() {
+            localStorage.removeItem('jwt_access_token');
+        }
+
+        // 登录处理
+        $('#jwt-login-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var username = $('#username').val();
+            var password = $('#password').val();
+
+            console.log('🔐 开始JWT登录测试...');
+
+            $.ajax({
+                url: 'http://localhost:8080/Login/login',
+                type: 'POST',
+                data: {
+                    username: username,
+                    password: password
+                },
+                success: function(data, textStatus, jqXHR) {
+                    console.log('🔐 登录成功，检查JWT响应头...');
+
+                    var authHeader = jqXHR.getResponseHeader('Authorization');
+                    var accessToken = jqXHR.getResponseHeader('X-Access-Token');
+
+                    if (authHeader && authHeader.startsWith('Bearer ')) {
+                        accessToken = authHeader.substring(7);
+                    }
+
+                    if (accessToken) {
+                        console.log('🔐 获得JWT token:', accessToken.substring(0, 20) + '...');
+                        setJwtToken(accessToken);
+                        $('#login-section').hide();
+                        $('#test-section').show();
+                        $('#results').html('<p style="color:green;">✅ JWT登录成功！Token已保存。</p>');
+                    } else {
+                        $('#results').html('<p style="color:red;">❌ 未获得JWT token</p>');
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('🔐 登录失败:', errorThrown);
+                    $('#results').html('<p style="color:red;">❌ 登录失败: ' + errorThrown + '</p>');
+                }
+            });
+        });
+
+        // 测试菜单数据
+        $('#test-menu-data').on('click', function() {
+            var token = getJwtToken();
+            if (!token) {
+                $('#results').html('<p style="color:red;">❌ 没有JWT token</p>');
+                return;
+            }
+
+            console.log('🔐 测试菜单数据API...');
+
+            $.ajax({
+                url: 'http://localhost:8080/menuData/qapps',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(data) {
+                    console.log('🔐 菜单数据获取成功:', data);
+                    $('#results').html('<p style="color:green;">✅ JWT菜单数据获取成功！</p><pre>' + JSON.stringify(data, null, 2) + '</pre>');
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('🔐 菜单数据获取失败:', errorThrown);
+                    $('#results').html('<p style="color:red;">❌ 菜单数据获取失败: ' + errorThrown + ' (状态码: ' + jqXHR.status + ')</p>');
+                }
+            });
+        });
+
+        // 测试qapps页面
+        $('#test-qapps-page').on('click', function() {
+            var token = getJwtToken();
+            if (!token) {
+                $('#results').html('<p style="color:red;">❌ 没有JWT token</p>');
+                return;
+            }
+
+            console.log('🔐 测试qapps页面...');
+
+            $.ajax({
+                url: 'http://localhost:8080/qapps',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(data) {
+                    console.log('🔐 qapps页面获取成功');
+                    var hasAppList = data.indexOf('选择应用') > -1;
+                    var appCount = (data.match(/智能供需平台|项目执行|项目管理|对象存储/g) || []).length;
+                    $('#results').html('<p style="color:green;">✅ JWT qapps页面获取成功！</p>' +
+                                     '<p>包含"选择应用": ' + (hasAppList ? '✅' : '❌') + '</p>' +
+                                     '<p>应用数量: ' + appCount + '</p>');
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('🔐 qapps页面获取失败:', errorThrown);
+                    $('#results').html('<p style="color:red;">❌ qapps页面获取失败: ' + errorThrown + ' (状态码: ' + jqXHR.status + ')</p>');
+                }
+            });
+        });
+
+        // 检查现有token
+        $(document).ready(function() {
+            var existingToken = getJwtToken();
+            if (existingToken) {
+                console.log('🔐 发现现有JWT token:', existingToken.substring(0, 20) + '...');
+                $('#login-section').hide();
+                $('#test-section').show();
+                $('#results').html('<p style="color:blue;">ℹ️ 发现现有JWT token，可直接测试。</p>');
+            }
+        });
+    </script>
+</body>
+</html>

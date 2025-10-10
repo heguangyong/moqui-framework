@@ -1,5 +1,39 @@
 ## Welcome to Moqui Framework
 
+## 🤖 AI Agent快速项目了解指南
+
+**新的AI agent开始工作前必读路径**：
+
+### 1️⃣ 第一步：了解项目基本情况
+- **项目性质**: 增强版Moqui Framework，包含JWT认证、JDK 21支持
+- **当前状态**: 生产可用，正在准备Vue3+Quasar2升级
+- **关键文件**: `CLAUDE.md` - AI开发助手的核心参考文档
+
+### 2️⃣ 第二步：掌握关键开发模式
+- **认证问题**: 查看 `CLAUDE.md` 的认证模式部分 - Service用`authenticate="false"`，Screen用`require-authentication="false"`
+- **常见错误**: 查看 `runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md`
+- **开发规范**: 查看 `docs/Moqui组件开发实战规范.md`
+
+### 3️⃣ 第三步：理解项目架构
+- **多库结构**: framework库 + runtime库
+- **组件系统**: runtime/component/ 下的各个组件都有独立的docs目录
+- **动态渲染**: Moqui页面通过FreeMarker+Vue.js动态生成，需要Chrome MCP验证
+- **Chrome MCP调试**: 验证动态内容的核心方法，curl测试无法替代
+
+### 4️⃣ 第四步：问题解决流程
+1. 🔍 **首先查看** `CLAUDE.md` - 经过验证的解决方案，包含Chrome MCP调试模式
+2. 📖 **然后参考** 相关组件的docs目录
+3. 📜 **最后查看** GitHub历史版本了解问题背景
+4. 🧪 **动态验证** 使用Chrome MCP调试闭环验证实际页面效果
+
+### ⚠️ 重要原则
+- **始终参考GitHub历史版本** - 理解项目演进
+- **尊重自动化机制** - 避免手工配置覆盖系统设计
+- **保持权限验证** - 不要随意移除安全检查
+- **使用异步调用** - 避免阻塞主线程
+
+---
+
 [![license](https://img.shields.io/badge/license-CC0%201.0%20Universal-blue.svg)](https://github.com/moqui/moqui-framework/blob/master/LICENSE.md)
 [![build](https://travis-ci.org/moqui/moqui-framework.svg)](https://travis-ci.org/moqui/moqui-framework)
 [![release](https://img.shields.io/github/release/moqui/moqui-framework.svg)](https://github.com/moqui/moqui-framework/releases)
@@ -205,5 +239,37 @@ export MOQUI_JWT_AUDIT_ENABLED="true"
 
 This enhanced Moqui Framework provides enterprise-grade security, performance, and maintainability while preserving the framework's ease of use and flexibility.
 
+## 📚 Documentation Structure
+
+This project uses an organized documentation structure with documents categorized by scope:
+
+### 🎯 Framework Documentation
+Location: `docs/`
+- **Development Standards**: Component development practices and coding standards
+- **Technical Guides**: Vue3/Quasar2 upgrade planning and framework templates
+- **Architecture Documentation**: Framework-level design patterns and principles
+
+[📖 Browse Framework Documentation](docs/README.md)
+
+### 🏃 Runtime Environment Documentation
+Location: `runtime/docs/`
+- **Authentication Systems**: JWT migration guides and configuration details
+- **Environment Configuration**: Runtime settings and deployment guides
+- **Operations Manual**: System administration and troubleshooting
+
+[🔧 Browse Runtime Documentation](runtime/docs/README.md)
+
+### 📁 Component-Specific Documentation
+Each component maintains its own documentation in its `docs/` directory:
+- **Marketplace Component**: `runtime/component/moqui-marketplace/docs/`
+- **MinIO Integration**: `runtime/component/moqui-minio/docs/`
+- **MCP Integration**: `runtime/component/moqui-mcp/docs/`
+
+### 🚀 Quick Documentation Access
+- **New Developers**: Start with [Framework Development Standards](docs/Moqui组件开发实战规范.md)
+- **System Issues**: Check [JWT Migration Experience Summary](runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md)
+- **Component Development**: Refer to component-specific docs in `runtime/component/*/docs/`
+
+## 🔗 Additional Resources
 
 
