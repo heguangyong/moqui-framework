@@ -222,6 +222,82 @@ curl -s -b /tmp/s.txt "http://localhost:8080/qapps" -w "%{http_code}"
 
 ---
 
+## 🗺️ Critical Routing Configuration Issues
+
+### Missing default-item in Screen Subscreens
+
+**Problem**: Screen paths not displaying expected content when accessed directly.
+
+**Root Cause**: Screen definitions lacking `default-item` attribute in `<subscreens>` configuration, causing empty or incorrect page loads.
+
+**Critical Example - qapps.xml Route Fix**:
+```xml
+<!-- BEFORE: Missing default-item causes empty page load -->
+<subscreens>
+    <subscreens-item name="tools" location="component://tools/screen/Tools.xml"/>
+    <subscreens-item name="marketplace" location="component://moqui-marketplace/screen/marketplace.xml"/>
+</subscreens>
+
+<!-- AFTER: default-item ensures correct page loads -->
+<subscreens default-item="AppList">
+    <subscreens-item name="AppList" location="component://webroot/screen/webroot/apps/AppList.xml"/>
+    <subscreens-item name="tools" location="component://tools/screen/Tools.xml"/>
+    <subscreens-item name="marketplace" location="component://moqui-marketplace/screen/marketplace.xml"/>
+</subscreens>
+```
+
+**Impact**:
+- `/qapps` path now correctly loads Application List instead of empty Vue wrapper
+- `/apps` path correctly defaults to marketplace dashboard instead of AppList
+- User expectations align with URL behavior
+
+**Investigation Pattern**:
+1. Check page title: `curl -s URL | grep -o "<title>.*</title>"`
+2. Compare expected vs actual screen content
+3. Verify `subscreens` has appropriate `default-item`
+4. Ensure referenced screen exists and has correct `menu-include` settings
+
+**Reference Pattern**: This issue occurred multiple times during development. Always verify screen routing configuration when URLs don't load expected content.
+
+### Legacy Screen Architecture Migration
+
+**Problem**: Multiple page style architectures (apps.xml, vapps.xml, qapps.xml) causing maintenance complexity and user experience inconsistency.
+
+**Architecture Analysis**:
+- `apps.xml`: Legacy HTML Bootstrap style (`STT_INTERNAL` + `Header.html.ftl`)
+- `vapps.xml`: Vue Bootstrap hybrid style (`STT_INTERNAL` + `WebrootVue.vuet.ftl`)
+- `qapps.xml`: Modern Vue Quasar style (`STT_INTERNAL_QUASAR` + `WebrootVue.qvt.ftl`)
+
+**Critical Discovery**: Components register subscreens-items to specific page styles via MoquiConf.xml. Simply deleting legacy styles breaks component registration and causes system failures.
+
+**Safe Migration Strategy**:
+```xml
+<!-- BEFORE: Legacy apps.xml with full implementation -->
+<pre-actions><script><![CDATA[
+    if (!ec.user.userId) { ec.web.saveScreenLastInfo(null, null); sri.sendRedirectAndStopRender('/Login') }
+]]></script></pre-actions>
+
+<!-- AFTER: Legacy apps.xml converted to redirect -->
+<pre-actions><script><![CDATA[
+    // Legacy apps.xml - redirect to modern qapps.xml for consistent user experience
+    sri.sendRedirectAndStopRender('/qapps')
+]]></script></pre-actions>
+```
+
+**Benefits**:
+- Maintains component compatibility (all existing MoquiConf.xml subscreens-items still work)
+- Provides consistent modern UI experience (all paths lead to qapps.xml)
+- Enables gradual migration (components can be updated to target qapps.xml over time)
+- Preserves system stability (no broken registrations or missing functionality)
+
+**Implementation Results**:
+- `/apps` → redirects to `/qapps` (showing AppList)
+- `/vapps` → redirects to `/qapps` (showing AppList)
+- `/qapps` → direct load of AppList with modern Quasar UI
+- All component functionality preserved and accessible
+
+---
+
 ## 🔄 Entity Authorization Bypassing
 
 ### Using .disableAuthz() in Groovy Scripts
