@@ -574,4 +574,76 @@ WARN  .webapp.MoquiServlet Web Resource Not Found: Could not find subscreen or t
 
 ---
 
-*Last updated: October 2025 - CSP and Navigation Routing Troubleshooting Session*
+## 🏠 Homepage Navigation & Menu Links Fix
+
+### Problem: Users Cannot Return to Homepage After Navigation
+
+**Issue**: After users navigate into application components (like marketplace, tools), the left sidebar menu doesn't provide a way to return to the main AppList homepage.
+
+**User Report**: "只有初次登录时页面主页链接的入口是正确的，进入后点击菜单，就无法切回到主页入口了" (Only when first logging in is the homepage link entry correct, after entering and clicking menus, you cannot switch back to the homepage entry)
+
+### Root Cause Analysis
+
+1. **Missing menuData Transition**: The qapps.xml screen lacked a `menuData` transition to provide navigation menu data
+2. **No Homepage Link**: Left sidebar menu had no "返回主页" (Return to Homepage) link for users to navigate back to AppList
+
+### Solution Implementation
+
+**1. Added menuData Transition to qapps.xml**:
+```xml
+<transition name="menuData" read-only="true" begin-transaction="false">
+    <actions><script><![CDATA[
+        // Get menu data for qapps navigation, always include homepage link at top
+        List menuDataList = []
+
+        // Add "返回主页" (Return to Homepage) link at the top
+        menuDataList.add([
+            title: "返回主页",
+            url: "/qapps/AppList",
+            image: "fa fa-home",
+            imageType: "icon"
+        ])
+
+        // Get standard menu data from screen
+        List standardMenuList = sri.getMenuData(sri.screenUrlInfo.extraPathNameList)
+        if (standardMenuList != null) {
+            menuDataList.addAll(standardMenuList)
+        }
+
+        ec.web.sendJsonResponse(menuDataList)
+    ]]></script></actions>
+    <default-response type="none" save-parameters="true"/>
+</transition>
+```
+
+**2. Verified Configuration**:
+- ✅ `default-item="AppList"` ensures `/qapps/` requests default to AppList page
+- ✅ `SubscreenSection` always renders subscreen content
+- ✅ "返回主页" link appears first in left navigation menu
+
+### Testing Results
+
+**Verification Commands**:
+```bash
+# Test qapps default behavior
+curl -s "http://localhost:8080/qapps" | grep "选择应用"
+# Returns: 选择应用 (confirms AppList is default)
+
+# Test menuData includes homepage link
+curl -s -b session.txt "http://localhost:8080/qapps/menuData" | grep "返回主页"
+# Returns: "title" : "返回主页" (confirms homepage link exists)
+```
+
+**Expected User Experience**:
+1. Users log in and see AppList by default at `/qapps/`
+2. Users navigate to any component (marketplace, tools, etc.)
+3. Left sidebar menu shows "返回主页" link with home icon at the top
+4. Clicking "返回主页" returns users to `/qapps/AppList`
+
+### Impact
+
+This fix resolves the navigation UX issue where users were "trapped" in application components without an easy way to return to the main application list. Now users have a consistent, always-visible "返回主页" link in the left navigation menu.
+
+---
+
+*Last updated: October 2025 - Homepage Navigation Menu Fix*
