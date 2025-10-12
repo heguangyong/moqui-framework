@@ -149,6 +149,12 @@ class UserFacadeImpl implements UserFacade {
         String authzHeader = request.getHeader("Authorization")
         String requestPath = request.getPathInfo() ?: request.getRequestURI()
 
+        String jwtParam = secureParameters?.jwt_token
+        if (!jwtParam) jwtParam = request.getParameter("jwt_token")
+        if ((!authzHeader || authzHeader.length() == 0) && jwtParam) {
+            authzHeader = "Bearer " + jwtParam
+        }
+
         // Check if this is a REST API request (JWT-only mode)
         boolean isRestApiRequest = requestPath.startsWith("/rest/")
 

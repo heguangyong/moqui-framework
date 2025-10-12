@@ -12,6 +12,9 @@
  * <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 import org.gradle.api.artifacts.ComponentSelection
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 buildscript {
     repositories {
@@ -30,6 +33,16 @@ allprojects {
     // Set default encoding to UTF-8 for Java/Groovy compilation to avoid issues with non-ASCII characters in source files
     tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
     tasks.withType(GroovyCompile) { options.encoding = 'UTF-8' }
+
+    pluginManager.withPlugin('java') {
+        extensions.getByType(JavaPluginExtension).toolchain.languageVersion = JavaLanguageVersion.of(21)
+    }
+    pluginManager.withPlugin('java-library') {
+        extensions.getByType(JavaPluginExtension).toolchain.languageVersion = JavaLanguageVersion.of(21)
+    }
+    pluginManager.withPlugin('groovy') {
+        extensions.getByType(JavaPluginExtension).toolchain.languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 import org.ajoberstar.grgit.*
