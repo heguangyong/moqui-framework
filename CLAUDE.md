@@ -757,4 +757,86 @@ This fix resolves the navigation UX issue where users were "trapped" in applicat
 
 ---
 
-*Last updated: October 2025 - Homepage Navigation Menu Fix*
+---
+
+## 🔄 Vue 3.x + Quasar 2.x 模板渲染诊断与修复实战
+
+### ⚠️ 关键问题：DOM Preservation方法的根本性错误
+
+**发现时间**: 2025-10-13
+**问题现象**: Vue 3.x + Quasar 2.x升级后，页面布局完全错乱，应用列表空白
+**根本原因**: 错误的"DOM preservation方法"绕过了FreeMarker模板渲染
+
+#### 问题分析过程
+
+**1. 症状对比分析**：
+- ❌ **当前问题页面**: 空白应用列表，缺少Quasar UI组件渲染，显示原始HTML调试信息
+- ✅ **官网正常页面**: 完整Quasar 2.x布局，应用卡片正确显示（智能供需平台、项目管理等）
+
+**2. 根本原因识别**：
+```javascript
+// 错误的DOM preservation方法 - Vue3CompatibilityAdapter.js
+// 问题：完全绕过FreeMarker模板渲染
+var app = self.createApp({
+    // 没有template选项，导致Vue 3.x创建空实例
+    // FreeMarker渲染的Quasar组件HTML被忽略
+});
+```
+
+**3. 诊断验证**：
+- ✅ **服务器端渲染正确**: `curl`测试显示完整的`<q-layout>`、`<q-header>`、应用列表等HTML结构
+- ❌ **客户端hydration失败**: Vue 3.x没有正确接管FreeMarker渲染的DOM
+- ✅ **库版本正确**: Vue 3.5.22完整版（含模板编译器），Quasar 2.18.5
+
+#### 正确的修复方案
+
+**核心原则**: Vue 3.x应该hydrate（接管）FreeMarker已渲染的HTML，而不是替代模板渲染
+
+**修复实现**:
+```javascript
+// 正确的Vue 3.x hydration方法
+function createVueApp(options) {
+    // 1. 获取包含FreeMarker内容的挂载元素
+    var el = document.querySelector(options.el);
+
+    // 2. 创建Vue 3.x应用配置（不指定template）
+    var appConfig = {
+        data: function() { return initialData; },
+        methods: options.methods || {},
+        // CRITICAL: 不指定template，让Vue 3.x使用现有DOM作为模板
+    };
+
+    // 3. 挂载到现有DOM进行hydration
+    var vm = app.mount(options.el);
+}
+```
+
+#### Chrome MCP验证要求
+
+**强制验证协议**:
+1. **修改前基线**: 执行Chrome MCP获取修改前页面截图
+2. **修改后验证**: 立即执行`/tmp/chrome_mcp_auth_proxy.sh`验证效果
+3. **功能点验证**: 布局完整性、导航功能、内容渲染逐一检查
+4. **问题立即回滚**: 发现问题时停止进一步修改，评估回滚
+
+#### 技术要点总结
+
+**错误模式警告**:
+- ❌ **DOM preservation**: 试图绕过模板系统，导致内容丢失
+- ❌ **假设性确认**: 仅基于代码分析确认，忽略实际页面效果
+- ❌ **批量修改**: 多个文件同时修改，难以定位问题根源
+
+**正确实践**:
+- ✅ **FreeMarker优先**: 保持服务器端模板完整渲染
+- ✅ **Vue 3.x hydration**: 客户端接管已渲染的DOM结构
+- ✅ **Chrome MCP验证**: 每次前端修改后强制验证页面效果
+- ✅ **问题隔离**: 单一文件修改，便于问题定位和回滚
+
+#### 经验教训
+
+1. **Vue 2.x到3.x迁移**: 不应该替代现有的模板渲染机制
+2. **Moqui架构理解**: FreeMarker + Vue.js的分工明确，服务器渲染+客户端交互
+3. **问题诊断方法**: 对比服务器端和客户端渲染结果，准确定位问题层次
+4. **验证协议重要性**: Chrome headless认证限制要求使用实际浏览器验证
+
+*Last updated: October 13, 2025 - Vue 3.x + Quasar 2.x Template Rendering Fix*

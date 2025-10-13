@@ -209,4 +209,59 @@
         </actions>
     </service>
 
+    <!-- Simple JWT Token Generation Service -->
+    <service verb="generate" noun="AccessToken">
+        <description>Generate JWT access token for existing authenticated user</description>
+        <in-parameters>
+            <parameter name="userId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="accessToken"/>
+            <parameter name="refreshToken"/>
+            <parameter name="expiresIn" type="Long"/>
+            <parameter name="success" type="Boolean"/>
+            <parameter name="message"/>
+        </out-parameters>
+        <actions>
+            <script><![CDATA[
+                // Generate JWT Token for already authenticated user (used by Login.xml)
+                try {
+                    // Simple approach: Use direct JwtUtil without complex validation
+                    def clientIp = ec.web?.request?.getRemoteAddr()
+
+                    // Check if JwtUtil is available
+                    try {
+                        Class.forName('org.moqui.jwt.JwtUtil')
+                        // Use JwtUtil's enterprise token generation
+                        def tokenPair = org.moqui.jwt.JwtUtil.generateTokenPair(userId, clientIp)
+
+                        accessToken = tokenPair.getAccessToken()
+                        refreshToken = tokenPair.getRefreshToken()
+                        expiresIn = tokenPair.getExpiresIn()
+                        success = true
+                        message = "JWT token generated successfully"
+
+                        ec.logger.info("JWT token generated for authenticated user: ${userId}")
+                    } catch (ClassNotFoundException cnfe) {
+                        // JwtUtil not available, log and continue without error
+                        ec.logger.warn("JwtUtil not available, JWT token generation skipped for user: ${userId}")
+                        success = false
+                        message = "JWT infrastructure not available"
+                        accessToken = null
+                        refreshToken = null
+                        expiresIn = null
+                    }
+                } catch (Exception e) {
+                    ec.logger.debug("JWT token generation failed for user: ${userId}, error: ${e.message}")
+                    success = false
+                    message = "Token generation failed: " + e.message
+                    // Return empty tokens but don't fail the overall process
+                    accessToken = null
+                    refreshToken = null
+                    expiresIn = null
+                }
+            ]]></script>
+        </actions>
+    </service>
+
 </services>

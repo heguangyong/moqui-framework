@@ -296,36 +296,58 @@ export MOQUI_JWT_AUDIT_ENABLED="true"
 
 This enhanced Moqui Framework provides enterprise-grade security, performance, and maintainability while preserving the framework's ease of use and flexibility.
 
-## 📚 Documentation Structure
+## 📚 统一实战指导文档
 
-This project uses an organized documentation structure with documents categorized by scope:
+### 🎯 核心指导书 (新增)
+**[📖 Moqui Framework 实战指导书](docs/moqui-framework-guide.md)** - 综合性实战指南
 
-### 🎯 Framework Documentation
-Location: `docs/`
-- **Development Standards**: Component development practices and coding standards
-- **Technical Guides**: Vue3/Quasar2 upgrade planning and framework templates
-- **Architecture Documentation**: Framework-level design patterns and principles
+**完整覆盖内容**:
+- 🤖 **AI Agent快速入门** - 新AI助手必读路径，包含前端修改强制验证协议
+- 🏗️ **框架架构深度解析** - 企业版增强特性、JWT认证、Vue3+Quasar2升级
+- 🛠️ **Chrome MCP调试闭环** - 动态页面验证的核心方法和突破性解决方案
+- 🧩 **组件开发实战** - 标准化流程、权限配置、模板最佳实践
+- 🚀 **企业级案例分析** - Marketplace智能撮合、MinIO对象存储深度剖析
+- 🔧 **故障排查方法论** - 系统性诊断流程、常见错误解决方案
+- 🎯 **开发最佳实践** - 黄金法则、检查清单、陷阱避免
 
-[📖 Browse Framework Documentation](docs/README.md)
+**适用人群**: Moqui开发者(新手到专家)、AI辅助开发工程师、企业架构师
 
-### 🏃 Runtime Environment Documentation
-Location: `runtime/docs/`
-- **Authentication Systems**: JWT migration guides and configuration details
-- **Environment Configuration**: Runtime settings and deployment guides
-- **Operations Manual**: System administration and troubleshooting
+### 🔗 专项技术文档 (精选保留)
 
-[🔧 Browse Runtime Documentation](runtime/docs/README.md)
+#### 🎯 Framework Core
+- **[AI开发助手权威参考](CLAUDE.md)** - 经过验证的核心开发模式和解决方案
+- **[组件开发实战规范](docs/moqui-component-standards.md)** - 标准化开发流程
 
-### 📁 Component-Specific Documentation
-Each component maintains its own documentation in its `docs/` directory:
-- **Marketplace Component**: `runtime/component/moqui-marketplace/docs/`
-- **MinIO Integration**: `runtime/component/moqui-minio/docs/`
-- **MCP Integration**: `runtime/component/moqui-mcp/docs/`
+#### 🚀 Frontend Modernization
+- **[Vue3+Quasar2升级指导](docs/vue-quasar-upgrade-guide-cn.md)** - 完整升级实战经验(中文13,799字)
+- **[Vue3+Quasar2 Upgrade Guide](docs/vue-quasar-upgrade-guide-en.md)** - English version (4,623 words)
+- **[Chrome MCP调试闭环实战指南](docs/chrome-mcp-debug-guide.md)** - 动态页面验证核心方法
 
-### 🚀 Quick Documentation Access
-- **New Developers**: Start with [Framework Development Standards](docs/Moqui组件开发实战规范.md)
-- **System Issues**: Check [JWT Migration Experience Summary](runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md)
-- **Component Development**: Refer to component-specific docs in `runtime/component/*/docs/`
+#### 🔐 Authentication & Security
+- **[JWT认证迁移经验总结](docs/jwt-auth-migration-experience.md)** - 关键经验教训
+- **[JWT企业级认证实战指南](docs/moqui-jwt-enterprise-guide.md)** - 技术实现细节
+
+#### 🧩 Component Development
+- **Marketplace**: `runtime/component/moqui-marketplace/docs/` - 智能撮合平台案例
+- **MinIO**: `runtime/component/moqui-minio/docs/` - 企业级对象存储集成
+- **Testing Tools**: `testing-tools/README.md` - Chrome MCP认证代理等调试工具
+
+### 🚀 快速开始路径
+
+**新开发者 (推荐路径)**:
+1. 📖 **[实战指导书](docs/moqui-framework-guide.md)** - 完整学习所有核心概念
+2. 🔑 **[CLAUDE.md](CLAUDE.md)** - 掌握具体开发模式和解决方案
+3. 🧩 **组件案例分析** - 学习Marketplace和MinIO实战案例
+
+**AI Agent开发者 (必读)**:
+1. 📖 **[实战指导书第1章](docs/moqui-framework-guide.md#第1章ai-agent-快速入门指南)** - AI Agent快速入门
+2. 🔑 **[CLAUDE.md前端验证协议](CLAUDE.md#前端修改强制验证协议)** - 强制验证机制
+3. 🛠️ **Chrome MCP调试** - 掌握动态页面验证方法
+
+**问题解决 (快速索引)**:
+- 🚨 **前端问题** → [实战指导书第3章](docs/moqui-framework-guide.md#第3章chrome-mcp调试闭环实战)
+- 🔐 **认证问题** → [CLAUDE.md认证模式](CLAUDE.md#critical-authentication-patterns)
+- 🧩 **组件开发** → [实战指导书第4章](docs/moqui-framework-guide.md#第4章组件开发实战指南)
 
 ## 🔗 Additional Resources
 

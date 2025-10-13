@@ -1,111 +1,84 @@
 # Moqui Framework 开发文档
 
-## 📚 文档导航
+## 📚 统一指导书 (推荐)
 
-### 🎯 框架开发规范
+**[📖 Moqui Framework 实战指导书](./moqui-framework-guide.md)** - 综合性实战指南
 
-#### [Moqui组件开发实战规范](./Moqui组件开发实战规范.md)
+本指导书整合了所有核心开发经验，推荐作为主要参考文档。
+
+## 🎯 框架开发规范 (专项文档)
+
+### 核心规范文档
+
+#### [Moqui组件开发实战规范](./moqui-component-standards.md)
 组件开发的标准化流程和最佳实践，包含：
 - 组件架构设计原则
 - 开发工作流程规范
 - 代码质量要求
 
-#### [Moqui 组件开发标准模板集(实战版)](./Moqui%20组件开发标准模板集(实战版).md)
+#### [Moqui 组件开发标准模板集](./moqui-component-templates.md)
 开发模板和代码示例集合，包含：
 - 标准组件模板
 - 服务定义模板
 - 屏幕配置模板
 - 实体定义模板
 
-### 🚀 技术栈升级
+## 🔐 认证系统 (专项文档)
 
-#### [Vue3-Quasar2-升级完整指南](./Vue3-Quasar2-升级完整指南.md)
-前端技术栈升级的完整规划和实施指南，包含：
-- 升级背景与目标
-- 详细升级计划
-- 风险评估和渐进式升级策略
-- 成功标准和验收条件
+### 核心认证文档
 
-## 🔗 其他文档资源
+#### [JWT认证迁移与前端架构重构实战经验总结](./jwt-auth-migration-experience.md)
+**最重要的经验文档** - 记录了JWT认证迁移过程中的关键经验教训，包括：
+- 如何正确理解和应用项目设计原则
+- 避免破坏现有架构的重要实践
+- 前端JavaScript异步处理最佳实践
+- 系统性问题诊断方法论
 
-### 🏃 运行时环境文档
-位置：`runtime/docs/`
-- [JWT认证迁移与前端架构重构实战经验总结](../runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md)
-- [Moqui-JWT企业级认证实战指南](../runtime/docs/Moqui-JWT企业级认证实战指南.md)
+#### [Moqui JWT企业级认证实战指南](./moqui-jwt-enterprise-guide.md)
+JWT认证系统的技术实现细节和配置指南，包含：
+- JWT配置参数详解
+- 前端集成实现
+- 安全最佳实践
 
-### 📁 组件专用文档
-各组件的专用文档位于对应组件的docs目录下：
+## 🔍 调试与验证 (专项文档)
 
-#### Marketplace组件
-位置：`runtime/component/moqui-marketplace/docs/`
-- [应用列表组件自动化配置实战指南](../runtime/component/moqui-marketplace/docs/应用列表组件自动化配置实战指南.md)
-- [Moqui-Marketplace组件认证与权限配置实战指南](../runtime/component/moqui-marketplace/docs/Moqui-Marketplace组件认证与权限配置实战指南.md)
+### Chrome MCP调试
 
-#### MinIO组件
-位置：`runtime/component/moqui-minio/docs/`
-- [Moqui-MinIO组件开发精品化实战指南](../runtime/component/moqui-minio/docs/Moqui-MinIO组件开发精品化实战指南.md)
+#### [Chrome MCP调试闭环实战指南](./chrome-mcp-debug-guide.md)
+**Moqui动态页面验证的核心方法** - 建立完善的Chrome MCP调试闭环，包括：
+- 为什么需要Chrome MCP调试（动态渲染验证）
+- 标准化调试流程和脚本
+- 关键问题解决方案
+- 简明有效的调试模式
 
-#### MCP组件
-位置：`runtime/component/moqui-mcp/docs/`
-- [MARKETPLACE_MCP_GUIDE](../runtime/component/moqui-mcp/docs/MARKETPLACE_MCP_GUIDE.md)
+#### [前端修改强制验证协议](./frontend-validation-protocol.md)
+前端开发的强制验证要求和更新记录
+
+### 前端升级文档
+
+#### Vue.js + Quasar 升级指导
+- **[Vue3+Quasar2升级指导(中文)](./vue-quasar-upgrade-guide-cn.md)** - 完整升级实战经验(13,799字)
+- **[Vue3+Quasar2 Upgrade Guide(English)](./vue-quasar-upgrade-guide-en.md)** - English version (4,623 words)
 
 ## 🚀 快速开始指引
 
-### 新开发者必读顺序
-1. **[Moqui组件开发实战规范](./Moqui组件开发实战规范.md)** - 掌握开发规范
-2. **[JWT认证迁移与前端架构重构实战经验总结](../runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md)** - 了解项目核心经验
-3. **[应用列表组件自动化配置实战指南](../runtime/component/moqui-marketplace/docs/应用列表组件自动化配置实战指南.md)** - 理解自动发现机制
+### 推荐学习路径
+1. **[📖 实战指导书](./moqui-framework-guide.md)** - 完整学习体系
+2. **[🔑 CLAUDE.md](../CLAUDE.md)** - 具体开发模式
+3. **本目录规范文档** - 深入理解标准化流程
 
-### 问题解决参考顺序
-1. 🔍 **查看相关组件的docs目录** - 特定问题优先查看组件文档
-2. 📖 **参考JWT认证迁移经验总结** - 了解常见问题模式
-3. 📜 **查看GitHub历史版本** - 理解问题的历史背景
-4. 🧪 **按照调试方法论进行系统性诊断** - 科学定位问题根因
+### 问题解决优先级
+1. 🔍 **[实战指导书](./moqui-framework-guide.md)** - 综合问题解决
+2. 📖 **[CLAUDE.md](../CLAUDE.md)** - 经过验证的解决方案
+3. 📜 **GitHub历史版本** - 了解问题背景
+4. 🧪 **Chrome MCP调试** - 动态验证实际效果
 
-## ⚠️ 重要开发原则
+## 🔗 相关资源
 
-### 🎯 核心设计原则（必须遵守）
-1. **自动发现优于手工配置** - 使用menu-image让组件自动出现
-2. **权限验证不可省略** - 保持isPermitted()等安全检查
-3. **异步处理避免阻塞** - 所有AJAX调用使用async: true
-4. **多模式兼容支持** - 支持html/vuet/qvt多种render-mode
-
-### 📋 开发前必做检查
-- [ ] 📖 阅读相关组件的docs目录文档
-- [ ] 📜 查看GitHub历史版本和提交信息
-- [ ] 🧪 在开发环境充分测试验证
-- [ ] 📝 记录修改原因和影响范围
-
-## 📈 项目演进历程
-
-### 技术栈演进
-- **Phase 1**: Moqui Framework 基础架构
-- **Phase 2**: Session-based 认证系统
-- **Phase 3**: JWT认证迁移 + Vue2+Quasar1优化 ← **当前阶段**
-- **Phase 4**: Vue3+Quasar2升级（规划中）
-
-### 关键里程碑
-- ✅ **应用列表自动发现机制** - 实现组件零配置自动显示
-- ✅ **JWT认证系统迁移** - 完全摆脱session依赖
-- ✅ **前端异步优化** - 解决页面卡死问题
-- 🚧 **Vue3技术栈升级** - 下一阶段重点
-
-## 🔗 相关链接
-
-- [项目主README](../README.md)
-- [Moqui Framework官方文档](https://www.moqui.org/docs)
-- [Vue.js官方文档](https://vuejs.org/)
-- [Quasar Framework文档](https://quasar.dev/)
+- **组件文档**: `runtime/component/*/docs/`
+- **调试工具**: `testing-tools/README.md`
+- **项目主页**: `../README.md`
 
 ---
 
-**文档库维护**: 开发团队
-**最后更新**: 2025-10-10
-**版本**: 3.0 (重构版)
-
-**📢 文档贡献指南**:
-- 框架级通用文档放在docs目录下
-- 运行时环境文档放在runtime/docs目录下
-- 组件专有文档放在对应组件的docs目录下
-- 重要经验和教训必须及时记录
-- 定期清理过时和重复文档
+**维护说明**: 本目录集中管理所有项目文档，采用kebab-case命名规范
