@@ -61,11 +61,11 @@
 ### Chrome MCP验证流程
 ```bash
 # 修改前基线
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 cp /tmp/moqui_verified.png /tmp/baseline_before_change.png
 
 # 修改后验证
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 open /tmp/baseline_before_change.png
 open /tmp/moqui_verified.png
 ```

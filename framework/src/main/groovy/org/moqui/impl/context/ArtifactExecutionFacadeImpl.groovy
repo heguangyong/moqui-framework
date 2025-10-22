@@ -95,7 +95,7 @@ class ArtifactExecutionFacadeImpl implements ArtifactExecutionFacade {
             warning.append("User ${eci.user.username ?: eci.user.userId ?: '[No User]'} is not authorized for ${aeii.getActionDescription()} on ${aeii.getTypeDescription()} ${aeii.getName()}")
 
             ArtifactAuthorizationException e = new ArtifactAuthorizationException(warning.toString(), aeii, curStack)
-            // end users see this message in vuet mode so better not to add all of this to the main message:
+            // end users see this message in qvt mode so better not to add all of this to the main message:
             warning.append("\nCurrent artifact info: ${aeii.toString()}\n")
             warning.append("Current artifact stack:")
             for (ArtifactExecutionInfo warnAei in curStack) warning.append("\n").append(warnAei.toString())

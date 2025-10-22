@@ -82,7 +82,7 @@
 
 **多模式支持**：
 - `html`: 普通`<a href>`链接 (用于传统页面)
-- `vuet`: Vue `<m-link>`组件 (用于Vue.js环境)
+- `qvt`: Vue `<m-link>`组件 (用于Vue.js环境)
 - `qvt`: Quasar `<q-btn>`按钮 (用于Quasar环境)
 
 ### 3. 路由配置原则

@@ -34,13 +34,13 @@
 **强制执行协议**:
 ```bash
 # 任何涉及前端的修改都必须执行Chrome MCP验证
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 
 # 修改前基线截图
 cp /tmp/moqui_verified.png /tmp/baseline_before_change.png
 
 # 修改后立即验证
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 echo "⚠️ 必须对比截图确认页面完整性"
 
 # 功能点验证清单
@@ -160,40 +160,21 @@ export MOQUI_JWT_RATE_LIMIT_ENABLED="true"
 
 #### 🔧 核心技术实现
 
-**Vue 3.x兼容性适配器** (关键实现):
+**Vue 3.x 应用启动核心逻辑** (关键实现):
 ```javascript
-// 文件: /js/Vue3CompatibilityAdapter.js
-function Vue2Compatible(options) {
-    if (!(this instanceof Vue2Compatible)) {
-        return new Vue2Compatible(options);
-    }
-
-    if (options.el) {
-        return createVueApp.call(this, options);
-    } else {
-        return window.Vue.defineComponent(options);
-    }
+// 文件: /js/WebrootVue.qvt.js
+if (typeof Quasar !== 'undefined') {
+    window.vuePendingPlugins = window.vuePendingPlugins || [];
+    window.vuePendingPlugins.push({
+        plugin: Quasar,
+        options: { config: window.quasarConfig || {} }
+    });
 }
 
-function createVueApp(options) {
-    // Vue 3.x应用创建与DOM配置读取
-    var domConfig = {};
-    var confElements = {
-        'appHost': document.getElementById('confAppHost'),
-        'basePath': document.getElementById('confBasePath'),
-        'userId': document.getElementById('confUserId')
-    };
-
-    // 创建Vue 3.x应用实例
-    var app = window.Vue.createApp(appConfig);
-
-    // Quasar 2.x注册
-    if (window.Quasar) {
-        app.use(window.Quasar);
-    }
-
-    return app.mount(options.el);
-}
+const app = Vue.createApp(appConfig);
+(window.vuePendingPlugins || []).forEach(entry => app.use(entry.plugin, entry.options));
+window.vuePendingPlugins = [];
+moqui.webrootVue = app.mount('#apps-root');
 ```
 
 **关键bug修复 - 点击事件处理**:
@@ -245,7 +226,7 @@ setTimeout(function() {
 
 ```bash
 # 标准Chrome MCP认证代理调用
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 
 # 验证结果
 open /tmp/moqui_verified.png
@@ -268,7 +249,7 @@ JSESSIONID=$(grep JSESSIONID /tmp/s.txt | cut -f7)
 curl -s -b /tmp/s.txt "http://localhost:8080/qapps" -w "%{http_code}"
 
 # 2. Chrome MCP完整验证（必须执行）
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 
 # 3. 结果分析
 open /tmp/moqui_verified.png
@@ -277,13 +258,13 @@ open /tmp/moqui_verified.png
 #### 前端修改验证流程
 ```bash
 # 修改前基线建立
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 cp /tmp/moqui_verified.png /tmp/baseline_before_change.png
 
 # 执行前端修改...
 
 # 修改后立即验证
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 echo "📸 修改后截图: /tmp/moqui_verified.png"
 echo "📸 基线截图: /tmp/baseline_before_change.png"
 
@@ -691,7 +672,7 @@ echo "⚠️ 必须手动对比截图确认首页完整性"
 | JWT配置问题 | JWT认证实战指南 | 企业级配置方案 |
 
 #### 🛠️ 工具与脚本
-- **Chrome MCP认证代理**: `/tmp/chrome_mcp_auth_proxy.sh`
+- **Chrome MCP认证代理**: `testing-tools/jwt_chrome_mcp.sh`
 - **JWT测试界面**: `testing-tools/pure_jwt_test.html`
 - **系统验证命令**: 参考testing-tools/README.md
 

@@ -110,14 +110,14 @@ echo "🎉 Chrome MCP认证代理成功完成"
 #### 使用方法
 ```bash
 # 保存脚本
-cat > /tmp/chrome_mcp_auth_proxy.sh << 'EOF'
+cat > testing-tools/jwt_chrome_mcp.sh << 'EOF'
 [上面的脚本内容]
 EOF
 
-chmod +x /tmp/chrome_mcp_auth_proxy.sh
+chmod +x testing-tools/jwt_chrome_mcp.sh
 
 # 执行认证代理
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 ```
 
 ### 🎯 突破性成果
@@ -136,7 +136,7 @@ chmod +x /tmp/chrome_mcp_auth_proxy.sh
 
 ```bash
 # 1. 使用认证代理进行完整验证
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 
 # 2. 检查生成的截图
 open /tmp/moqui_verified.png
@@ -411,7 +411,7 @@ curl -s -b /tmp/auth_session.txt "http://localhost:8080/menuData/qapps" -w "%{ht
 curl -s -b /tmp/auth_session.txt "http://localhost:8080/menuData/qapps" | jq '.[] | .title'
 
 # 3. Chrome MCP验证页面渲染
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 ```
 
 ### 🚨 常见错误模式
@@ -452,7 +452,7 @@ curl -s -b /tmp/auth_session.txt "http://localhost:8080/menuData/qapps" | jq '.[
 #### 1. 问题确认
 ```bash
 # Chrome MCP截图确认菜单异常
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 ```
 
 #### 2. API接口验证
@@ -470,7 +470,7 @@ ec.user.internalLoginUser(username)
 #### 4. 效果验证
 ```bash
 # 验证修复效果
-/tmp/chrome_mcp_auth_proxy.sh
+testing-tools/jwt_chrome_mcp.sh
 ```
 
 ### 💡 架构设计原则

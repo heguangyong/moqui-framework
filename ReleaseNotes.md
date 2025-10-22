@@ -179,7 +179,7 @@ last release but there are minor cases where default behavior has changed (see d
 
 ##### XML Screen and Form
 
-- Support for Vue component based XML Screens using a .js file and a .vuet file that gets merged into the Vue component as the 
+- Support for Vue component based XML Screens using a .js file and a .qvt file that gets merged into the Vue component as the 
   template (template can be inline in the .js file); for an example see the DynamicExampleItems.xml screen in the example component
 - XML Screen and WebFacade response headers now configurable with webapp.response-header element in Moqui Conf XML
 - Add moqui-conf.screen-facade.screen and screen.subscreens-item elements that override screen.subscreens.subscreens-item elements 
@@ -229,7 +229,7 @@ last release but there are minor cases where default behavior has changed (see d
 - Fix issue in update#Password service with reset password when UserAccount has a resetPassword but no currentPassword
 - Disable default geo IP lookup for Visit records because the freegeoip service has been discontinued
 - Fix DataFeed trigger false positives for PK fields on related entities included in DataDocument definitions
-- Fix transaction response type screen-last in vuet/vapps mode, history wasn't being maintained server side
+- Fix transaction response type screen-last in qvt/qapps mode, history wasn't being maintained server side
 
 ## Release 2.1.0 - 22 Oct 2017
 

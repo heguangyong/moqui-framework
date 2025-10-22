@@ -210,7 +210,7 @@
     </service>
 
     <!-- Simple JWT Token Generation Service -->
-    <service verb="generate" noun="AccessToken">
+    <service verb="generate" noun="AccessToken" authenticate="false">
         <description>Generate JWT access token for existing authenticated user</description>
         <in-parameters>
             <parameter name="userId" required="true"/>

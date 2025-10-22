@@ -22,16 +22,18 @@
 
 ```bash
 # 检查Vue版本
-curl -s "http://localhost:8080/libs/vue/vue.js" | head -c 200
-# 应该显示: Vue.js v2.7.14
+curl -s "http://localhost:8080/libs/vue3/vue.js" | head -c 200
+# 应该显示: Vue.js v3.5.22
 
 # 检查Quasar版本
-curl -s "http://localhost:8080/libs/quasar/quasar.umd.min.js" | head -c 200
-# 应该显示: Quasar Framework v1.22.10
+curl -s "http://localhost:8080/libs/quasar2/quasar.umd.min.js" | head -c 200
+# 应该显示: Quasar Framework v2.18.5
 
 # 检查页面模板模式
 curl -s -b session.txt "http://localhost:8080/qapps" | grep -E "render-mode|STT_"
 ```
+
+> 📎 **提示**：Quasar 2 的 CSS 通过 `sri.buildUrl` 动态生成上下文路径即可，无需再额外引入外部的 Material Icons 或 Font Awesome 链接；主题会负责这些公共资源。
 
 ### 1.2 识别关键文件
 
@@ -45,7 +47,7 @@ curl -s -b session.txt "http://localhost:8080/qapps" | grep -E "render-mode|STT_
 <!-- 在AppList.xml中检查 -->
 <render-mode>
     <text type="html"><!-- HTML Bootstrap模式 --></text>
-    <text type="vuet"><!-- Vue Bootstrap混合模式 --></text>
+    <!-- vuet 模式已在 Vue 3 升级中移除 -->
     <text type="qvt"><!-- Vue Quasar模式 --></text>
 </render-mode>
 ```
@@ -79,90 +81,12 @@ curl -s -b baseline_session.txt "http://localhost:8080/qapps/marketplace/Dashboa
 **步骤1**: 下载Vue 3.x文件
 ```bash
 # 开发版本
-curl -o base-component/webroot/screen/webroot/libs/vue/vue3.js \
+curl -o base-component/webroot/screen/webroot/libs/vue3/vue.js \
      "https://unpkg.com/vue@3.5.22/dist/vue.global.js"
 
 # 生产版本
-curl -o base-component/webroot/screen/webroot/libs/vue/vue3.min.js \
+curl -o base-component/webroot/screen/webroot/libs/vue3/vue.min.js \
      "https://unpkg.com/vue@3.5.22/dist/vue.global.prod.js"
-```
-
-**步骤2**: 创建Vue 3.x兼容性适配器
-
-```javascript
-// 文件: /js/Vue3CompatibilityAdapter.js
-console.log("=== Vue 3.x Compatibility Adapter Loading ===");
-
-// 检测Vue 3.x并创建Vue 2.x兼容接口
-if (window.Vue && typeof window.Vue.createApp === 'function') {
-    console.log("Vue 3.x detected, applying compatibility layer");
-
-    // Vue 2.x兼容构造函数
-    function Vue2Compatible(options) {
-        if (!(this instanceof Vue2Compatible)) {
-            return new Vue2Compatible(options);
-        }
-
-        if (options.el) {
-            return createVueApp.call(this, options);
-        } else {
-            return window.Vue.defineComponent(options);
-        }
-    }
-
-    // 核心Vue 3.x应用创建函数
-    function createVueApp(options) {
-        console.log("Creating Vue 3.x app with FreeMarker template hydration...");
-
-        var el = typeof options.el === 'string' ? document.querySelector(options.el) : options.el;
-
-        // 读取DOM配置
-        var domConfig = {};
-        var confElements = {
-            'appHost': document.getElementById('confAppHost'),
-            'basePath': document.getElementById('confBasePath'),
-            'linkBasePath': document.getElementById('confLinkBasePath'),
-            'userId': document.getElementById('confUserId'),
-            'leftOpen': document.getElementById('confLeftOpen')
-        };
-
-        for (var key in confElements) {
-            var element = confElements[key];
-            domConfig[key] = element ? element.value : '';
-        }
-        domConfig.leftOpen = domConfig.leftOpen === 'true';
-
-        // 创建Vue 3.x应用配置
-        var appConfig = {
-            data: function() {
-                return Object.assign({
-                    basePath: "", linkBasePath: "", currentPathList: [],
-                    navMenuList: [], leftOpen: false, moqui: window.moqui || {}
-                }, domConfig);
-            },
-            methods: options.methods || {},
-            computed: options.computed || {},
-            mounted: options.mounted
-        };
-
-        var app = window.Vue.createApp(appConfig);
-        return app.mount(options.el);
-    }
-
-    // Vue 2.x兼容方法
-    Vue2Compatible.component = function(name, definition) {
-        if (window.currentVueApp) {
-            window.currentVueApp.component(name, definition);
-        } else {
-            window.pendingComponents = window.pendingComponents || {};
-            window.pendingComponents[name] = definition;
-        }
-    };
-
-    // 替换全局Vue
-    window.Vue = Vue2Compatible;
-    console.log("Vue 3.x compatibility layer installed");
-}
 ```
 
 ### 2.2 Quasar升级
@@ -170,15 +94,15 @@ if (window.Vue && typeof window.Vue.createApp === 'function') {
 **步骤1**: 下载Quasar 2.x文件
 ```bash
 # CSS文件
-curl -o base-component/webroot/screen/webroot/libs/quasar/quasar2.min.css \
+curl -o base-component/webroot/screen/webroot/libs/quasar2/quasar.min.css \
      "https://cdn.jsdelivr.net/npm/quasar@2.18.5/dist/quasar.prod.css"
 
 # JavaScript文件
-curl -o base-component/webroot/screen/webroot/libs/quasar/quasar2.umd.min.js \
+curl -o base-component/webroot/screen/webroot/libs/quasar2/quasar.umd.min.js \
      "https://cdn.jsdelivr.net/npm/quasar@2.18.5/dist/quasar.umd.prod.js"
 ```
 
-**步骤2**: 修改qapps.xml脚本引用
+**步骤2**: 修改 `qapps.xml` 脚本引用
 
 ```xml
 <screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/screen-3.xsd"
@@ -187,25 +111,24 @@ curl -o base-component/webroot/screen/webroot/libs/quasar/quasar2.umd.min.js \
     <always-actions>
         <script><![CDATA[
         String instancePurpose = System.getProperty("instance_purpose")
+        String quasarCss = sri.buildUrl('/libs/quasar2/quasar.min.css').url
+        if (!html_stylesheets.contains(quasarCss)) html_stylesheets.add(quasarCss)
+
         if (!instancePurpose || instancePurpose == 'production') {
             /* ========== Production Mode ========== */
             html_scripts.add('/js/MoquiLib.min.js')
             // Vue 3.x
-            footer_scripts.add('/libs/vue/vue3.min.js')
-            // Vue 3.x Compatibility Adapter
-            footer_scripts.add('/js/Vue3CompatibilityAdapter.js')
+            footer_scripts.add('/libs/vue3/vue.min.js')
             // Quasar 2.x
-            footer_scripts.add("/libs/quasar/quasar2.umd.min.js")
-            footer_scripts.add('/js/WebrootVue.qvt.min.js')
+            footer_scripts.add("/libs/quasar2/quasar.umd.min.js")
+            footer_scripts.add('/js/WebrootVue.qvt.js')
         } else {
             /* ========== Dev Mode ========== */
             html_scripts.add('/js/MoquiLib.js')
             // Vue 3.x
-            footer_scripts.add('/libs/vue/vue3.js')
-            // Vue 3.x Compatibility Adapter
-            footer_scripts.add('/js/Vue3CompatibilityAdapter.js')
+            footer_scripts.add('/libs/vue3/vue.js')
             // Quasar 2.x
-            footer_scripts.add("/libs/quasar/quasar2.umd.js")
+            footer_scripts.add("/libs/quasar2/quasar.umd.js")
             footer_scripts.add('/js/WebrootVue.qvt.js')
         }
         ]]></script>
@@ -221,21 +144,15 @@ curl -o base-component/webroot/screen/webroot/libs/quasar/quasar2.umd.min.js \
 
 **问题**: Quasar 1.x到2.x的组件注册方式变化
 
-**解决方案**: 在Vue3CompatibilityAdapter.js中添加Quasar兼容处理
+**解决方案**: 利用 `WebrootVue.qvt.js` 内置的插件队列，在加载脚本时把 Quasar 推送到 `window.vuePendingPlugins`。框架会在创建 Vue 3 应用前统一执行 `app.use()` 完成注册。
 
 ```javascript
-// Quasar 2.x注册处理
-if (window.Quasar) {
-    console.log("Registering Quasar 2.x with Vue 3.x app...");
-
-    if (typeof window.Quasar.install === 'function') {
-        app.use(window.Quasar);
-        console.log("✅ Quasar 2.x registered successfully");
-    } else {
-        // Fallback for compatibility
-        app.config.globalProperties.$q = window.Quasar;
-        console.log("✅ Quasar available as $q globally");
-    }
+if (typeof Quasar !== 'undefined') {
+    window.vuePendingPlugins = window.vuePendingPlugins || [];
+    window.vuePendingPlugins.push({
+        plugin: Quasar,
+        options: { config: window.quasarConfig || {} }
+    });
 }
 ```
 
@@ -247,12 +164,12 @@ if (window.Quasar) {
 
 ```javascript
 // 在WebrootVue.qvt.js中确保路由兼容
-Object.defineProperty(Vue.prototype, '$router', {
-    get: function get() { return moqui.webrootRouter; }
+Object.defineProperty(app.config.globalProperties, '$router', {
+    get() { return moqui.webrootRouter; }
 });
 
-Object.defineProperty(Vue.prototype, '$route', {
-    get: function get() { return moqui.webrootVue ? moqui.webrootVue.getRoute() : {}; }
+Object.defineProperty(app.config.globalProperties, '$route', {
+    get() { return moqui.webrootVue ? moqui.webrootVue.getRoute() : {}; }
 });
 ```
 
@@ -310,10 +227,10 @@ curl -s -b session.txt "http://localhost:8080/qapps" | grep "选择应用" | wc 
 # 预期输出: 1
 
 # 2. Vue版本确认
-curl -s "http://localhost:8080/libs/vue/vue3.js" | grep "Vue.js v3"
+curl -s "http://localhost:8080/libs/vue3/vue.js" | grep "Vue.js v3"
 
 # 3. Quasar版本确认
-curl -s "http://localhost:8080/libs/quasar/quasar2.umd.js" | grep "Quasar v2"
+curl -s "http://localhost:8080/libs/quasar2/quasar.umd.js" | grep "Quasar v2"
 ```
 
 **UI交互测试**:
@@ -388,9 +305,8 @@ console.log("toggleLeftOpen:", typeof window.toggleLeftOpen);
 ```xml
 <!-- 使用压缩版本 -->
 <script>
-footer_scripts.add('/libs/vue/vue3.min.js')
-footer_scripts.add('/libs/quasar/quasar2.umd.min.js')
-footer_scripts.add('/js/Vue3CompatibilityAdapter.min.js')
+footer_scripts.add('/libs/vue3/vue.min.js')
+footer_scripts.add('/libs/quasar2/quasar.umd.min.js')
 </script>
 ```
 
@@ -398,9 +314,8 @@ footer_scripts.add('/js/Vue3CompatibilityAdapter.min.js')
 ```xml
 <!-- 使用开发版本便于调试 -->
 <script>
-footer_scripts.add('/libs/vue/vue3.js')
-footer_scripts.add('/libs/quasar/quasar2.umd.js')
-footer_scripts.add('/js/Vue3CompatibilityAdapter.js')
+footer_scripts.add('/libs/vue3/vue.js')
+footer_scripts.add('/libs/quasar2/quasar.umd.js')
 </script>
 ```
 
