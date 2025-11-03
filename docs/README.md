@@ -1,103 +1,122 @@
-# Moqui Framework 文档中心
+# 智能供需平台文档导航
 
-本目录是 Moqui Framework 项目的统一文档中心，采用结构化组织方式便于导航和维护。
+## 📚 文档目录结构
 
-## 📋 核心文档
+本文档按照项目管理最佳实践组织，便于不同角色的开发者快速找到所需信息。
 
-### 进度跟踪
-- **[progress-log.md](progress-log.md)** - 项目进展时间线（倒序记录）
+### 🔗 快速导航
 
-## 🎯 专项目录
-
-### 开发指南与方法论
-**目录**: [development-guides/](development-guides/)
-**状态**: ✅ 完成
-**目标**: 提供完整的开发方法论和标准化指南
-
-**关键文档**:
-- `development-methodology-guide.md` - 完整的开发方法论和最佳实践
-- `moqui-framework-guide.md` - Moqui Framework 实战指导书（24,868 词）
-- `moqui-component-standards.md` - Moqui 组件开发标准
-- `moqui-component-templates.md` - 组件模板和最佳实践
-
-### Vue3+Quasar2 升级项目
-**目录**: [vue3-quasar2-upgrade/](vue3-quasar2-upgrade/)
-**状态**: ✅ 完成
-**目标**: Vue 2.7.14 + Quasar 1.22.10 → Vue 3.5.22 + Quasar 2.18.5
-
-**关键文档**:
-- `README.md` - 项目概览和技术要求
-- `phase-plan.md` - 分阶段实施计划
-- `progress-log.md` - 详细进度记录
-- `validation-checklist.md` - 验证清单
-- `vue3-native-refactor-strategy.md` - Vue3 原生重构策略
-
-### JWT 企业级实施项目
-**目录**: [jwt-enterprise-implementation/](jwt-enterprise-implementation/)
-**状态**: ✅ 完成
-**目标**: 构建企业级 JWT 认证与授权系统
-
-**关键文档**:
-- `jwt-auth-migration-experience.md` - JWT 认证迁移经验总结
-- `moqui-jwt-enterprise-guide.md` - 企业级 JWT 实施指南
-
-### Chrome MCP 调试系统
-**目录**: [chrome-mcp-debugging/](chrome-mcp-debugging/)
-**状态**: ✅ 完成
-**目标**: 解决 Chrome headless 认证限制，建立可靠的前端验证机制
-
-**关键文档**:
-- `chrome-mcp-debug-guide.md` - Chrome MCP 调试闭环实战指南
-
-### 前端现代化改造
-**目录**: [frontend-modernization/](frontend-modernization/)
-**状态**: 🔧 进行中
-**目标**: 前端技术栈现代化和用户体验提升
-
-**关键文档**:
-- `frontend-validation-protocol.md` - 前端验证协议
-- `vue-quasar-upgrade-guide-cn.md` - Vue/Quasar 升级指南（中文）
-- `vue-quasar-upgrade-guide-en.md` - Vue/Quasar 升级指南（英文）
-
-## 🔍 快速导航
-
-### 按开发阶段
-- **规划阶段**: [development-guides/development-methodology-guide.md](development-guides/development-methodology-guide.md)
-- **技术实施**: 各专项目录下的具体指南
-- **进度跟踪**: [progress-log.md](progress-log.md)
-
-### 按技术类型
-- **前端技术**: [vue3-quasar2-upgrade/](vue3-quasar2-upgrade/), [frontend-modernization/](frontend-modernization/)
-- **后端认证**: [jwt-enterprise-implementation/](jwt-enterprise-implementation/)
-- **调试工具**: [chrome-mcp-debugging/](chrome-mcp-debugging/)
-- **组件开发**: [development-guides/moqui-component-standards.md](development-guides/moqui-component-standards.md)
-
-### 按状态
-- **已完成**: development-guides, vue3-quasar2-upgrade, jwt-enterprise-implementation, chrome-mcp-debugging
-- **进行中**: frontend-modernization
-- **持续更新**: progress-log.md
-
-## 📊 文档维护说明
-
-### 目录结构原则
-- **docs根目录**: 仅保留 README.md 和 progress-log.md
-- **专项子目录**: 按重大目标或技术领域组织
-- **命名规范**: 使用 kebab-case 命名（小写字母+连字符）
-
-### 文档更新原则
-1. **时间记录**: 所有重大变更在 [progress-log.md](progress-log.md) 中按倒序记录
-2. **状态标识**: 使用统一的状态图标（✅ 完成，🔧 进行中，⏸️ 暂停，❌ 取消）
-3. **交叉引用**: 文档间通过相对路径互相引用
-4. **版本控制**: 重要文档变更通过 git 提交记录跟踪
-
-### 新项目添加流程
-1. 在 docs/ 下创建新的主题目录
-2. 在目录中添加 README.md 说明项目目标和文档结构
-3. 在 [progress-log.md](progress-log.md) 中添加新条目
-4. 更新本文档的导航链接
+| 目录 | 用途 | 主要受众 |
+|------|------|----------|
+| [01-guides/](#01-guides) | 开发和使用指南 | 开发者、运维人员 |
+| [02-design/](#02-design) | 系统设计文档 | 架构师、高级开发者 |
+| [03-tasks/](#03-tasks) | 项目任务管理 | 项目经理、开发团队 |
+| [04-archive/](#04-archive) | 历史文档归档 | 研究人员、审计 |
+| [05-reports/](#05-reports) | 技术报告总结 | 管理层、技术负责人 |
 
 ---
 
-📝 **最后更新**: 2025-10-21
-🔄 **文档版本**: v2.2
-👤 **维护者**: Claude AI Assistant
+## 📖 01-guides/ - 开发指南
+
+### 开发环境和工具
+- `development-setup.md` - 开发环境搭建指南
+- `debugging-methodology.md` - 调试方法论和工具链
+- `deployment-guide.md` - 生产环境部署指南
+- `ui-screen-customization-checklist.md` - UI 层改造复盘与最佳实践（本次 AppList/主题调整经验）
+
+### AI集成开发
+- `ai-integration-guide.md` - 多模态AI集成开发指南
+- `api-integration-patterns.md` - API集成模式和最佳实践
+
+---
+
+## 🏗️ 02-design/ - 设计文档
+
+### API设计 (`api/`)
+- `ai-services-api.md` - AI服务API接口设计
+- `telegram-bot-api.md` - Telegram Bot API设计
+- `marketplace-api.md` - 供需平台API设计
+
+### 架构设计 (`architecture/`)
+- `multimodal-ai-arch.md` - 多模态AI架构设计
+- `platform-integration.md` - HiveMind/POP/Marble平台集成架构
+- `security-architecture.md` - 安全架构和认证体系
+
+### 数据设计 (`data/`)
+- `entity-model.md` - 实体模型和数据结构
+- `data-flow.md` - 数据流设计和处理链路
+
+### 工作流设计 (`workflow/`)
+- `supply-demand-flow.md` - 供需撮合业务流程
+- `project-creation-flow.md` - 项目创建和管理流程
+
+---
+
+## 🎯 03-tasks/ - 项目任务
+
+### 业务开发阶段
+- `phase-1-telegram-mvp/` - Phase 1: Telegram MVP实现
+- `phase-2-hivemind-integration/` - Phase 2: HiveMind项目管理集成
+- `phase-3-pop-ecommerce/` - Phase 3: POP电商平台集成
+- `phase-4-marble-erp/` - Phase 4: Marble ERP深度整合
+
+### 基础设施升级 (`infrastructure-upgrades/`)
+- `vue3-quasar2-upgrade/` - Vue3+Quasar2技术栈升级
+- `jwt-authentication/` - JWT认证系统实现
+- `chrome-mcp-debugging/` - Chrome MCP调试工具链
+
+---
+
+## 📦 04-archive/ - 归档文档
+
+- `legacy-integration-reports/` - 历史集成报告
+- `deprecated-guides/` - 已废弃的开发指南
+- `old-api-docs/` - 旧版API文档
+
+---
+
+## 📊 05-reports/ - 技术报告
+
+- `technical-summaries/` - 技术实现总结
+- `phase-completion-reports/` - 阶段完成报告
+- `performance-analysis/` - 性能分析报告
+
+---
+
+## 🔄 当前开发状态
+
+**最新进展**: [progress-log.md](progress-log.md)
+
+### Phase 0 ✅ 已完成
+- 多模态AI平台集成（智谱AI GLM-4/GLM-4V）
+- JWT认证系统实施
+- Vue3+Quasar2技术栈升级
+- Chrome MCP调试工具链建立
+
+### Phase 1 🔄 进行中
+- Telegram MVP闭环实现
+- `/supply` `/demand` `/match` 指令系统
+- 多模态消息处理优化
+
+---
+
+## 📝 文档维护
+
+- **更新频率**: 重要变更立即更新，常规更新每周一次
+- **维护责任**: 开发团队共同维护，技术负责人审核
+- **质量标准**: 文档必须与代码同步，包含完整的示例和说明
+
+---
+
+## 🔧 组件级文档
+
+各组件的详细文档位于组件目录下：
+- `runtime/component/moqui-marketplace/docs/` - 供需平台组件
+- `runtime/component/moqui-mcp/docs/` - MCP集成组件
+- `runtime/component/moqui-hivemind/docs/` - HiveMind集成组件
+
+---
+
+**最后更新**: 2025-11-01
+**文档版本**: v3.0
+**维护者**: Claude Code AI Assistant

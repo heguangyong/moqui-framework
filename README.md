@@ -1,45 +1,191 @@
-## Welcome to Moqui Framework
+# 智能供需平台 - Moqui Framework
 
-## 🤖 AI Agent快速项目了解指南
+基于Moqui Framework构建的企业级智能供需撮合平台，集成多模态AI能力，连接HiveMind项目管理、POP电商平台和Marble ERP系统。
 
-**新的AI agent开始工作前必读路径**：
+## 🚀 快速开始
 
-### 1️⃣ 第一步：了解项目基本情况
-- **项目性质**: 增强版Moqui Framework，包含JWT认证、JDK 21支持
-- **当前状态**: 生产可用，正在准备Vue3+Quasar2升级
-- **关键文件**: `CLAUDE.md` - AI开发助手的核心参考文档
+### 系统要求
+- **Java**: 21 LTS (推荐Amazon Corretto 21)
+- **操作系统**: macOS / Linux / Windows
+- **内存**: 最低8GB，推荐16GB
+- **存储**: 最低10GB可用空间
 
-### 2️⃣ 第二步：掌握关键开发模式
-- **认证问题**: 查看 `CLAUDE.md` 的认证模式部分 - Service用`authenticate="false"`，Screen用`require-authentication="false"`
-- **常见错误**: 查看 `runtime/docs/JWT认证迁移与前端架构重构实战经验总结.md`
-- **开发规范**: 查看 `docs/Moqui组件开发实战规范.md`
+### 启动系统
+```bash
+# 设置Java环境
+export JAVA_HOME=/path/to/java21
 
-### 3️⃣ 第三步：理解项目架构
-- **多库结构**: framework库 + runtime库
-- **组件系统**: runtime/component/ 下的各个组件都有独立的docs目录
-- **动态渲染**: Moqui页面通过FreeMarker+Vue.js动态生成，需要Chrome MCP验证
-- **Chrome MCP调试**: 验证动态内容的核心方法，curl测试无法替代
+# 启动Moqui服务器
+./gradlew run
 
-### 4️⃣ 第四步：问题解决流程
-1. 🔍 **首先查看** `CLAUDE.md` - 经过验证的解决方案，包含Chrome MCP调试模式
-2. 📖 **然后参考** 相关组件的docs目录
-3. 📜 **最后查看** GitHub历史版本了解问题背景
-4. 🧪 **动态验证** 使用Chrome MCP调试闭环验证实际页面效果
+# 访问系统
+# 主界面: http://localhost:8080/qapps
+# 管理后台: http://localhost:8080/vapps
+```
 
-### 5️⃣ 第五步：前端修改强制验证协议
-⚠️ **重要警告**: AI对前端修改的确认与实际情况往往相差很多，必须执行强制验证
-1. 🛡️ **强制Chrome MCP验证** - 任何前端修改都必须执行`/tmp/chrome_mcp_auth_proxy.sh`验证
-2. 📸 **修改前后截图对比** - 获取基线截图，修改后立即对比验证
-3. 🔗 **功能点完整验证** - 布局完整性、导航功能、内容渲染必须逐一验证
-4. 🚫 **禁止假设性确认** - 不允许"看起来正确"的代码分析确认
-5. ⚡ **发现问题立即回滚** - 问题出现时必须停止进一步修改并评估回滚
+### 默认登录信息
+- **用户名**: `john.doe`
+- **密码**: `moqui`
 
-### ⚠️ 重要原则
-- **始终参考GitHub历史版本** - 理解项目演进
-- **尊重自动化机制** - 避免手工配置覆盖系统设计
-- **保持权限验证** - 不要随意移除安全检查
-- **使用异步调用** - 避免阻塞主线程
-- **强制前端验证** - 任何前端修改必须Chrome MCP验证，禁止假设性确认
+---
+
+## 🎯 核心功能
+
+### 🤖 多模态AI集成
+- **语音识别**: 支持中英文混合语音转文字（智谱AI GLM-4）
+- **图像识别**: 智能产品图片分析（GLM-4V Plus）
+- **智能对话**: 自然语言供需信息处理
+- **Telegram Bot**: 多平台消息处理和业务操作
+
+### 🏪 智能供需撮合
+- **供应发布**: 多渠道供应信息发布和管理
+- **需求匹配**: AI驱动的智能供需匹配算法
+- **价格分析**: 实时市场价格趋势分析
+- **交易撮合**: 全流程交易支持和跟踪
+
+### 🔗 平台集成
+- **HiveMind**: 项目管理和协作
+- **POP/Ecommerce**: 电商平台集成
+- **Marble ERP**: 企业资源规划系统
+- **多终端支持**: Web、移动端、API接口
+
+---
+
+## 📱 主要应用
+
+### 智能供需平台
+- **访问地址**: `/qapps/marketplace`
+- **功能**: 供需发布、智能匹配、数据统计
+- **特色**: AI辅助的供需撮合和价格分析
+
+### 项目管理 (HiveMind)
+- **访问地址**: `/qapps/tools`
+- **功能**: 项目计划、任务管理、协作工具
+- **集成**: 与供需平台无缝对接
+
+### 系统管理
+- **访问地址**: `/qapps/system`
+- **功能**: 用户管理、权限配置、系统监控
+- **权限**: 管理员专用
+
+---
+
+## 🛠️ 技术架构
+
+### 后端技术栈
+- **框架**: Moqui Framework 3.1.0
+- **语言**: Java 21 + Groovy
+- **数据库**: H2 (开发) / MySQL (生产)
+- **认证**: JWT企业级认证系统
+
+### 前端技术栈
+- **框架**: Vue.js 3.5.22
+- **UI库**: Quasar Framework 2.18.5
+- **模板**: FreeMarker + Vue组件
+- **架构**: SPA + 服务器端渲染
+
+### AI技术栈
+- **主要提供商**: 智谱AI (GLM-4/GLM-4V)
+- **备用服务**: 百度AI、阿里云AI、OpenAI
+- **能力**: 语音识别、图像分析、自然语言处理
+- **集成方式**: RESTful API + Fallback机制
+
+---
+
+## 📚 文档
+
+详细文档请参见 [docs/](docs/) 目录：
+
+- **[开发指南](docs/01-guides/)**: 环境搭建、开发规范、调试工具
+- **[系统设计](docs/02-design/)**: 架构设计、API文档、数据模型
+- **[项目任务](docs/03-tasks/)**: 各阶段开发任务和实施计划
+- **[技术报告](docs/05-reports/)**: 实施总结和性能分析
+
+### 快速链接
+- [开发环境搭建](docs/01-guides/development-setup.md)
+- [AI集成指南](docs/01-guides/ai-integration-guide.md)
+- [项目进展记录](docs/progress-log.md)
+
+---
+
+## 🔧 调试工具
+
+项目提供完整的调试工具链，位于 [testing-tools/](testing-tools/) 目录：
+
+- **Chrome MCP认证**: 解决headless浏览器认证问题
+- **JWT测试工具**: JWT认证和会话管理测试
+- **多模态AI测试**: 语音和图像识别功能测试
+- **API配置脚本**: 各种AI服务的快速配置
+
+---
+
+## 🚀 开发状态
+
+### Phase 0 ✅ 已完成 (2025-11-01)
+- [x] 多模态AI平台集成 (智谱AI GLM-4/GLM-4V)
+- [x] JWT认证系统实施
+- [x] Vue3+Quasar2技术栈升级
+- [x] Chrome MCP调试工具链建立
+
+### Phase 1 🔄 进行中
+- [ ] Telegram MVP闭环实现
+- [ ] `/supply` `/demand` `/match` 指令系统
+- [ ] 多模态消息处理优化
+
+### 后续阶段 📋 规划中
+- **Phase 2**: HiveMind项目管理集成
+- **Phase 3**: POP电商平台深度集成
+- **Phase 4**: Marble ERP全面整合
+
+---
+
+## 🤖 AI Assistant开发指南
+
+### 新AI Agent快速上手
+1. **核心参考**: [CLAUDE.md](CLAUDE.md) - AI开发助手的核心参考文档
+2. **认证模式**: Service用`authenticate="false"`，Screen用`require-authentication="false"`
+3. **调试协议**: 前端修改必须执行Chrome MCP验证，禁止假设性确认
+4. **项目架构**: FreeMarker + Vue.js动态渲染，需要实际浏览器验证
+
+### 重要原则
+- **强制验证**: 任何前端修改都必须Chrome MCP验证
+- **权限保护**: 不要随意移除安全检查
+- **尊重自动化**: 避免手工配置覆盖系统设计
+- **异步优先**: 避免阻塞主线程
+
+---
+
+## 🤝 开发贡献
+
+### 代码规范
+- 遵循Moqui Framework开发标准
+- Java代码使用Google Java Style
+- 前端代码遵循Vue.js官方风格指南
+- 提交信息使用[约定式提交](https://conventionalcommits.org/)
+
+### 开发流程
+1. Fork项目并创建特性分支
+2. 完成开发和测试
+3. 提交PR并描述变更内容
+4. 通过代码审查后合并
+
+---
+
+## 📄 许可证
+
+本项目采用企业许可证，详情请联系项目维护团队。
+
+---
+
+## 📞 联系我们
+
+- **项目维护**: Claude Code AI Assistant
+- **技术支持**: 通过GitHub Issues提交
+- **文档更新**: 2025-11-01
+
+---
+
+**快速访问**: [系统首页](http://localhost:8080/qapps) | [文档中心](docs/) | [API文档](docs/02-design/api/) | [调试工具](testing-tools/)
 
 ---
 

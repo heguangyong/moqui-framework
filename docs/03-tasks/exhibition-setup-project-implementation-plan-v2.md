@@ -122,7 +122,7 @@
         // 4. 结构化信息提取
         if (isProject) {
             extractedRequirements = ec.service.sync()
-                .name("marketplace.extract#ProjectRequirements")
+                .name("marketplace.MarketplaceServices.extract#ProjectRequirements")
                 .parameter("description", userDescription)
                 .parameter("projectType", projectType)
                 .call()
@@ -134,55 +134,53 @@
 ### HiveMind集成HTTP调用实现说明
 
 **HTTP调用架构选择**:
-由于Moqui框架没有`ec.resource.httpClientRequest`API，我们采用Moqui提供的`org.moqui.impl.WebResourceServices.http#call`服务执行HTTP请求。
+由于Moqui框架没有`ec.resource.httpClientRequest`API，建议在本项目中新增一个HTTP封装服务，通过Java 11+ `HttpClient`发送JSON请求，避免依赖内部实现类。
 
-**实现模式**:
+**实现模式（示例）**:
 ```xml
-<!-- 使用Moqui内置HTTP服务 -->
-<service verb="call" noun="HiveMindAPI" authenticate="true">
+<!-- 使用Java HttpClient封装HiveMind调用 -->
+<service verb="call" noun="HiveMindApi" authenticate="true">
     <in-parameters>
         <parameter name="endpoint" required="true"/>
         <parameter name="requestData" type="Map" required="true"/>
     </in-parameters>
     <out-parameters>
         <parameter name="response" type="Map"/>
+        <parameter name="statusCode" type="Integer"/>
         <parameter name="success" type="Boolean"/>
     </out-parameters>
     <actions><script><![CDATA[
-        def httpResponse = ec.service.sync().name("org.moqui.impl.WebResourceServices.http#call").parameters([
-            method: "POST",
-            uri: endpoint,
-            bodyMap: requestData,
-            headers: ["Content-Type": "application/json", "Accept": "application/json"]
-        ]).call()
+        import java.net.URI
+        import java.net.http.HttpClient
+        import java.net.http.HttpRequest
+        import java.net.http.HttpResponse
+        import groovy.json.JsonOutput
+        import groovy.json.JsonSlurper
 
-        if ((httpResponse.statusCode ?: 500) == 200) {
-            response = httpResponse.bodyMap ?: [:]
+        HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(15))
+            .build()
+
+        String requestBodyJson = JsonOutput.toJson(requestData)
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(endpoint))
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
+            .build()
+
+        HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString())
+        statusCode = httpResponse.statusCode()
+        if (statusCode == 200) {
+            String body = httpResponse.body() ?: ""
+            response = body ? (Map) new JsonSlurper().parseText(body) : [:]
             success = true
         } else {
             success = false
-            ec.logger.error("HiveMind API调用失败: ${httpResponse.statusCode} -> ${httpResponse.bodyText}")
+            ec.logger.error("HiveMind API调用失败: ${statusCode} -> ${httpResponse.body()}")
         }
     ]]></script></actions>
 </service>
-```
-
-**备选方案**:
-如果`org.moqui.impl.WebResourceServices.http#call`服务不可用，可以使用Java原生HTTP客户端：
-```groovy
-// Java 11+ HttpClient实现
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-
-def client = HttpClient.newHttpClient()
-def request = HttpRequest.newBuilder()
-    .uri(URI.create(endpoint))
-    .header("Content-Type", "application/json")
-    .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
-    .build()
-
-def response = client.send(request, HttpResponse.BodyHandlers.ofString())
 ```
 
 **功能**: 自动创建和管理项目，连接Moqui与HiveMind
@@ -225,14 +223,18 @@ def response = client.send(request, HttpResponse.BodyHandlers.ofString())
             budget: estimatedBudget
         ]
 
-        def httpResponse = ec.service.sync().name("org.moqui.impl.WebResourceServices.http#call").parameters([
-            method: "POST",
-            uri: "https://hivemind.example.com/api/projects",
-            bodyMap: requestPayload,
-            headers: ["Content-Type": "application/json", "Accept": "application/json"]
+        def apiResult = ec.service.sync().name("marketplace.MarketplaceServices.call#HiveMindApi").parameters([
+            endpoint: "https://hivemind.example.com/api/projects",
+            requestData: requestPayload
         ]).call()
 
-        def responseData = httpResponse.bodyMap ?: [:]
+        if (!(apiResult.success ?: false)) {
+            ec.logger.error("HiveMind项目创建失败")
+            success = false
+            return
+        }
+
+        def responseData = apiResult.response ?: [:]
         def hiveMindProjectId = responseData.projectId
 
         // 3. 建立关联关系
@@ -288,11 +290,9 @@ def response = client.send(request, HttpResponse.BodyHandlers.ofString())
                 sequenceNumber: task.sequenceNum
             ]
 
-            ec.service.sync().name("org.moqui.impl.WebResourceServices.http#call").parameters([
-                method: "POST",
-                uri: "https://hivemind.example.com/api/projects/${hiveMindProjectId}/tasks",
-                bodyMap: taskPayload,
-                headers: ["Content-Type": "application/json", "Accept": "application/json"]
+            ec.service.sync().name("marketplace.MarketplaceServices.call#HiveMindApi").parameters([
+                endpoint: "https://hivemind.example.com/api/projects/${hiveMindProjectId}/tasks",
+                requestData: taskPayload
             ]).call()
         }
     ]]></script></actions>
@@ -613,7 +613,7 @@ curl -s -b /tmp/test_session.txt "http://localhost:8080/qapps/marketplace/Dashbo
 **任务清单**:
 - [ ] 完成Dashboard.xml中所有div标签修复（详见上述指南）
 - [ ] 实现Moqui Service模式的项目类型检测服务
-- [ ] 配置HiveMind API连接和认证（使用ec.resource.httpClientRequest）
+    - [ ] 配置HiveMind API连接和认证（实现自定义HttpClient封装服务）
 - [ ] 创建基于WorkEffort的项目管理实体扩展
 - [ ] 建立项目创建基础服务
 
