@@ -270,7 +270,7 @@ open /tmp/moqui_verified.png
 ```
 
 #### 突破性成果
-✅ **完整应用列表显示**: 智能供需平台、项目管理、对象存储等
+✅ **完整应用列表显示**: 智能推荐、项目管理、对象存储等
 ✅ **Vue.js组件完全加载**: 导航栏、用户菜单、通知等全部正常
 ✅ **高质量截图输出**: 58KB完整页面截图
 ✅ **彻底解决认证问题**: Chrome MCP现在可以完美验证Moqui动态页面
@@ -884,7 +884,7 @@ This fix resolves the navigation UX issue where users were "trapped" in applicat
 
 **1. 症状对比分析**：
 - ❌ **当前问题页面**: 空白应用列表，缺少Quasar UI组件渲染，显示原始HTML调试信息
-- ✅ **官网正常页面**: 完整Quasar 2.x布局，应用卡片正确显示（智能供需平台、项目管理等）
+- ✅ **官网正常页面**: 完整Quasar 2.x布局，应用卡片正确显示（智能推荐、项目管理等）
 
 **2. 根本原因识别**：
 ```javascript

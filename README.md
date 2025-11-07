@@ -1,6 +1,6 @@
-# 智能供需平台 - Moqui Framework
+# 智能推荐 - Moqui Framework
 
-基于Moqui Framework构建的企业级智能供需撮合平台，集成多模态AI能力，连接HiveMind项目管理、POP电商平台和Marble ERP系统。
+基于Moqui Framework构建的企业级智能推荐平台，集成多模态AI能力，连接HiveMind项目管理、POP电商平台和Marble ERP系统。
 
 ## 🚀 快速开始
 
@@ -53,7 +53,7 @@ export JAVA_HOME=/path/to/java21
 
 ## 📱 主要应用
 
-### 智能供需平台
+### 智能推荐
 - **访问地址**: `/qapps/marketplace`
 - **功能**: 供需发布、智能匹配、数据统计
 - **特色**: AI辅助的供需撮合和价格分析
@@ -97,9 +97,9 @@ export JAVA_HOME=/path/to/java21
 详细文档请参见 [docs/](docs/) 目录：
 
 - **[开发指南](docs/01-guides/)**: 环境搭建、开发规范、调试工具
-- **[系统设计](docs/02-design/)**: 架构设计、API文档、数据模型
-- **[项目任务](docs/03-tasks/)**: 各阶段开发任务和实施计划
-- **[技术报告](docs/05-reports/)**: 实施总结和性能分析
+- **[系统设计](docs/01-guides/design/)**: 架构设计、API文档、数据模型
+- **[项目任务](docs/02-tasks/)**: 各阶段开发任务和实施计划
+- **[技术报告](docs/03-reports/)**: 实施总结和性能分析
 
 ### 快速链接
 - [开发环境搭建](docs/01-guides/development-setup.md)
@@ -185,7 +185,7 @@ export JAVA_HOME=/path/to/java21
 
 ---
 
-**快速访问**: [系统首页](http://localhost:8080/qapps) | [文档中心](docs/) | [API文档](docs/02-design/api/) | [调试工具](testing-tools/)
+**快速访问**: [系统首页](http://localhost:8080/qapps) | [文档中心](docs/) | [API文档](docs/01-guides/design/api/) | [调试工具](testing-tools/)
 
 ---
 
