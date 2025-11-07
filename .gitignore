@@ -20,6 +20,7 @@ gradle.properties
 /docker/nginx/conf.d
 /docker/nginx/vhost.d
 /docker/nginx/html
+/volumes/
 ## Do not want to accidentally commit production certificates https://www.theregister.com/2024/07/25/data_from_deleted_github_repos/
 /docker/certs
 !/docker/certs/moqui1.local.*
