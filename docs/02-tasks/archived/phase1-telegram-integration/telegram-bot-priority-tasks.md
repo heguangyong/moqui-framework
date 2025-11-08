@@ -213,7 +213,7 @@ def handleSmartClassification(chatId, messageText, messageType = "text") {
 
 ### **目标**: 创建业务意图识别和路由服务
 
-**新文件**: `runtime/component/moqui-mcp/service/McpRoutingServices.xml`
+**新文件**: `runtime/component/moqui-mcp/service/mcp/routing.xml`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>

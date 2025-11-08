@@ -59,7 +59,7 @@
 
 **文件参考**:
 - `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/screen/marketplace/Dashboard.xml`
-- `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/service/EcommerceServices.xml`
+- `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/service/marketplace/EcommerceServices.xml`
 - `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/entity/EcommerceEntities.xml`
 - `/Users/demo/Workspace/moqui/runtime/component/moqui-mcp/src/main/groovy/TelegramServices.groovy`
 

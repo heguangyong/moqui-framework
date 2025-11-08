@@ -31,7 +31,7 @@
 
 #### **Task E-3: 创建电商基础服务** ⭐ **高优先级**
 
-**文件路径**: `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/service/EcommerceServices.xml`
+**文件路径**: `/Users/demo/Workspace/moqui/runtime/component/moqui-marketplace/service/marketplace/EcommerceServices.xml`
 
 **任务内容**:
 1. 实现商品CRUD服务：`create#Product`, `update#Product`, `get#ProductList`

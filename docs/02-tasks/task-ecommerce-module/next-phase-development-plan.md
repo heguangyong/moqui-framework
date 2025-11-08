@@ -123,6 +123,10 @@
 
 新增配置管理页面，集中所有开发和管理工具。
 
+-**最新进展（2025-11-07）**
+- ✅ `Dashboard.xml` 已按照“控制台 + 模块卡片 + 匹配/Telegram/最新供需”结构重写，保留商户筛选与核心指标，突出 Telegram 驱动监控视角（文件：`runtime/component/moqui-marketplace/screen/marketplace/Dashboard.xml`）。
+- ✅ `SystemConfig.xml` 收敛为四大快捷面板（Telegram/HiveMind/数据工具/诊断）+ 集成状态区，成为实际的配置入口，与 Dashboard 形成“双页”结构（文件：`runtime/component/moqui-marketplace/screen/marketplace/SystemConfig.xml`）。
+
 ---
 
 ## 🚀 Phase 1: Telegram Bot 4分类菜单系统 ✅ **已完成**
@@ -160,7 +164,7 @@
 
 #### **具体实现要求**:
 
-**新文件**: `runtime/component/moqui-mcp/service/McpRoutingServices.xml`
+**新文件**: `runtime/component/moqui-mcp/service/mcp/routing.xml`
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -351,6 +355,7 @@
 - ✅ `SmartMatchingEngine` 增加 ProjectAffinity 评分维度，综合面积、预算、工期、地点、风格、材质等特征，匹配权重重新校准为 0.30/0.20/0.15/0.10/0.10/0.15。
 - ✅ 新增 `marketplace.listing.ListingInsight` 实体与 `store#ListingInsight` 服务，供多模态识别和项目提取结果长期沉淀，并在匹配时自动加载。
 - ✅ `MatchingServices.calculate#MatchScoreDetailed` 输出 `projectAffinity` 并复用引擎生成的项目说明文案，前端可直接展示。
+- ✅ 匹配引擎权重/关键词/最小分阈值支持 `runtime/component/moqui-marketplace/config/matching-config.json` 配置并可热重载（服务 `marketplace.MatchingServices.reload#MatchingConfig`）；`find#MatchesForListing` 默认阈值来自配置。
 - 🔄 待补充：结合真实展搭/装修/工程案例扩充样本数据，进一步校准各特征阈值与推荐话术。
 
 ### **Task T-MATCH-2: 多模态内容处理增强**

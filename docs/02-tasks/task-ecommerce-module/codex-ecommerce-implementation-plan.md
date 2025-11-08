@@ -44,7 +44,7 @@
 
 #### **2. 服务实现**
 ```
-/runtime/component/moqui-marketplace/service/EcommerceServices.xml
+/runtime/component/moqui-marketplace/service/marketplace/EcommerceServices.xml
 ├── create#Product (创建商品)
 ├── update#Product (更新商品)
 ├── create#Order (创建订单)

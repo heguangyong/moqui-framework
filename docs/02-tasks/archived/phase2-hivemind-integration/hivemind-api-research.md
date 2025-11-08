@@ -139,7 +139,7 @@
 
 ## 9. Webhook/消息触发方案
 
-- **服务入口**: `marketplace.MarketplaceServices.handle#HiveMindWebhook`（`component://moqui-marketplace/service/HiveMindWebhookServices.xml`），REST路径 `/rest/s1/marketplace/webhook/hivemind`。  
+- **服务入口**: `marketplace.MarketplaceServices.handle#HiveMindWebhook`（`component://moqui-marketplace/service/marketplace/HiveMindWebhookServices.xml`），REST路径 `/rest/s1/marketplace/webhook/hivemind`。  
 - **用途**: HiveMind 项目或任务状态变更时，将 `notificationType` + `payload` 推送到 Moqui；服务会按 `hivemind.webhook.secret` 验证 SHA-256 签名（可选）。  
 - **处理流程**: 定位 `HiveMindProject` → 调用 `sync#HiveMindProjectStatus`、`fetch#HiveMindProjectTasks` 刷新数据 → 若需要则触发 Telegram 提醒。  
 - **Webhook 回传**: `monitor#HiveMindProjects` 支持向外部系统二次推送（配置 `hivemind.monitor.webhook.config` 或 `HIVEMIND_MONITOR_WEBHOOK`），默认样例位于 `config/hivemind-monitor-webhook.json`，可设置 URL、Token、超时时间及开关。  
