@@ -32,28 +32,49 @@
 
 ### 🎯 **立即执行任务**
 
-#### **Task E-4: 商品管理端到端体验** ⭐ **进行中**
+#### **Task E-4: 商品管理端到端体验** ✅ **2025-11-08 完成（REST 自测待JWT）**
 
 **目标**: 让Telegram与Web端都能完成商品建档、查询、更新。
-- [ ] 为Telegram新增 `/product add|update|list` 指令，复用 `create#Product`/`update#Product` 服务
-- [ ] 在Web控制台 `Dashboard` 增加商品列表卡片，展示最新5条商品信息
-- [ ] 设计`EcommerceDemoData.xml`种子数据（至少3个分类、5个商品），便于演示与测试
-- [ ] 完成后通过 `/rest/s1/marketplace/ecommerce/products` + JWT 验证接口输出
+- [x] 为Telegram新增 `/product add|update|list` 指令：`handleProduct*Command` 直连 `marketplace.EcommerceServices`，支持 name/price/stock/category/status 参数解析
+- [x] 在Web控制台 `Dashboard` 增加商品列表卡片：展示最新5条商品并映射 `EcommerceProductCategory` 名称
+- [x] 设计 `EcommerceDemoData.xml` 种子数据：3 个分类、5 个商品、示例购物车/订单/评价，`./gradlew load` 通过
+- [ ] `/rest/s1/marketplace/ecommerce/products` + JWT 验证脚本（等待正式 JWT 凭据补充后执行）
 
-#### **Task E-5: 订单处理系统** ⭐ **待启动**
+#### **Task E-5: 订单处理系统** ✅ **2025-11-08 完成**
 
 **目标**: 支撑 Telegram 下单、状态跟踪及库存扣减。
-- [ ] 实现 `/order create|status|list` 指令，结合 `create#Order` 与 `get#OrderStatus`
-- [ ] 订单创建成功后自动调用 `update#ProductInventory` 扣减库存
-- [ ] 建立订单状态映射（CREATED→PAID→FULFILLED→CLOSED），同步到HiveMind项目卡片
-- [ ] 准备 REST 调用示例，记录到 `testing-tools` 下的脚本中
+- [x] Telegram `/order create|status|list` 指令落地，`handleOrder*Command` 直接调用 `marketplace.EcommerceServices`
+- [x] `create#Order` 在写入明细后调用 `update#ProductInventory` 并校验库存；`update#ProductInventory` 增加负库存保护
+- [x] Dashboard 仍沿用订单状态（CREATED/PAID/FULFILLED/CLOSED），Telegram status/list 文案同步说明
+- [x] 新增 `testing-tools/ecommerce_order_rest_examples.sh` 样例脚本，涵盖创建/查询 REST 流程（需用户自行提供 JWT）
 
-#### **Task E-6: 智能推荐集成** ⭐ **规划**
+#### **Task E-6: 智能推荐集成** ✅ **2025-11-09 完成**
 
 **目标**: 融合供需推荐与电商商品数据。
-- [ ] 接入 `mcp.routing.classify#UserIntent` 的商品专属标签，区分B端采购与项目拓展
-- [ ] 引入商品评价 `EcommerceProductReview` 评分作为权重
-- [ ] 在 Telegram 回复中突出“智能推荐来源”，并给出关联项目信息
+- [x] `mcp.routing.classify#UserIntent` 识别电商专属标签：可区分 `B2B_PURCHASE`、`PROJECT_EXPANSION`、`SOCIAL_RETAIL`，并在 `route#ToBusinessModule` 中根据意图自动推送相应菜单/引导
+- [x] `marketplace.EcommerceServices.get#ProductRecommendations` 按评价/订单热度混合评分，输出 `avgRating`、`orderCount`、`recommendationSource` 等字段；路由与 Telegram `/ec_recommend` 均调用该服务
+- [x] Telegram 推荐消息显示“来源：B端热销/客户评价/项目口碑”等文本，并在项目类意图下追加「如需跟踪项目请使用 `/project create`」指引
+
+#### **Task E-7: 电商控制台页面** ✅ **2025-11-09 完成**
+
+**目标**: 将电商监控能力纳入 Web 控制台。
+- [x] 新建 `Ecommerce.xml`（商品/订单卡片、低库存提醒、品类/客户分析、Telegram 操作提示）
+- [x] `marketplace.xml` 增加“电商控制台”子屏并在顶部按钮提供快捷入口
+- [ ] 后续可按需增加筛选条件（按分类/客户过滤）
+
+#### **Task E-8: 数据分析仪表板** ✅ **2025-11-09 完成（基础版）**
+
+**目标**: 提供可视化数据概览。
+- [x] 统计模块：品类销售排行、订单状态分布、Top 客户、低库存 / 今日订单指标
+- [x] 数据源 entirely 来自 `EcommerceOrder`/`EcommerceOrderItem` 聚合，便于后续扩展到图表
+- [ ] 若需要图形化展示，可在下一阶段接入 Chart 组件或输出 CSV
+
+#### **Task E-9: SystemConfig 集成** ✅ **2025-11-09 完成**
+
+**目标**: 让电商相关配置/脚本在 SystemConfig 中有统一入口。
+- [x] `SystemConfig.xml` 新增“电商配置 / Ngrok / REST 脚本”卡片：展示当前 ngrok 隧道、Webhook URL、REST 示例脚本路径
+- [x] 附带 `../Ecommerce` 快捷链接以及脚本运行指引（BASE_URL/TOKEN 环境变量）
+- [ ] 后续可接入可编辑表单（如库存预警阈值、推荐策略），目前以信息/指引为主
 
 ---
 
