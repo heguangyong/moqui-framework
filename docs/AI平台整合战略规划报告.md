@@ -116,17 +116,43 @@
    - 梳理 Party、Listing、Order、Project 的跨平台主键策略。  
    - 建立事件或任务队列，记录待同步事项。  
 
-> 详细任务拆解见 `docs/intelligent-supply-demand/ROADMAP.md`（待补充）。
+### 详细任务拆解
+
+**阶段1：基础设施完善**
+- Telegram Bot优化：多模态消息处理、指令系统完善
+- AI服务稳定性：智谱AI GLM-4/GLM-4V服务质量监控
+- 数据模型统一：跨平台实体关系梳理
+
+**阶段2：HiveMind集成**
+- 项目管理API对接：任务创建、状态同步、协作工具
+- 数据流设计：供需信息与项目任务关联机制
+- 用户体验统一：单点登录、权限管理
+
+**阶段3：POP/Marble整合**
+- 电商平台集成：商品目录、订单处理、库存管理
+- ERP系统对接：财务数据、供应链管理、报表分析
+- 全流程自动化：从供需匹配到订单履约的完整闭环
 
 ---
 
 ## 7. 文档与协作指引
 
-- 顶层规划：本文件（持续更新，变更请记录到 `docs/progress-log.md`）。
-- 频道适配 & 多模态：`docs/intelligent-supply-demand/README.md` + 专项调试笔记。
-- HiveMind 项目模板：`docs/hivemind/`（待新增）。
-- POP/Marble 接口与实体：参考各组件 `runtime/component/*` 下的 README 与 docs。
-- 任何里程碑或重大决策请同步到 `docs/progress-log.md`，确保团队共识。
+### 核心文档架构
+- **顶层规划**: 本文件（AI平台整合战略规划报告.md）- 持续更新战略方向
+- **技术实现**: [Moqui统一架构实现综合报告](Moqui统一架构实现综合报告.md) - 技术架构详细说明
+- **Vue升级**: [Vue3迁移技术调研报告](Vue3迁移技术调研报告.md) - 前端技术栈升级经验
+- **API架构**: [统一REST API架构实现报告](统一REST API架构实现报告.md) - 接口设计规范
+
+### 开发协作流程
+- **技术决策**: 重大技术决策记录在相应技术报告中，确保可追溯性
+- **问题解决**: 技术难题解决方案更新到 [CLAUDE.md](../CLAUDE.md) 开发指南
+- **工具集成**: 调试工具和脚本统一管理在 [testing-tools/](../testing-tools/) 目录
+- **进展跟踪**: 里程碑达成和重要变更记录在项目README.md开发状态部分
+
+### 组件开发规范
+- **HiveMind项目管理**: 遵循Moqui组件标准，参考现有marketplace组件实现
+- **POP电商集成**: 基于统一REST API架构，确保数据模型一致性
+- **Marble ERP对接**: 实体关系设计参考现有Party/Order模型，保持兼容性
 
 ---
 
