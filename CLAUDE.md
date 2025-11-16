@@ -35,6 +35,107 @@ This pattern was discovered when fixing moqui-marketplace authentication issues.
 
 ---
 
+## 🍽️ Moqui菜单配置架构指南
+
+### ⚠️ 重要发现：菜单配置的双重架构陷阱
+
+**关键问题**: Moqui存在双重菜单架构，容易导致配置错位和显示问题。
+
+#### 菜单架构核心机制
+
+**问题根源**: AppList.xml应用卡片生成器读取`apps.xml`的subscreens，而非`qapps.xml`
+
+```
+qapps.xml (Modern Vue/Quasar UI) ← 用户看到的界面
+   ↓ (仅负责整体渲染)
+AppList.xml ← 应用卡片生成器
+   ↓ (读取subscreens)
+apps.xml ← 实际的应用注册中心 ⚡ 关键文件
+```
+
+#### 正确的菜单配置方法
+
+**1. 应用显示配置 (apps.xml)**:
+```xml
+<!-- apps.xml - 控制应用卡片是否显示 -->
+<subscreens default-item="marketplace">
+    <subscreens-item name="hivemind" menu-title="项目执行"
+                     menu-image="fa fa-check"
+                     location="component://HiveMind/screen/HiveMindRoot.xml"/>
+    <subscreens-item name="hmadmin" menu-title="项目管理"
+                     menu-image="fa fa-tasks"
+                     location="component://HiveMind/screen/HiveMindAdmin.xml"/>
+</subscreens>
+```
+
+**2. 应用内部菜单配置 (HiveMindRoot.xml)**:
+```xml
+<!-- HiveMindRoot.xml - 应用内部子菜单 -->
+<subscreens default-item="dashboard" always-use-full-path="true">
+    <subscreens-item name="Project" menu-index="3" menu-title="项目"
+                     location="component://HiveMind/screen/HiveMindRoot/Project.xml"/>
+    <subscreens-item name="Task" menu-index="4" menu-title="任务"
+                     location="component://SimpleScreens/screen/SimpleScreens/Task.xml"/>
+    <subscreens-item name="Request" menu-index="5" menu-title="需求"
+                     location="component://HiveMind/screen/HiveMindRoot/Request.xml"/>
+</subscreens>
+```
+
+#### 常见错误模式
+
+❌ **错误**: 仅在qapps.xml中配置应用，忽略apps.xml
+```xml
+<!-- 错误：仅配置qapps.xml -->
+<subscreens default-item="AppList">
+    <subscreens-item name="hivemind" location="component://HiveMind/screen/HiveMindRoot.xml"/>
+</subscreens>
+```
+
+✅ **正确**: 在apps.xml中注册应用，qapps.xml保持AppList结构
+```xml
+<!-- 正确：在apps.xml中注册 -->
+<subscreens default-item="marketplace">
+    <subscreens-item name="hivemind" menu-title="项目执行" location="..."/>
+</subscreens>
+```
+
+#### 菜单显示验证协议
+
+**强制验证步骤**:
+1. **配置验证**: 检查apps.xml中是否有相应的subscreens-item
+2. **功能验证**: 测试应用直接访问路径（如`/qapps/hivemind`）
+3. **显示验证**: 使用Chrome MCP确认应用卡片在主页显示
+
+```bash
+# 验证应用功能可用性
+curl -s -b session.txt "http://localhost:8080/qapps/hivemind" -w "Status: %{http_code}"
+
+# 验证应用内部菜单
+curl -s -b session.txt "http://localhost:8080/qapps/hivemind" | grep -o "项目\|任务\|需求"
+```
+
+#### HiveMind双模块应用配置实例
+
+**项目执行端** (面向执行人员):
+- 路径: `/qapps/hivemind`
+- 功能: 项目、任务、需求的具体执行
+- 配置文件: `HiveMindRoot.xml`
+
+**项目管理端** (面向管理人员):
+- 路径: `/qapps/hmadmin`
+- 功能: 成本核算、工资管理、AI分析、思维导图
+- 配置文件: `HiveMindAdmin.xml`
+
+#### 经验教训总结
+
+1. **理解双重架构**: apps.xml是实际注册中心，qapps.xml只负责界面渲染
+2. **配置验证机制**: 任何菜单修改都必须验证实际显示效果
+3. **功能划分清晰**: 不同用户角色使用不同的应用入口
+
+**核心原则**: 要让应用在主页显示，必须在apps.xml中配置subscreens-item
+
+---
+
 ## 🛡️ 前端修改强制验证协议
 
 ### ⚠️ 关键问题：前端修改缺乏可靠验证
