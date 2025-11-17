@@ -63,10 +63,10 @@ sessionStorage.setItem("jwt_refresh_token", "${REFRESH_TOKEN}");
 document.cookie = "jwt_access_token=${JWT_TOKEN}; path=/; SameSite=Lax";
 document.cookie = "jwt_refresh_token=${REFRESH_TOKEN}; path=/; SameSite=Lax";
 
-// 验证并跳转到marketplace
-console.log("JWT tokens设置完成，跳转到marketplace");
+// 验证并跳转到应用列表页面
+console.log("JWT tokens设置完成，跳转到应用列表");
 setTimeout(function(){
-    window.location.replace("${MOQUI_URL}/qapps/marketplace");
+    window.location.replace("${MOQUI_URL}/qapps");
 }, 500);
 </script>
 <p>JWT认证中...</p>
