@@ -6,15 +6,15 @@
 echo "🔗 Telegram Webhook Update Complete!"
 echo "======================================"
 
-echo "✅ Current ngrok tunnel: https://41416ace43b7.ngrok-free.app"
-echo "✅ Webhook URL: https://41416ace43b7.ngrok-free.app/rest/s1/mcp/telegram"
+echo "✅ Current ngrok tunnel: https://6dcd02acbdfd.ngrok-free.app"
+echo "✅ Webhook URL: https://6dcd02acbdfd.ngrok-free.app/rest/s1/mcp/telegram"
 echo "✅ Moqui server: Running on port 8080"
 
 echo ""
 echo "🧪 Testing webhook endpoint..."
 
 # Test the webhook endpoint
-RESPONSE=$(curl -s "https://41416ace43b7.ngrok-free.app/rest/s1/mcp/telegram" \
+RESPONSE=$(curl -s "https://6dcd02acbdfd.ngrok-free.app/rest/s1/mcp/telegram" \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{"test": "webhook", "message": {"text": "test", "chat": {"id": "123"}}}' \

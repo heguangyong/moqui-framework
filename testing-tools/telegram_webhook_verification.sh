@@ -4,7 +4,7 @@ echo "🤖 Telegram Webhook 验证完成报告"
 echo "=================================="
 
 BOT_TOKEN="6889801043:AAF5wdoc4tybZEqCXtO5229tOErnK_ZUzMA"
-WEBHOOK_URL="https://41416ace43b7.ngrok-free.app/rest/s1/mcp/telegram"
+WEBHOOK_URL="https://6dcd02acbdfd.ngrok-free.app/rest/s1/mcp/telegram"
 
 echo "📋 1. Webhook配置验证"
 curl -s "https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo" | jq .
