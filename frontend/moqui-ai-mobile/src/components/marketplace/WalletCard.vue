@@ -151,11 +151,30 @@ const handleInTransitClick = () => {
     }
   }
 
-  &__expansion-header {
-    padding: $spacing-md $card-padding;
+  // 折叠面板深色样式
+  :deep(.q-expansion-item) {
     background-color: #3A3A3C;
-    color: white;
-    font-weight: $font-weight-medium;
+    
+    .q-expansion-item__container {
+      background-color: #3A3A3C;
+    }
+    
+    .q-item {
+      background-color: #3A3A3C;
+      color: white;
+      
+      .q-item__label {
+        color: white;
+      }
+      
+      .q-item__section--avatar {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+    
+    .q-expansion-item__content {
+      background-color: #2C2C2E;
+    }
   }
 
   &__details {

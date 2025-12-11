@@ -420,7 +420,14 @@ const handleWithdraw = () => {
       model: '',
       type: 'number'
     },
-    cancel: true,
+    cancel: {
+      label: '取消',
+      flat: true
+    },
+    ok: {
+      label: '确认提现',
+      color: 'secondary'
+    },
     persistent: true
   }).onOk(data => {
     $q.notify({
