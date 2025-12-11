@@ -1,93 +1,63 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import NetworkStatus from './components/common/NetworkStatus.vue'
+import BottomNavBar from './components/common/BottomNavBar.vue'
+
+const route = useRoute()
+
+// 需要显示底部导航的页面
+const showBottomNav = computed(() => {
+  const path = route.path
+  // 这些页面不显示底部导航
+  const hideNavPaths = ['/login', '/execution']
+  
+  // 订单详情页也不显示（但订单大厅要显示）
+  const isOrderDetail = /^\/marketplace\/order\/[^/]+$/.test(path)
+  
+  // marketplace 相关页面显示底部导航（除了上面排除的）
+  const isMarketplace = path === '/marketplace' || path.startsWith('/marketplace/')
+  
+  return isMarketplace && !hideNavPaths.some(p => path.includes(p)) && !isOrderDetail
+})
 </script>
 
 <template>
-  <!-- Network Status Banner - Requirements 5.1 -->
-  <NetworkStatus
-    position="top"
-    :auto-hide="true"
-    :auto-hide-delay="3000"
-  />
+  <q-layout view="hHh lpR fFf">
+    <!-- Network Status Banner - Requirements 5.1 -->
+    <NetworkStatus
+      position="top"
+      :auto-hide="true"
+      :auto-hide-delay="3000"
+    />
 
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+    <q-page-container>
+      <RouterView />
+    </q-page-container>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+    <!-- 底部导航栏 -->
+    <q-footer v-if="showBottomNav" class="bottom-nav-footer">
+      <BottomNavBar />
+    </q-footer>
+  </q-layout>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<style>
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
+html, body, #app {
+  height: 100%;
   width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+#app {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

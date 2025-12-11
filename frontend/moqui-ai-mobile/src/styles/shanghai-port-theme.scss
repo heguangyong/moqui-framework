@@ -261,3 +261,126 @@ $wallet-amount-color: $secondary-color;
 .shadow-card { box-shadow: $shadow-card !important; }
 .shadow-button { box-shadow: $shadow-button !important; }
 .shadow-modal { box-shadow: $shadow-modal !important; }
+
+
+// ============================================
+// 13. Quasar 组件深色主题覆盖
+// ============================================
+
+// 菜单和下拉列表
+.q-menu {
+  background: $list-bg-color !important;
+  border: 1px solid $border-color;
+  
+  .q-list {
+    background: transparent;
+  }
+  
+  .q-item {
+    color: $text-color;
+    
+    &:hover, &:focus {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    &--active {
+      background: rgba($secondary-color, 0.2);
+      color: $secondary-color;
+    }
+  }
+  
+  .q-item__section--avatar {
+    color: $text-secondary;
+  }
+}
+
+// 列表组件
+.q-list {
+  background: $list-bg-color;
+  
+  .q-item {
+    color: $text-color;
+    
+    &__label {
+      color: $text-color;
+    }
+    
+    &__section--side {
+      color: $text-secondary;
+    }
+  }
+}
+
+// 对话框
+.q-dialog {
+  .q-card {
+    background: $card-bg !important;
+    color: $text-color;
+    
+    .q-card__section {
+      color: $text-color;
+    }
+  }
+}
+
+// 通知
+.q-notification {
+  background: $card-bg;
+  color: $text-color;
+}
+
+// 选择器
+.q-select {
+  .q-field__native {
+    color: $text-color;
+  }
+  
+  .q-field__control {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+// 输入框
+.q-field {
+  &--dark {
+    .q-field__control {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .q-field__native {
+      color: $text-color;
+    }
+  }
+}
+
+// 标签页
+.q-tabs {
+  .q-tab {
+    color: $text-secondary;
+    
+    &--active {
+      color: $secondary-color;
+    }
+  }
+}
+
+// 芯片/标签
+.q-chip {
+  &--dark {
+    background: rgba(255, 255, 255, 0.1);
+    color: $text-color;
+  }
+}
+
+// 工具提示
+.q-tooltip {
+  background: $card-bg;
+  color: $text-color;
+}
+
+// 滚动区域
+.q-scrollarea {
+  &__thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
