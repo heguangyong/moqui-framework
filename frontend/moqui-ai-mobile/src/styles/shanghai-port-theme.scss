@@ -1,0 +1,263 @@
+/**
+ * 上海港集装箱运输系统 - 设计系统主题
+ * 基于供需设计.md规范
+ */
+
+// ============================================
+// 1. 色彩系统
+// ============================================
+
+// 主色调
+$primary-color: #0A1F6C;        // 科技蓝
+$secondary-color: #FF4F1E;      // 行动橙
+
+// 语义色
+$success-color: #00B365;        // 成功绿
+$warning-color: #FFB300;        // 警告黄
+$error-color: #FF3D71;          // 错误红
+$info-color: #1890FF;           // 信息蓝
+
+// 中性色（浅色主题 - 备用）
+$bg-color-light: #F5F7FA;       // 背景色
+$card-bg-light: #FFFFFF;        // 卡片背景
+$title-color-light: #1A1A1A;    // 标题色
+$text-color-light: #666666;     // 正文色
+$hint-color-light: #999999;     // 提示色
+$border-color-light: #E5E5E5;   // 边框色
+$divider-color-light: #F0F0F0;  // 分割线色
+
+// 深色主题（主要使用）
+$bg-color: #1C1C1E;             // 页面背景（最深）
+$list-bg-color: #2C2C2E;        // 列表区域背景（中）
+$card-bg: #3A3A3C;              // 卡片背景（最浅）
+$highlighted-card-bg: linear-gradient(135deg, #F5A623 0%, #FF8F00 100%); // 高亮卡片
+$title-color: #FFFFFF;          // 标题色（白色）
+$text-color: rgba(255, 255, 255, 0.87); // 正文色（白色87%透明度）
+$text-secondary: rgba(255, 255, 255, 0.60); // 次要文字（白色60%透明度）
+$hint-color: rgba(255, 255, 255, 0.38); // 提示色（白色38%透明度）
+$border-color: rgba(255, 255, 255, 0.12); // 边框色
+$divider-color: rgba(255, 255, 255, 0.06); // 分割线色
+
+// 状态色扩展
+$listening-color: #00B365;      // 听单中
+$in-transit-color: #1890FF;     // 运输中
+$completed-color: #52C41A;      // 已完成
+$cancelled-color: #999999;      // 已取消
+
+// ============================================
+// 2. 字体系统
+// ============================================
+
+// 字体家族
+$font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+              'Helvetica Neue', Arial, sans-serif;
+
+// 字体大小 (基于375x812pt iPhone 13设计)
+$font-size-xlarge: 34px;        // 大标题
+$font-size-large: 28px;         // 卡片标题
+$font-size-base: 28px;          // 正文
+$font-size-small: 24px;         // 辅助文字
+$font-size-xsmall: 20px;        // 次要信息
+
+// 字体粗细
+$font-weight-regular: 400;      // Regular
+$font-weight-medium: 500;       // Medium
+$font-weight-semibold: 600;     // Semibold
+$font-weight-bold: 700;         // Bold
+
+// 行高 (字号的1.4倍)
+$line-height-xlarge: 48px;      // 34 * 1.4
+$line-height-large: 39px;       // 28 * 1.4
+$line-height-base: 39px;        // 28 * 1.4
+$line-height-small: 34px;       // 24 * 1.4
+
+// ============================================
+// 3. 间距系统
+// ============================================
+
+// 基准间距
+$spacing-base: 20px;
+
+// 间距阶梯
+$spacing-xs: 8px;
+$spacing-sm: 12px;
+$spacing-md: 20px;
+$spacing-lg: 32px;
+$spacing-xl: 48px;
+
+// 组件内边距
+$card-padding: 32px;
+$list-item-padding: 20px;
+$button-padding-vertical: 12px;
+$button-padding-horizontal: 32px;
+
+// ============================================
+// 4. 圆角系统
+// ============================================
+
+$border-radius-large: 12px;     // 大圆角 (卡片)
+$border-radius-medium: 8px;     // 中圆角
+$border-radius-small: 6px;      // 小圆角 (按钮)
+$border-radius-xsmall: 4px;     // 超小圆角 (标签)
+
+// ============================================
+// 5. 图标与图片
+// ============================================
+
+// 图标尺寸
+$icon-size-small: 24px;
+$icon-size-medium: 32px;
+$icon-size-large: 48px;
+
+// 图片比例
+$banner-ratio: calc(16 / 9);          // 首页Banner
+$container-photo-ratio: calc(4 / 3);  // 集装箱照片
+
+// ============================================
+// 6. 阴影系统
+// ============================================
+
+$shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+$shadow-button: 0 2px 4px rgba(0, 0, 0, 0.12);
+$shadow-modal: 0 4px 16px rgba(0, 0, 0, 0.16);
+$shadow-float: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// ============================================
+// 7. 动画系统
+// ============================================
+
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ============================================
+// 8. 布局系统
+// ============================================
+
+// 容器宽度
+$container-max-width: 1200px;
+$mobile-breakpoint: 768px;
+
+// 安全区域
+$safe-area-top: env(safe-area-inset-top);
+$safe-area-bottom: env(safe-area-inset-bottom);
+$safe-area-left: env(safe-area-inset-left);
+$safe-area-right: env(safe-area-inset-right);
+
+// ============================================
+// 9. Z-index层级
+// ============================================
+
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+// ============================================
+// 10. 组件特定变量
+// ============================================
+
+// 订单卡片
+$order-card-bg: $card-bg;
+$order-card-border: $border-color;
+$order-card-shadow: $shadow-card;
+$order-card-padding: $card-padding;
+$order-card-radius: $border-radius-large;
+
+// 按钮
+$button-primary-bg: $secondary-color;
+$button-primary-color: #FFFFFF;
+$button-secondary-bg: $primary-color;
+$button-secondary-color: #FFFFFF;
+$button-default-bg: #FFFFFF;
+$button-default-color: $text-color;
+$button-default-border: $border-color;
+
+// 标签
+$tag-sh-plate-bg: #FFF7E6;
+$tag-sh-plate-color: #FA8C16;
+$tag-port-bg: #E6F7FF;
+$tag-port-color: #1890FF;
+$tag-urgent-bg: #FFF1F0;
+$tag-urgent-color: #FF4D4F;
+
+// 进度条
+$progress-active-color: $primary-color;
+$progress-completed-color: $success-color;
+$progress-pending-color: #D9D9D9;
+$progress-line-width: 2px;
+$progress-node-size: 32px;
+
+// 钱包
+$wallet-header-bg: $primary-color;
+$wallet-header-color: #FFFFFF;
+$wallet-amount-color: $secondary-color;
+
+// ============================================
+// 11. 导出Quasar变量映射
+// ============================================
+
+// Quasar主题变量覆盖
+:root {
+  // 主色调
+  --q-primary: #{$primary-color};
+  --q-secondary: #{$secondary-color};
+  --q-accent: #{$secondary-color};
+  
+  // 语义色
+  --q-positive: #{$success-color};
+  --q-negative: #{$error-color};
+  --q-warning: #{$warning-color};
+  --q-info: #{$info-color};
+  
+  // 中性色
+  --q-dark: #{$title-color};
+  
+  // 字体
+  --q-font-family: #{$font-family};
+}
+
+// ============================================
+// 12. 工具类
+// ============================================
+
+// 文本颜色工具类
+.text-primary { color: $primary-color !important; }
+.text-secondary { color: $secondary-color !important; }
+.text-success { color: $success-color !important; }
+.text-warning { color: $warning-color !important; }
+.text-error { color: $error-color !important; }
+.text-hint { color: $hint-color !important; }
+
+// 背景色工具类
+.bg-primary { background-color: $primary-color !important; }
+.bg-secondary { background-color: $secondary-color !important; }
+.bg-success { background-color: $success-color !important; }
+.bg-card { background-color: $card-bg !important; }
+.bg-page { background-color: $bg-color !important; }
+
+// 间距工具类
+.p-xs { padding: $spacing-xs !important; }
+.p-sm { padding: $spacing-sm !important; }
+.p-md { padding: $spacing-md !important; }
+.p-lg { padding: $spacing-lg !important; }
+.p-xl { padding: $spacing-xl !important; }
+
+.m-xs { margin: $spacing-xs !important; }
+.m-sm { margin: $spacing-sm !important; }
+.m-md { margin: $spacing-md !important; }
+.m-lg { margin: $spacing-lg !important; }
+.m-xl { margin: $spacing-xl !important; }
+
+// 圆角工具类
+.rounded-sm { border-radius: $border-radius-small !important; }
+.rounded-md { border-radius: $border-radius-medium !important; }
+.rounded-lg { border-radius: $border-radius-large !important; }
+
+// 阴影工具类
+.shadow-card { box-shadow: $shadow-card !important; }
+.shadow-button { box-shadow: $shadow-button !important; }
+.shadow-modal { box-shadow: $shadow-modal !important; }

@@ -1,48 +1,152 @@
-# moqui-ai-mobile
+# 🛠️ Moqui AI Mobile 开发工具快速指南
 
-This template should help get you started developing with Vue 3 in Vite.
+## 📱 移动端开发优化工具集
 
-## Recommended IDE Setup
+### 🚀 快速开始
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+```bash
+# 1. 启动网络访问开发服务器
+npm run dev -- --host --port 5173
 
-## Recommended Browser Setup
+# 2. 检查开发环境
+./tools/dev-optimize.sh
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+# 3. 创建新组件
+./tools/create-component.sh ComponentName [type]
+```
 
-## Type Support for `.vue` Imports in TS
+### 📋 核心工具
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+#### 🌐 网络预览
+- **功能**: 移动设备直接访问开发环境
+- **地址**: `http://192.168.10.171:5173`
+- **用途**: 真机测试、跨设备调试
 
-## Customize configuration
+#### 🎨 组件生成器
+```bash
+# 基础组件
+./tools/create-component.sh Button
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+# 业务组件
+./tools/create-component.sh UserCard business
 
-## Project Setup
+# AI功能组件
+./tools/create-component.sh VoiceInput ai
+
+# 自定义路径
+./tools/create-component.sh Header layout components/layout
+```
+
+#### ⚡ 开发优化器
+```bash
+./tools/dev-optimize.sh
+```
+**检查项目**:
+- ✅ 开发服务器状态
+- ✅ 代码质量检查
+- ✅ 样式系统验证
+- ✅ 移动端调试工具
+- ✅ 性能监控系统
+
+### 📚 设计系统
+
+#### 基础组件
+```javascript
+// 导入基础组件
+import { MobileButton, MobileCard, MobileInput } from '@/components/base'
+```
+
+#### 样式系统
+```scss
+// 使用设计变量
+@import '@/styles/variables';
+@import '@/styles/mixins';
+
+.component {
+  @include mobile-touch;
+  padding: $spacing-md;
+  color: $primary-color;
+}
+```
+
+#### 设计系统展示
+- **访问**: `http://localhost:5173/design-system`
+- **内容**: 颜色系统、组件变体、响应式测试
+
+### 🎯 开发流程
+
+#### 日常开发
+1. 启动网络服务器
+2. 检查开发环境
+3. 创建/编辑组件
+4. 移动端真机测试
+5. 代码质量检查
+
+#### 组件开发
+1. 使用组件生成器创建标准结构
+2. 继承设计系统变量和混合器
+3. 应用移动端优化模式
+4. 添加 TypeScript 类型定义
+5. 编写使用文档和示例
+
+### 📖 详细文档
+
+- **完整实施方案**: [../docs/前端移动端完整实施方案.md](../docs/前端移动端完整实施方案.md)
+
+### 💡 最佳实践
+
+#### 移动端优化
+- 最小触摸目标: 44px
+- 响应式断点: 480px / 768px / 1024px
+- 触摸优化: 使用 `@include mobile-touch`
+- 性能优化: 懒加载、虚拟滚动
+
+#### 代码标准
+- Vue 3 Composition API + `<script setup>`
+- TypeScript 完整类型定义
+- SCSS 设计系统变量
+- ESLint + Prettier 代码格式化
+
+---
+
+## 🛠️ 传统开发命令
+
+### 项目设置
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 开发服务器
 
 ```sh
+# 标准开发服务器
 npm run dev
+
+# 网络访问开发服务器 (推荐)
+npm run dev -- --host --port 5173
 ```
 
-### Type-Check, Compile and Minify for Production
+### 生产构建
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 代码检查
 
 ```sh
 npm run lint
 ```
+
+### 类型检查
+
+```sh
+npm run type-check
+```
+
+---
+
+**开发状态**: ✅ 全面可用
+**网络地址**: http://192.168.10.171:5173
+**技术支持**: 📚 完整文档和工具支持

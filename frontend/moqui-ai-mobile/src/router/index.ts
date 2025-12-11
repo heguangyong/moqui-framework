@@ -7,8 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/pages/DashboardPage.vue'),
-      meta: { requiresAuth: false }
+      redirect: '/marketplace'
     },
     {
       path: '/login',
@@ -37,20 +36,44 @@ const router = createRouter({
     {
       path: '/marketplace',
       name: 'marketplace',
-      component: () => import('@/pages/marketplace/MessageSquare.vue'),
+      component: () => import('@/pages/marketplace/OrderHall.vue'),
       meta: { requiresAuth: false }
+    },
+    {
+      path: '/marketplace/order/:orderId',
+      name: 'order-detail',
+      component: () => import('@/pages/marketplace/OrderDetail.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/marketplace/order/:orderId/execution',
+      name: 'order-execution',
+      component: () => import('@/pages/marketplace/OrderExecution.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketplace/profile',
+      name: 'marketplace-profile',
+      component: () => import('@/pages/marketplace/MyProfile.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketplace/push-settings',
+      name: 'push-settings',
+      component: () => import('@/pages/marketplace/PushSettings.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/marketplace/push-history',
+      name: 'push-history',
+      component: () => import('@/pages/marketplace/PushHistory.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/marketplace/publish',
       name: 'marketplace-publish',
-      component: () => import('@/pages/marketplace/PublishMessage.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/marketplace/smart-matching',
-      name: 'smart-matching',
-      component: () => import('@/pages/marketplace/SmartMatching.vue'),
-      meta: { requiresAuth: true }
+      component: () => import('@/pages/marketplace/PublishOrder.vue'),
+      meta: { requiresAuth: false }
     },
     {
       path: '/ai/voice',

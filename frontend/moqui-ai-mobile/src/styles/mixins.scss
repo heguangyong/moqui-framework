@@ -1,0 +1,177 @@
+/* Moqui AI Mobile - 混合器库 */
+/* ================================ */
+
+// 🎨 渐变混合器
+@mixin gradient-primary {
+  background: $primary-gradient;
+}
+
+@mixin gradient-button {
+  background: linear-gradient(45deg, #ff6b6b, #feca57);
+  transition: all $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-button;
+  }
+}
+
+// 📱 移动端响应式混合器
+@mixin mobile-only {
+  @media (max-width: #{$mobile-breakpoint - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin mobile-small-only {
+  @media (max-width: #{$mobile-small - 1px}) {
+    @content;
+  }
+}
+
+// 🃏 卡片混合器
+@mixin card-base {
+  background: $bg-secondary;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-card;
+  border: 1px solid $gray-200;
+  transition: all $transition-base;
+}
+
+@mixin card-hover {
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lg;
+    border-color: rgba($primary-color, 0.3);
+  }
+}
+
+// 🎯 按钮混合器
+@mixin button-base {
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+  font-weight: $font-weight-medium;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-button;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// 📝 输入框混合器
+@mixin input-base {
+  background: $bg-primary;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+
+  &:hover {
+    background: $gray-50;
+    box-shadow: $shadow-sm;
+    border-color: $gray-300;
+  }
+
+  &:focus {
+    background: $white;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+}
+
+// 🏷️ 标签混合器
+@mixin tag-base {
+  background: linear-gradient(45deg, $gray-50, $gray-100);
+  color: $gray-700;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:hover {
+    background: linear-gradient(45deg, $gray-100, $gray-200);
+    transform: translateY(-1px);
+  }
+}
+
+// 📐 居中混合器
+@mixin center-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin center-absolute {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// 🌊 动画混合器
+@mixin fadeInUp($delay: 0s) {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: slideInUp 0.8s ease forwards;
+  animation-delay: $delay;
+}
+
+@mixin pulse {
+  animation: pulse 2s infinite;
+}
+
+@mixin bounce {
+  animation: bounce 1s infinite;
+}
+
+// 📱 移动端优化混合器
+@mixin mobile-touch {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+@mixin mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+// 🎨 状态混合器
+@mixin status-indicator($color) {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: $color;
+    border-radius: $border-radius-full;
+    animation: pulse 2s infinite;
+  }
+}
+
+// 📊 进度条混合器
+@mixin progress-bar($color: $primary-color) {
+  background: rgba($color, 0.2);
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    display: block;
+    height: 100%;
+    background: $color;
+    border-radius: inherit;
+    transition: width $transition-slow;
+  }
+}

@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+import NetworkStatus from './components/common/NetworkStatus.vue'
 </script>
 
 <template>
+  <!-- Network Status Banner - Requirements 5.1 -->
+  <NetworkStatus
+    position="top"
+    :auto-hide="true"
+    :auto-hide-delay="3000"
+  />
+
   <header>
     <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
