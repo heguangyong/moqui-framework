@@ -1,0 +1,122 @@
+// Babelio 主样式文件 - 极简理性风格
+@use 'sass:color';
+
+// 基础变量
+$primary: #2C3E50;      // 深灰蓝 - 理性沉稳
+$secondary: #8B4513;    // 书卷棕 - 文学气质
+$accent: #D4A574;       // 暖金色 - 精选标记
+$text-primary: #1A1A1A;
+$text-secondary: #666666;
+$background: #FAFAFA;
+$card-bg: #FFFFFF;
+
+// 全局样式
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background-color: $background;
+  color: $text-primary;
+  line-height: 1.6;
+}
+
+// 卡片样式
+.babelio-card {
+  background: $card-bg;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+// 书评内容样式
+.review-content {
+  font-size: 16px;
+  line-height: 1.8;
+  color: $text-primary;
+  
+  p {
+    margin-bottom: 1em;
+  }
+  
+  blockquote {
+    border-left: 3px solid $accent;
+    padding-left: 16px;
+    margin: 16px 0;
+    color: $text-secondary;
+    font-style: italic;
+  }
+}
+
+// 精选标记
+.featured-badge {
+  background: linear-gradient(135deg, $accent, color.scale($accent, $lightness: -10%));
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+// 三维评分样式
+.rating-dimension {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  
+  .label {
+    width: 80px;
+    font-size: 14px;
+    color: $text-secondary;
+  }
+  
+  .stars {
+    color: $accent;
+  }
+}
+
+// 书架状态标签
+.shelf-status {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  
+  &.want-to-read {
+    background: #E3F2FD;
+    color: #1976D2;
+  }
+  
+  &.reading {
+    background: #FFF3E0;
+    color: #F57C00;
+  }
+  
+  &.finished {
+    background: #E8F5E9;
+    color: #388E3C;
+  }
+}
+
+// 响应式布局
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+// 书籍网格
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+// 书评列表
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
