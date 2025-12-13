@@ -665,11 +665,16 @@ const formatPrice = (price: number): string => {
     margin-bottom: 20px;
 
     .filter-buttons {
+      :deep(.q-btn-group) {
+        gap: 8px;
+      }
+      
       :deep(.q-btn) {
         background: rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.7);
         border-radius: 8px;
         font-size: 13px;
+        margin: 0 4px;
       }
 
       :deep(.q-btn--active) {
