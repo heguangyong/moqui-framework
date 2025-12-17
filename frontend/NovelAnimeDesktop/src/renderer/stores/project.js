@@ -22,7 +22,25 @@ export const useProjectStore = defineStore('project', {
     currentProjectStatistics: (state) => {
       if (!state.currentProject) return null;
       return state.projectManager.getProjectStatistics(state.currentProject.id);
-    }
+    },
+    
+    // 项目分类统计
+    myProjects: (state) => state.projects.filter(p => !p.shared),
+    sharedProjects: (state) => state.projects.filter(p => p.shared),
+    
+    // 项目计数
+    projectCounts: (state) => ({
+      total: state.projects.length,
+      my: state.projects.filter(p => !p.shared).length,
+      shared: state.projects.filter(p => p.shared).length
+    }),
+    
+    // 项目状态统计
+    projectsByStatus: (state) => ({
+      draft: state.projects.filter(p => p.status === 'draft').length,
+      processing: state.projects.filter(p => p.status === 'processing').length,
+      completed: state.projects.filter(p => p.status === 'completed').length
+    })
   },
 
   actions: {

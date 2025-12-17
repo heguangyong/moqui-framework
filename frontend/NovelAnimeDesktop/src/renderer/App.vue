@@ -17,60 +17,23 @@
             </div>
             <!-- 分割线（只有这一条） -->
             <div class="sidebar-divider"></div>
-            <!-- 导航按钮（无分割线） -->
+            <!-- 导航按钮（数据驱动） -->
             <button 
-              class="sidebar-icon-btn sidebar-icon-btn--active"
-              @click="handleSidebarClick({ route: 'home', label: 'Home' })"
-              @mouseenter="showTooltip({ label: 'Home' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.home" :size="24" />
-            </button>
-            <button 
+              v-for="nav in navItems"
+              :key="nav.id"
               class="sidebar-icon-btn"
-              @click="handleSidebarClick({ route: 'workflow', label: 'Workflow' })"
-              @mouseenter="showTooltip({ label: 'Workflow' }, $event)"
+              :class="{ 'sidebar-icon-btn--active': activeNavId === nav.id }"
+              @click="handleNavClick(nav)"
+              @mouseenter="showTooltip({ label: nav.label }, $event)"
               @mouseleave="hideTooltip"
             >
-              <component :is="icons.workflow" :size="24" />
-            </button>
-            <button 
-              class="sidebar-icon-btn"
-              @click="handleSidebarClick({ route: 'star', label: 'Favorites' })"
-              @mouseenter="showTooltip({ label: 'Favorites' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.star" :size="24" />
-            </button>
-            <button 
-              class="sidebar-icon-btn"
-              @click="handleSidebarClick({ route: 'key', label: 'Keys' })"
-              @mouseenter="showTooltip({ label: 'Keys' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.key" :size="24" />
-            </button>
-            <button 
-              class="sidebar-icon-btn"
-              @click="handleSidebarClick({ route: 'grid', label: 'Grid' })"
-              @mouseenter="showTooltip({ label: 'Grid' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.grid" :size="24" />
-            </button>
-            <button 
-              class="sidebar-icon-btn"
-              @click="handleSidebarClick({ route: 'users', label: 'Users' })"
-              @mouseenter="showTooltip({ label: 'Users' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.users" :size="24" />
+              <component :is="nav.icon" :size="24" />
             </button>
           </div>
           <!-- 分割线 -->
           <div class="sidebar-section-divider"></div>
           <!-- 竖向文字标签（雕刻风格） -->
-          <div class="sidebar-label">REAGLE 2025 NAV</div>
+          <div class="sidebar-label">NOVEL ANIME</div>
         </div>
         
         <!-- 下半部分：设置区域（占 1/4 空间，即上方的 1/3） -->
@@ -141,26 +104,31 @@
           <div class="section-title">Projects</div>
           <div class="section-items">
             <div 
-              class="section-item section-item--active"
+              class="section-item"
+              :class="{ 'section-item--active': activeProjectView === 'dashboard' }"
               @click="handleProjectClick('dashboard')"
             >
               <component :is="icons.grid" :size="16" />
               <span>Dashboard</span>
-              <span class="item-badge">0</span>
+              <span class="item-badge">{{ projectStore.projectCounts.total }}</span>
             </div>
             <div 
               class="section-item"
+              :class="{ 'section-item--active': activeProjectView === 'library' }"
               @click="handleProjectClick('library')"
             >
               <component :is="icons.book" :size="16" />
-              <span>Library</span>
+              <span>我的项目</span>
+              <span v-if="projectStore.projectCounts.my > 0" class="item-badge">{{ projectStore.projectCounts.my }}</span>
             </div>
             <div 
               class="section-item"
+              :class="{ 'section-item--active': activeProjectView === 'shared' }"
               @click="handleProjectClick('shared')"
             >
               <component :is="icons.share" :size="16" />
-              <span>Shared Projects</span>
+              <span>共享项目</span>
+              <span v-if="projectStore.projectCounts.shared > 0" class="item-badge">{{ projectStore.projectCounts.shared }}</span>
             </div>
           </div>
         </div>
@@ -171,24 +139,30 @@
           <div class="section-items">
             <div 
               class="section-item"
+              :class="{ 'section-item--active': activeStatusView === 'new' }"
               @click="handleStatusClick('new')"
             >
               <component :is="icons.circle" :size="16" />
-              <span>New</span>
+              <span>新建</span>
+              <span v-if="taskStore.taskCounts.new > 0" class="item-badge">{{ taskStore.taskCounts.new }}</span>
             </div>
             <div 
               class="section-item"
-              @click="handleStatusClick('updates')"
+              :class="{ 'section-item--active': activeStatusView === 'running' }"
+              @click="handleStatusClick('running')"
             >
               <component :is="icons.refresh" :size="16" />
-              <span>Updates</span>
+              <span>处理中</span>
+              <span v-if="taskStore.taskCounts.running > 0" class="item-badge item-badge--highlight">{{ taskStore.taskCounts.running }}</span>
             </div>
             <div 
               class="section-item"
+              :class="{ 'section-item--active': activeStatusView === 'review' }"
               @click="handleStatusClick('review')"
             >
               <component :is="icons.users" :size="16" />
-              <span>Team Review</span>
+              <span>待审核</span>
+              <span v-if="taskStore.taskCounts.review > 0" class="item-badge">{{ taskStore.taskCounts.review }}</span>
             </div>
           </div>
         </div>
@@ -412,18 +386,23 @@
 </template>
 
 <script setup>
-import { onMounted, computed, reactive, ref } from 'vue';
+import { onMounted, computed, reactive, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useProjectStore } from './stores/project.js';
 import { useUIStore } from './stores/ui.js';
+import { useTaskStore } from './stores/task.js';
 import { icons } from './utils/icons.js';
 
 const router = useRouter();
 const route = useRoute();
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
+const taskStore = useTaskStore();
 
 const currentProject = computed(() => projectStore.currentProject);
+
+// 状态视图
+const activeStatusView = ref('');
 
 // 工具提示状态
 const tooltip = reactive({
@@ -439,6 +418,9 @@ const userMenuVisible = ref(false);
 // 文档树展开状态
 const expandedFolders = ref(['system']); // 默认展开 system 文件夹
 
+// 项目视图状态
+const activeProjectView = ref('dashboard');
+
 // 标签页状态
 const activeTab = ref('workflows');
 const tabs = [
@@ -450,45 +432,68 @@ const tabs = [
 // 搜索状态
 const searchQuery = ref('');
 
-// 侧边栏图标 - 匹配参考图的图标布局
-const sidebarIcons = [
+// 侧边栏导航项 - 映射到小说动漫生成器功能模块
+const navItems = [
   {
-    id: 'dashboard',
-    route: 'home',
+    id: 'home',
+    route: '/home',
     label: 'Dashboard',
-    icon: icons.grid
-  },
-  {
-    id: 'files',
-    route: 'files',
-    label: 'Files',
-    icon: icons.file
+    icon: icons.home,
+    description: '项目概览和快速操作'
   },
   {
     id: 'workflow',
-    route: 'workflow',
-    label: 'Workflow',
-    icon: icons.workflow
+    route: '/workflow',
+    label: '工作流',
+    icon: icons.workflow,
+    description: '可视化工作流编辑器'
   },
   {
-    id: 'users',
-    route: 'users',
-    label: 'Users',
-    icon: icons.users
+    id: 'favorites',
+    route: '/favorites',
+    label: '收藏',
+    icon: icons.star,
+    description: '收藏的项目和模板'
   },
   {
-    id: 'analytics',
-    route: 'analytics',
-    label: 'Analytics',
-    icon: icons.chart
+    id: 'api-config',
+    route: '/api-config',
+    label: 'API配置',
+    icon: icons.key,
+    description: 'AI服务密钥管理'
   },
   {
-    id: 'notifications',
-    route: 'notifications',
-    label: 'Notifications',
-    icon: icons.bell
+    id: 'assets',
+    route: '/assets',
+    label: '资源库',
+    icon: icons.grid,
+    description: '角色、场景等资源管理'
+  },
+  {
+    id: 'characters',
+    route: '/characters',
+    label: '角色管理',
+    icon: icons.users,
+    description: '角色档案和一致性管理'
   }
 ];
+
+// 当前激活的导航ID
+const activeNavId = ref('home');
+
+// 导航点击处理
+function handleNavClick(nav) {
+  activeNavId.value = nav.id;
+  uiStore.setActiveRoute(nav.route);
+  router.push(nav.route);
+  
+  uiStore.addNotification({
+    type: 'info',
+    title: nav.label,
+    message: nav.description,
+    timeout: 2000
+  });
+}
 
 // 动态计算页面标题和内容
 const contentPanelTitle = computed(() => {
@@ -623,33 +628,56 @@ function handleUserAction(action) {
 
 // 项目点击处理
 function handleProjectClick(projectType) {
+  activeProjectView.value = projectType;
+  
+  const labels = {
+    dashboard: 'Dashboard',
+    library: '我的项目',
+    shared: '共享项目'
+  };
+  
   uiStore.addNotification({
     type: 'info',
-    title: `切换到 ${projectType}`,
-    message: `正在加载 ${projectType} 内容`,
+    title: labels[projectType],
+    message: `正在加载 ${labels[projectType]} 内容`,
     timeout: 2000
   });
   
-  // 这里可以添加项目切换逻辑
-  console.log('Project clicked:', projectType);
+  // 根据项目类型导航到对应视图
+  if (projectType === 'dashboard') {
+    router.push('/home');
+  } else if (projectType === 'library') {
+    router.push('/projects/my');
+  } else if (projectType === 'shared') {
+    router.push('/projects/shared');
+  }
 }
 
 // 状态点击处理
 function handleStatusClick(statusType) {
+  activeStatusView.value = statusType;
+  
   const statusLabels = {
-    new: 'New Items',
-    updates: 'Updates',
-    review: 'Team Review'
+    new: '新建任务',
+    running: '处理中',
+    review: '待审核'
+  };
+  
+  const counts = {
+    new: taskStore.taskCounts.new,
+    running: taskStore.taskCounts.running,
+    review: taskStore.taskCounts.review
   };
   
   uiStore.addNotification({
     type: 'info',
     title: statusLabels[statusType],
-    message: `正在查看 ${statusLabels[statusType]} 内容`,
+    message: `共 ${counts[statusType]} 个任务`,
     timeout: 2000
   });
   
-  console.log('Status clicked:', statusType);
+  // 导航到任务列表视图
+  router.push(`/tasks/${statusType}`);
 }
 
 // 历史记录点击处理
@@ -762,12 +790,20 @@ onMounted(() => {
   // 初始化UI状态
   uiStore.initializeFromStorage();
   
+  // 加载任务数据
+  taskStore.loadTasks();
+  
   // 强制侧边栏展开
   uiStore.layout.sidebarCollapsed = false;
   
+  // 根据当前路由设置激活的导航项
+  const currentPath = route.path;
+  const matchedNav = navItems.find(nav => currentPath.startsWith(nav.route));
+  if (matchedNav) {
+    activeNavId.value = matchedNav.id;
+  }
+  
   console.log('App mounted, UI store initialized');
-  console.log('Sidebar collapsed:', uiStore.layout.sidebarCollapsed);
-  console.log('UI Store layout:', uiStore.layout);
   
   // 监听菜单事件
   if (window.electronAPI) {
@@ -787,6 +823,14 @@ onMounted(() => {
           break;
       }
     });
+  }
+});
+
+// 监听路由变化，同步激活状态
+watch(() => route.path, (newPath) => {
+  const matchedNav = navItems.find(nav => newPath.startsWith(nav.route));
+  if (matchedNav) {
+    activeNavId.value = matchedNav.id;
   }
 });
 
