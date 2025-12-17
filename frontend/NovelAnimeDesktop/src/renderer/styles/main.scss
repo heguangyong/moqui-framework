@@ -1,0 +1,166 @@
+// 主样式入口文件
+// 电子书风格UI的样式系统
+
+// 导入设计系统
+@import './design-system.scss';
+
+// 导入组件样式
+@import './components.scss';
+
+// 注释掉布局样式导入，避免与App.vue中的样式冲突
+// @import './layout.scss';
+
+// ===== 全局样式重置和基础样式 =====
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  font-family: var(--font-family-sans);
+  color: var(--text-primary);
+  background-color: var(--content-panel-bg);
+}
+
+// ===== 全局工具类 =====
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: var(--spacing-2);
+}
+
+.gap-4 {
+  gap: var(--spacing-4);
+}
+
+.p-2 {
+  padding: var(--spacing-2);
+}
+
+.p-4 {
+  padding: var(--spacing-4);
+}
+
+.p-6 {
+  padding: var(--spacing-6);
+}
+
+.m-0 {
+  margin: 0;
+}
+
+.mb-4 {
+  margin-bottom: var(--spacing-4);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+// ===== 动画类 =====
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-normal);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform var(--transition-normal);
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(100%);
+}
+
+// ===== 焦点样式 =====
+.focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// ===== 选择样式 =====
+::selection {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: var(--text-primary);
+}
+
+// ===== 打印样式 =====
+@media print {
+  .sidebar,
+  .content-panel__header,
+  .main-area__header {
+    display: none !important;
+  }
+  
+  .app-layout {
+    height: auto;
+    overflow: visible;
+  }
+  
+  .main-area {
+    flex: none;
+  }
+  
+  .main-area__body {
+    padding: 0;
+    overflow: visible;
+  }
+}
