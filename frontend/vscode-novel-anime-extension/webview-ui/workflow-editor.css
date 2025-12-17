@@ -1,0 +1,546 @@
+/* 工作流编辑器样式 */
+
+.workflow-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--vscode-editorGroupHeader-tabsBackground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    gap: 12px;
+}
+
+.workflow-toolbar-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.workflow-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.workflow-btn:hover:not(:disabled) {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.workflow-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.workflow-btn-primary {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.workflow-btn-primary:hover:not(:disabled) {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.workflow-btn-danger {
+    background-color: var(--vscode-errorForeground);
+    color: white;
+}
+
+.workflow-btn-danger:hover:not(:disabled) {
+    background-color: #d32f2f;
+}
+
+.workflow-btn-small {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: auto;
+}
+
+/* 工作流画布容器 */
+.workflow-canvas-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.workflow-canvas {
+    flex: 1;
+    position: relative;
+    background-color: var(--vscode-editor-background);
+    overflow: auto;
+    min-height: 400px;
+}
+
+/* 网格背景 */
+.workflow-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(var(--vscode-panel-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--vscode-panel-border) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* 连接线容器 */
+.workflow-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.connection-line {
+    fill: none;
+    stroke: var(--vscode-textLink-foreground);
+    stroke-width: 2;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+.connection-line:hover {
+    stroke: var(--vscode-textLink-activeForeground);
+    stroke-width: 3;
+}
+
+/* 节点容器 */
+.workflow-nodes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+/* 工作流节点 */
+.workflow-node {
+    position: absolute;
+    background-color: var(--vscode-editor-background);
+    border: 2px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    user-select: none;
+    min-width: 180px;
+    transition: all 0.2s ease;
+}
+
+.workflow-node:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.workflow-node.selected {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+}
+
+/* 节点头部 */
+.node-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: var(--vscode-button-background);
+    color: white;
+    border-radius: 4px 4px 0 0;
+    cursor: move;
+    position: relative;
+}
+
+.node-header i {
+    font-size: 14px;
+}
+
+.node-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.node-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #666;
+}
+
+.node-status-idle {
+    background-color: #666;
+}
+
+.node-status-running {
+    background-color: #2196F3;
+    animation: pulse 1s infinite;
+}
+
+.node-status-completed {
+    background-color: #4CAF50;
+}
+
+.node-status-error {
+    background-color: #F44336;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 节点主体 */
+.node-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 节点端口 */
+.node-inputs,
+.node-outputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.node-port {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.node-input {
+    justify-content: flex-start;
+}
+
+.node-output {
+    justify-content: flex-end;
+}
+
+.port-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--vscode-button-background);
+    border: 2px solid var(--vscode-panel-border);
+    cursor: crosshair;
+    transition: all 0.2s;
+}
+
+.port-dot:hover {
+    background-color: var(--vscode-textLink-foreground);
+    transform: scale(1.2);
+}
+
+.port-label {
+    font-size: 11px;
+    color: var(--vscode-foreground);
+}
+
+/* 属性面板 */
+.workflow-properties {
+    width: 280px;
+    background-color: var(--vscode-sideBar-background);
+    border-left: 1px solid var(--vscode-panel-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.properties-header {
+    padding: 8px 12px;
+    background-color: var(--vscode-sideBarSectionHeader-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.properties-header h4 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--vscode-sideBarSectionHeader-foreground);
+}
+
+.properties-content {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.properties-placeholder {
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    padding: 20px;
+}
+
+/* 属性组 */
+.property-group {
+    margin-bottom: 12px;
+}
+
+.property-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.property-input,
+.property-textarea,
+.property-select {
+    width: 100%;
+    padding: 6px 8px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    color: var(--vscode-input-foreground);
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.property-input:focus,
+.property-textarea:focus,
+.property-select:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.property-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.property-checkbox {
+    width: auto;
+    margin: 0;
+}
+
+.property-section {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.property-section h5 {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    text-transform: uppercase;
+}
+
+.property-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+/* 日志面板 */
+.workflow-logs {
+    height: 200px;
+    background-color: var(--vscode-panel-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--vscode-panelTitle-activeBorder);
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.logs-header h4 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--vscode-panelTitle-activeForeground);
+}
+
+.logs-content {
+    flex: 1;
+    padding: 8px 12px;
+    overflow-y: auto;
+    font-family: var(--vscode-editor-font-family);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* 日志条目 */
+.log-entry {
+    display: flex;
+    gap: 8px;
+    padding: 2px 0;
+    border-bottom: 1px solid transparent;
+}
+
+.log-entry:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.log-timestamp {
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    min-width: 80px;
+}
+
+.log-level {
+    font-weight: 600;
+    min-width: 60px;
+}
+
+.log-message {
+    flex: 1;
+    color: var(--vscode-foreground);
+}
+
+/* 日志级别颜色 */
+.log-info .log-level {
+    color: var(--vscode-notificationsInfoIcon-foreground);
+}
+
+.log-success .log-level {
+    color: #4CAF50;
+}
+
+.log-warning .log-level {
+    color: var(--vscode-notificationsWarningIcon-foreground);
+}
+
+.log-error .log-level {
+    color: var(--vscode-notificationsErrorIcon-foreground);
+}
+
+/* 图标 */
+.icon-book::before { content: '📖'; }
+.icon-person::before { content: '👤'; }
+.icon-scene::before { content: '🎬'; }
+.icon-script::before { content: '📝'; }
+.icon-video::before { content: '🎥'; }
+.icon-save::before { content: '💾'; }
+.icon-play::before { content: '▶️'; }
+.icon-stop::before { content: '⏹️'; }
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .workflow-properties {
+        width: 240px;
+    }
+    
+    .workflow-toolbar-group {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .workflow-canvas-container {
+        flex-direction: column;
+    }
+    
+    .workflow-properties {
+        width: 100%;
+        height: 200px;
+        border-left: none;
+        border-top: 1px solid var(--vscode-panel-border);
+    }
+    
+    .workflow-logs {
+        height: 150px;
+    }
+    
+    .workflow-toolbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .workflow-toolbar-group {
+        justify-content: center;
+    }
+}
+
+/* 滚动条样式 */
+.workflow-canvas::-webkit-scrollbar,
+.properties-content::-webkit-scrollbar,
+.logs-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.workflow-canvas::-webkit-scrollbar-track,
+.properties-content::-webkit-scrollbar-track,
+.logs-content::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+.workflow-canvas::-webkit-scrollbar-thumb,
+.properties-content::-webkit-scrollbar-thumb,
+.logs-content::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-background);
+    border-radius: 4px;
+}
+
+.workflow-canvas::-webkit-scrollbar-thumb:hover,
+.properties-content::-webkit-scrollbar-thumb:hover,
+.logs-content::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+/* 动画效果 */
+.workflow-node {
+    animation: nodeAppear 0.3s ease-out;
+}
+
+@keyframes nodeAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.connection-line {
+    animation: connectionDraw 0.5s ease-out;
+}
+
+@keyframes connectionDraw {
+    from {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+    }
+    to {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 0;
+    }
+}

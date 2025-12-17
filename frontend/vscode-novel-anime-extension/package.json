@@ -1,0 +1,252 @@
+{
+  "name": "novel-anime-generator",
+  "displayName": "小说动漫生成器",
+  "description": "使用AI技术将小说转换为精美的动画视频的VS Code扩展",
+  "version": "0.1.0",
+  "publisher": "novel-anime-studio",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "小说",
+    "动漫",
+    "AI",
+    "视频生成",
+    "创作工具"
+  ],
+  "activationEvents": [
+    "onCommand:novelAnime.createProject",
+    "onCommand:novelAnime.openWorkflow",
+    "onLanguage:plaintext",
+    "onLanguage:markdown",
+    "workspaceContains:**/*.novel",
+    "workspaceContains:**/novel-anime.config.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "novelAnime.createProject",
+        "title": "创建新项目",
+        "category": "小说动漫生成器",
+        "icon": "$(add)"
+      },
+      {
+        "command": "novelAnime.openProject",
+        "title": "打开项目",
+        "category": "小说动漫生成器",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "novelAnime.openWorkflow",
+        "title": "打开工作流编辑器",
+        "category": "小说动漫生成器",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "novelAnime.parseNovel",
+        "title": "解析小说",
+        "category": "小说动漫生成器",
+        "icon": "$(book)"
+      },
+      {
+        "command": "novelAnime.generateVideo",
+        "title": "生成动画视频",
+        "category": "小说动漫生成器",
+        "icon": "$(play)"
+      },
+      {
+        "command": "novelAnime.showSettings",
+        "title": "扩展设置",
+        "category": "小说动漫生成器",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "novelAnimeExplorer",
+          "title": "小说动漫生成器",
+          "icon": "$(movie)"
+        }
+      ]
+    },
+    "views": {
+      "novelAnimeExplorer": [
+        {
+          "id": "novelAnimeProjects",
+          "name": "项目",
+          "when": "novelAnime.hasProjects"
+        },
+        {
+          "id": "novelAnimeCharacters",
+          "name": "角色",
+          "when": "novelAnime.hasActiveProject"
+        },
+        {
+          "id": "novelAnimeWorkflows",
+          "name": "工作流",
+          "when": "novelAnime.hasActiveProject"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "novelAnime.createProject",
+          "when": "true"
+        },
+        {
+          "command": "novelAnime.openProject",
+          "when": "true"
+        },
+        {
+          "command": "novelAnime.openWorkflow",
+          "when": "novelAnime.hasActiveProject"
+        },
+        {
+          "command": "novelAnime.parseNovel",
+          "when": "resourceExtname == .txt || resourceExtname == .md"
+        },
+        {
+          "command": "novelAnime.generateVideo",
+          "when": "novelAnime.hasActiveProject"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "novelAnime.parseNovel",
+          "when": "resourceExtname == .txt || resourceExtname == .md",
+          "group": "novelAnime"
+        },
+        {
+          "command": "novelAnime.generateVideo",
+          "when": "resourceExtname == .txt || resourceExtname == .md",
+          "group": "novelAnime"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "小说动漫生成器",
+      "properties": {
+        "novelAnime.aiService.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "AI服务API密钥",
+          "scope": "application"
+        },
+        "novelAnime.aiService.endpoint": {
+          "type": "string",
+          "default": "https://api.zhipuai.cn/api/paas/v4/",
+          "description": "AI服务端点URL",
+          "scope": "application"
+        },
+        "novelAnime.aiService.model": {
+          "type": "string",
+          "default": "glm-4",
+          "enum": [
+            "glm-4",
+            "glm-4v-plus",
+            "glm-3-turbo"
+          ],
+          "description": "使用的AI模型",
+          "scope": "application"
+        },
+        "novelAnime.output.videoFormat": {
+          "type": "string",
+          "default": "mp4",
+          "enum": [
+            "mp4",
+            "avi",
+            "mov"
+          ],
+          "description": "输出视频格式",
+          "scope": "resource"
+        },
+        "novelAnime.output.resolution": {
+          "type": "string",
+          "default": "1920x1080",
+          "enum": [
+            "1280x720",
+            "1920x1080",
+            "3840x2160"
+          ],
+          "description": "视频分辨率",
+          "scope": "resource"
+        },
+        "novelAnime.output.frameRate": {
+          "type": "number",
+          "default": 30,
+          "minimum": 15,
+          "maximum": 60,
+          "description": "视频帧率",
+          "scope": "resource"
+        },
+        "novelAnime.workspace.autoSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "自动保存项目文件",
+          "scope": "resource"
+        },
+        "novelAnime.workspace.backupEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用项目备份",
+          "scope": "resource"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "novel",
+        "aliases": [
+          "Novel",
+          "小说"
+        ],
+        "extensions": [
+          ".novel",
+          ".txt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "novel",
+        "scopeName": "text.novel",
+        "path": "./syntaxes/novel.tmGrammar.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/uuid": "^10.0.0",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chokidar": "^3.5.3",
+    "uuid": "^9.0.0"
+  }
+}

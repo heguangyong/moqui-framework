@@ -1,0 +1,337 @@
+/* 小说动漫生成器 Webview 样式 */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    overflow: hidden;
+}
+
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 加载状态 */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: var(--vscode-foreground);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--vscode-progressBar-background);
+    border-top: 3px solid var(--vscode-progressBar-foreground);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* 主要布局 */
+.main-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 300px;
+    background-color: var(--vscode-sideBar-background);
+    border-right: 1px solid var(--vscode-sideBar-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 工具栏 */
+.toolbar {
+    height: 40px;
+    background-color: var(--vscode-titleBar-activeBackground);
+    border-bottom: 1px solid var(--vscode-titleBar-border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+}
+
+.toolbar-button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s;
+}
+
+.toolbar-button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.toolbar-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 面板 */
+.panel {
+    background-color: var(--vscode-panel-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    margin: 8px;
+    overflow: hidden;
+}
+
+.panel-header {
+    background-color: var(--vscode-panelTitle-activeBorder);
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.panel-content {
+    padding: 12px;
+    overflow-y: auto;
+}
+
+/* 项目信息 */
+.project-info {
+    padding: 16px;
+}
+
+.project-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--vscode-foreground);
+}
+
+.project-description {
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 16px;
+}
+
+.project-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px;
+    background-color: var(--vscode-input-background);
+    border-radius: 4px;
+    border: 1px solid var(--vscode-input-border);
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--vscode-textLink-foreground);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 4px;
+}
+
+/* 工作流编辑器 */
+.workflow-editor {
+    flex: 1;
+    position: relative;
+    background-color: var(--vscode-editor-background);
+}
+
+.workflow-canvas {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: auto;
+}
+
+/* 节点样式 */
+.workflow-node {
+    position: absolute;
+    background-color: var(--vscode-input-background);
+    border: 2px solid var(--vscode-input-border);
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 150px;
+    cursor: move;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.workflow-node:hover {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.workflow-node.selected {
+    border-color: var(--vscode-textLink-foreground);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.node-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--vscode-foreground);
+}
+
+.node-description {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 8px;
+}
+
+.node-ports {
+    display: flex;
+    justify-content: space-between;
+}
+
+.node-port {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--vscode-button-background);
+    border: 2px solid var(--vscode-button-foreground);
+    cursor: pointer;
+}
+
+.node-port:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+/* 连接线 */
+.workflow-connection {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.connection-line {
+    stroke: var(--vscode-textLink-foreground);
+    stroke-width: 2;
+    fill: none;
+}
+
+/* 属性面板 */
+.properties-panel {
+    width: 100%;
+}
+
+.property-group {
+    margin-bottom: 16px;
+}
+
+.property-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--vscode-foreground);
+}
+
+.property-input {
+    width: 100%;
+    padding: 6px 8px;
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+}
+
+.property-input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.property-select {
+    width: 100%;
+    padding: 6px 8px;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 3px;
+    color: var(--vscode-dropdown-foreground);
+    font-size: 13px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .project-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+/* 动画 */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

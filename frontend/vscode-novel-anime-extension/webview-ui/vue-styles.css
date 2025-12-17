@@ -1,0 +1,495 @@
+/* Vue 适配器样式 */
+
+/* Vue 主布局 */
+.vue-main-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.vue-header {
+    background: var(--vscode-titleBar-activeBackground);
+    border-bottom: 1px solid var(--vscode-titleBar-border);
+    padding: 8px 12px;
+}
+
+.vue-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.vue-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.vue-sidebar {
+    width: 300px;
+    background: var(--vscode-sideBar-background);
+    border-right: 1px solid var(--vscode-sideBar-border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.vue-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vue-footer {
+    background: var(--vscode-statusBar-background);
+    border-top: 1px solid var(--vscode-statusBar-border);
+    height: 24px;
+}
+
+/* Vue 按钮 */
+.vue-btn {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background-color 0.2s;
+}
+
+.vue-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.vue-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.vue-btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Vue 面板 */
+.vue-panel {
+    border-bottom: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+}
+
+.vue-panel-header {
+    background: var(--vscode-panelTitle-activeBorder);
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    color: var(--vscode-panelTitle-activeForeground);
+}
+
+.vue-panel-content {
+    padding: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Vue 项目信息 */
+.vue-project-info h3 {
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+    font-size: 16px;
+}
+
+.vue-project-info p {
+    margin: 0 0 12px 0;
+    color: var(--vscode-descriptionForeground);
+    font-size: 13px;
+}
+
+.vue-project-stats {
+    display: flex;
+    gap: 16px;
+}
+
+.vue-stat {
+    text-align: center;
+}
+
+.vue-stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vscode-textLink-foreground);
+}
+
+.vue-stat-label {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    text-transform: uppercase;
+}
+
+/* Vue 工作流 */
+.vue-workflow-area {
+    flex: 1;
+    background: var(--vscode-editor-background);
+    overflow: auto;
+    padding: 16px;
+}
+
+.vue-workflow-editor h3 {
+    margin: 0 0 16px 0;
+    color: var(--vscode-foreground);
+}
+
+.vue-workflow-canvas {
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    height: 400px;
+    position: relative;
+}
+
+.vue-workflow-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.vue-workflow-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.vue-workflow-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--vscode-list-inactiveSelectionBackground);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.vue-workflow-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.vue-workflow-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--vscode-foreground);
+}
+
+.vue-workflow-description {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 8px;
+}
+
+.vue-workflow-actions {
+    display: flex;
+    gap: 4px;
+    padding: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.vue-empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+/* Vue 属性面板 */
+.vue-properties-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vue-properties-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.vue-property-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vue-property-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--vscode-foreground);
+}
+
+.vue-property-input,
+.vue-property-select,
+.vue-property-textarea {
+    padding: 6px 8px;
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.vue-property-input:focus,
+.vue-property-select:focus,
+.vue-property-textarea:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.vue-property-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Vue 素材浏览器 */
+.vue-asset-browser {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.vue-asset-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.vue-search-input {
+    flex: 1;
+    padding: 6px 8px;
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+}
+
+.vue-search-input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.vue-asset-grid {
+    flex: 1;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+}
+
+/* Vue 状态栏 */
+.vue-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 100%;
+    font-size: 12px;
+    color: var(--vscode-statusBar-foreground);
+}
+
+.vue-progress {
+    width: 100px;
+    height: 4px;
+    background: var(--vscode-progressBar-background);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.vue-progress-bar {
+    height: 100%;
+    background: var(--vscode-progressBar-foreground);
+    width: 0%;
+    animation: vue-progress-animation 2s infinite;
+}
+
+@keyframes vue-progress-animation {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
+}
+
+/* Vue 通知系统 */
+.vue-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 400px;
+}
+
+.vue-notification {
+    background: var(--vscode-notifications-background);
+    border: 1px solid var(--vscode-notifications-border);
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.vue-notification-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.vue-notification-content {
+    flex: 1;
+}
+
+.vue-notification-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--vscode-notifications-foreground);
+}
+
+.vue-notification-message {
+    font-size: 13px;
+    color: var(--vscode-notifications-foreground);
+    line-height: 1.4;
+}
+
+.vue-notification-close {
+    background: none;
+    border: none;
+    color: var(--vscode-notifications-foreground);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+.vue-notification-close:hover {
+    opacity: 1;
+    background: var(--vscode-toolbar-hoverBackground);
+}
+
+/* 通知类型样式 */
+.vue-notification-info {
+    border-left: 4px solid var(--vscode-notificationsInfoIcon-foreground);
+}
+
+.vue-notification-success {
+    border-left: 4px solid #4CAF50;
+}
+
+.vue-notification-warning {
+    border-left: 4px solid var(--vscode-notificationsWarningIcon-foreground);
+}
+
+.vue-notification-error {
+    border-left: 4px solid var(--vscode-notificationsErrorIcon-foreground);
+}
+
+/* 图标 */
+.icon-plus::before { content: '+'; }
+.icon-workflow::before { content: '⚡'; }
+.icon-assets::before { content: '📁'; }
+.icon-upload::before { content: '⬆'; }
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .vue-content {
+        flex-direction: column;
+    }
+    
+    .vue-sidebar {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--vscode-sideBar-border);
+    }
+    
+    .vue-notifications {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+    
+    .vue-toolbar {
+        flex-wrap: wrap;
+    }
+}
+
+/* 主题适配 */
+.vue-theme-dark {
+    /* 深色主题特定样式 */
+}
+
+.vue-theme-light {
+    /* 浅色主题特定样式 */
+}
+
+.vue-theme-auto {
+    /* 自动主题样式 */
+}
+
+/* 动画 */
+.vue-fade-in {
+    animation: vue-fade-in 0.3s ease-in;
+}
+
+@keyframes vue-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.vue-slide-in {
+    animation: vue-slide-in 0.3s ease-out;
+}
+
+@keyframes vue-slide-in {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 滚动条样式 */
+.vue-panel-content::-webkit-scrollbar,
+.vue-workflow-list::-webkit-scrollbar,
+.vue-asset-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.vue-panel-content::-webkit-scrollbar-track,
+.vue-workflow-list::-webkit-scrollbar-track,
+.vue-asset-grid::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+.vue-panel-content::-webkit-scrollbar-thumb,
+.vue-workflow-list::-webkit-scrollbar-thumb,
+.vue-asset-grid::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+    border-radius: 4px;
+}
+
+.vue-panel-content::-webkit-scrollbar-thumb:hover,
+.vue-workflow-list::-webkit-scrollbar-thumb:hover,
+.vue-asset-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+}
