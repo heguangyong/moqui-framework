@@ -5,6 +5,7 @@ import {
   Home,
   FileText,
   Edit3,
+  Edit,
   Workflow,
   Settings,
   Search,
@@ -13,7 +14,9 @@ import {
   ChevronDown,
   Folder,
   FolderOpen,
+  FolderPlus,
   File,
+  FilePlus,
   Users,
   Play,
   Pause,
@@ -66,7 +69,11 @@ import {
   User,
   LogOut,
   Key,
-  Sparkles
+  Sparkles,
+  Image,
+  Video,
+  Lock,
+  Unlock
 } from 'lucide-vue-next';
 
 // 导航图标映射
@@ -203,7 +210,18 @@ export const icons = {
   sparkles: Sparkles,
   users: Users,
   star: Star,
-  trendingUp: TrendingUp
+  trendingUp: TrendingUp,
+  // 文件操作图标
+  filePlus: FilePlus,
+  folderPlus: FolderPlus,
+  edit: Edit,
+  trash: Trash2,
+  image: Image,
+  video: Video,
+  x: X,
+  plus: Plus,
+  lock: Lock,
+  unlock: Unlock
 };
 
 // 默认图标属性

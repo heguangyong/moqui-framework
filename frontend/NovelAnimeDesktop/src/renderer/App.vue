@@ -192,71 +192,16 @@
         <div class="section section--documents">
           <div class="section-header">
             <div class="section-title">Documents</div>
-            <span class="add-btn" @click="handleCreateNew">+</span>
+            <span class="add-btn" @click="handleCreateDocument">+</span>
           </div>
           
-          <!-- 搜索框 -->
-          <div class="search-box">
-            <component :is="icons.search" :size="16" class="search-icon" />
-            <input type="text" placeholder="Search" class="search-input" />
-          </div>
-          
-          <!-- 文档树 -->
-          <div class="document-tree">
-            <div 
-              class="tree-item tree-item--folder"
-              :class="{ 'tree-item--expanded': expandedFolders.includes('system') }"
-              @click="toggleFolder('system')"
-            >
-              <component :is="expandedFolders.includes('system') ? icons.chevronDown : icons.chevronRight" :size="12" class="tree-chevron" />
-              <component :is="icons.folder" :size="16" />
-              <span>System Management's</span>
-              <span class="item-count">12</span>
-            </div>
-            
-            <div v-if="expandedFolders.includes('system')" class="tree-item tree-item--folder tree-item--nested">
-              <component :is="expandedFolders.includes('2025') ? icons.chevronDown : icons.chevronRight" :size="12" class="tree-chevron" />
-              <component :is="icons.folder" :size="16" />
-              <span>2025 Update's</span>
-              <span class="item-count">2</span>
-            </div>
-            
-            <div v-if="expandedFolders.includes('system')" class="tree-item tree-item--file tree-item--nested-2">
-              <div class="tree-spacer"></div>
-              <component :is="icons.fileText" :size="16" />
-              <span>Hiring Process</span>
-              <span class="item-count">4</span>
-            </div>
-            
-            <div v-if="expandedFolders.includes('system')" class="tree-item tree-item--file tree-item--nested-2">
-              <div class="tree-spacer"></div>
-              <component :is="icons.fileText" :size="16" />
-              <span>Billing Process</span>
-              <span class="item-count">3</span>
-            </div>
-            
-            <div 
-              class="tree-item tree-item--folder"
-              :class="{ 'tree-item--expanded': expandedFolders.includes('fundamentals') }"
-              @click="toggleFolder('fundamentals')"
-            >
-              <component :is="expandedFolders.includes('fundamentals') ? icons.chevronDown : icons.chevronRight" :size="12" class="tree-chevron" />
-              <component :is="icons.folder" :size="16" />
-              <span>Fundamentals</span>
-              <span class="item-count">4</span>
-            </div>
-            
-            <div 
-              class="tree-item tree-item--folder"
-              :class="{ 'tree-item--expanded': expandedFolders.includes('servers') }"
-              @click="toggleFolder('servers')"
-            >
-              <component :is="expandedFolders.includes('servers') ? icons.chevronDown : icons.chevronRight" :size="12" class="tree-chevron" />
-              <component :is="icons.folder" :size="16" />
-              <span>Off Grid Servers</span>
-              <span class="item-count">5</span>
-            </div>
-          </div>
+          <!-- 文档树组件 -->
+          <DocumentTree
+            @select="handleDocumentSelect"
+            @open="handleDocumentOpen"
+            @create="handleDocumentCreate"
+            @delete="handleDocumentDelete"
+          />
         </div>
         </div>
         
@@ -391,13 +336,16 @@ import { useRouter, useRoute } from 'vue-router';
 import { useProjectStore } from './stores/project.js';
 import { useUIStore } from './stores/ui.js';
 import { useTaskStore } from './stores/task.js';
+import { useFileStore } from './stores/file.js';
 import { icons } from './utils/icons.js';
+import DocumentTree from './components/explorer/DocumentTree.vue';
 
 const router = useRouter();
 const route = useRoute();
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
+const fileStore = useFileStore();
 
 const currentProject = computed(() => projectStore.currentProject);
 
@@ -415,8 +363,7 @@ const tooltip = reactive({
 // 用户菜单状态
 const userMenuVisible = ref(false);
 
-// 文档树展开状态
-const expandedFolders = ref(['system']); // 默认展开 system 文件夹
+// 文档树展开状态 - 现在由 fileStore 管理
 
 // 项目视图状态
 const activeProjectView = ref('dashboard');
@@ -697,15 +644,7 @@ function handleHistoryClick(historyType) {
   console.log('History clicked:', historyType);
 }
 
-// 文件夹展开/折叠处理
-function toggleFolder(folderId) {
-  const index = expandedFolders.value.indexOf(folderId);
-  if (index > -1) {
-    expandedFolders.value.splice(index, 1);
-  } else {
-    expandedFolders.value.push(folderId);
-  }
-}
+// 文件夹展开/折叠处理 - 现在由 DocumentTree 组件和 fileStore 管理
 
 // 创建新项目处理
 function handleCreateNew() {
@@ -713,6 +652,93 @@ function handleCreateNew() {
     type: 'info',
     title: '创建新项目',
     message: '正在打开创建项目对话框',
+    timeout: 2000
+  });
+}
+
+// 文档树事件处理
+function handleCreateDocument() {
+  const name = prompt('请输入文件夹名称:');
+  if (name && name.trim()) {
+    fileStore.addFolder(null, { name: name.trim() });
+    uiStore.addNotification({
+      type: 'success',
+      title: '创建成功',
+      message: `文件夹 "${name}" 已创建`,
+      timeout: 2000
+    });
+  }
+}
+
+function handleDocumentSelect(node) {
+  if (node.type === 'file') {
+    uiStore.addNotification({
+      type: 'info',
+      title: '选中文件',
+      message: `已选中: ${node.name}`,
+      timeout: 1500
+    });
+  }
+}
+
+function handleDocumentOpen(node) {
+  uiStore.addNotification({
+    type: 'info',
+    title: '打开文件',
+    message: `正在打开: ${node.name}`,
+    timeout: 2000
+  });
+  // 根据文件类型导航到对应的编辑器
+  const fileType = node.fileType || 'other';
+  switch (fileType) {
+    case 'novel':
+      router.push(`/edit/novel/${node.id}`);
+      break;
+    case 'script':
+      router.push(`/edit/script/${node.id}`);
+      break;
+    case 'storyboard':
+      router.push(`/edit/storyboard/${node.id}`);
+      break;
+    case 'video':
+      router.push(`/preview/video/${node.id}`);
+      break;
+    default:
+      router.push(`/edit/file/${node.id}`);
+  }
+}
+
+function handleDocumentCreate({ type, parentId }) {
+  if (type === 'folder') {
+    const name = prompt('请输入文件夹名称:');
+    if (name && name.trim()) {
+      fileStore.addFolder(parentId, { name: name.trim() });
+      uiStore.addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: `文件夹 "${name}" 已创建`,
+        timeout: 2000
+      });
+    }
+  } else {
+    const name = prompt('请输入文件名称:');
+    if (name && name.trim()) {
+      fileStore.addFile(parentId, { name: name.trim() });
+      uiStore.addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: `文件 "${name}" 已创建`,
+        timeout: 2000
+      });
+    }
+  }
+}
+
+function handleDocumentDelete(node) {
+  uiStore.addNotification({
+    type: 'success',
+    title: '删除成功',
+    message: `"${node.name}" 已删除`,
     timeout: 2000
   });
 }
@@ -792,6 +818,9 @@ onMounted(() => {
   
   // 加载任务数据
   taskStore.loadTasks();
+  
+  // 加载文件树数据
+  fileStore.loadFromStorage();
   
   // 强制侧边栏展开
   uiStore.layout.sidebarCollapsed = false;

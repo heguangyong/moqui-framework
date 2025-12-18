@@ -7,6 +7,10 @@ import WorkflowEditor from '../views/WorkflowEditor.vue';
 import Files from '../views/Files.vue';
 import Edit from '../views/Edit.vue';
 import Settings from '../views/Settings.vue';
+import DashboardView from '../views/DashboardView.vue';
+import AssetsView from '../views/AssetsView.vue';
+import CharactersView from '../views/CharactersView.vue';
+import FilePreviewView from '../views/FilePreviewView.vue';
 
 const routes = [
   {
@@ -17,6 +21,11 @@ const routes = [
     path: '/home',
     name: 'home',
     component: Home
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: DashboardView
   },
   {
     path: '/files',
@@ -37,6 +46,28 @@ const routes = [
     path: '/settings',
     name: 'settings',
     component: Settings
+  },
+  {
+    path: '/assets',
+    name: 'assets',
+    component: AssetsView
+  },
+  {
+    path: '/characters',
+    name: 'characters',
+    component: CharactersView
+  },
+  {
+    path: '/edit/:type/:id',
+    name: 'file-edit',
+    component: FilePreviewView,
+    props: true
+  },
+  {
+    path: '/preview/:type/:id',
+    name: 'file-preview',
+    component: FilePreviewView,
+    props: true
   },
   {
     path: '/project/:id',

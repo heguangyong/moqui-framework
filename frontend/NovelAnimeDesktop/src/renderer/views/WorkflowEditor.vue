@@ -35,6 +35,26 @@
       <div class="progress-text">{{ executionProgress }}%</div>
     </div>
     
+    <!-- Execution Results Panel -->
+    <div v-if="showResultsPanel && executionResults" class="execution-results">
+      <div class="results-header">
+        <h3>执行结果</h3>
+        <button @click="showResultsPanel = false" class="btn btn-small">关闭</button>
+      </div>
+      <div class="results-content">
+        <div class="result-status" :class="executionResults.status">
+          <span v-if="executionResults.status === 'completed'">✅ 执行成功</span>
+          <span v-else>❌ 执行失败</span>
+        </div>
+        <div class="result-duration" v-if="executionResults.duration">
+          耗时: {{ Math.round(executionResults.duration / 1000) }}秒
+        </div>
+        <div class="result-summary">
+          <p>已处理 {{ executionResults.nodeResults?.size || 0 }} 个节点</p>
+        </div>
+      </div>
+    </div>
+    
     <div class="editor-content">
       <div class="node-palette">
         <h3>节点库</h3>
@@ -145,15 +165,30 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useWorkflowStore } from '../stores/workflow.js';
+import { useProjectStore } from '../stores/project.js';
+import { useUIStore } from '../stores/ui.js';
 
 const workflowStore = useWorkflowStore();
+const projectStore = useProjectStore();
+const uiStore = useUIStore();
 
 // Reactive data
 const selectedWorkflowId = ref('');
 const validationResult = ref(null);
 const currentExecutionId = ref(null);
+const executionResults = ref(null);
+const showResultsPanel = ref(false);
+
+// 监听执行状态变化
+watch(() => workflowStore.executionStatus, (newStatus) => {
+  if (newStatus === 'completed') {
+    handleExecutionComplete();
+  } else if (newStatus === 'failed') {
+    handleExecutionFailed();
+  }
+});
 
 // Computed properties
 const workflows = computed(() => workflowStore.workflows);
@@ -234,20 +269,96 @@ function saveWorkflow() {
 
 async function runWorkflow() {
   if (!currentWorkflow.value) {
-    alert('请先选择一个工作流');
+    uiStore.addNotification({
+      type: 'warning',
+      title: '无法执行',
+      message: '请先选择一个工作流',
+      timeout: 3000
+    });
     return;
   }
 
   if (currentWorkflowNodes.value.length === 0) {
-    alert('请先添加一些节点到工作流中');
+    uiStore.addNotification({
+      type: 'warning',
+      title: '无法执行',
+      message: '请先添加一些节点到工作流中',
+      timeout: 3000
+    });
     return;
   }
 
-  try {
-    currentExecutionId.value = await workflowStore.executeWorkflow(currentWorkflow.value.id);
-  } catch (error) {
-    alert('执行工作流失败: ' + error.message);
+  // 准备初始数据（从当前项目获取）
+  const initialData = {};
+  if (projectStore.currentProject) {
+    initialData.projectId = projectStore.currentProject.id;
+    initialData.novelId = projectStore.currentProject.novelId;
+    
+    if (projectStore.currentProject.novel) {
+      initialData.title = projectStore.currentProject.novel.title;
+      initialData.chapters = projectStore.currentProject.novel.chapters;
+    }
+    
+    if (projectStore.currentProject.characters) {
+      initialData.characters = projectStore.currentProject.characters;
+    }
   }
+
+  try {
+    executionResults.value = null;
+    showResultsPanel.value = false;
+    
+    currentExecutionId.value = await workflowStore.executeWorkflow(
+      currentWorkflow.value.id,
+      initialData
+    );
+    
+    uiStore.addNotification({
+      type: 'info',
+      title: '开始执行',
+      message: `工作流 "${currentWorkflow.value.name}" 开始执行`,
+      timeout: 2000
+    });
+  } catch (error) {
+    uiStore.addNotification({
+      type: 'error',
+      title: '执行失败',
+      message: error.message,
+      timeout: 5000
+    });
+  }
+}
+
+// 处理执行完成
+function handleExecutionComplete() {
+  const execution = workflowStore.getExecutionStatus(currentExecutionId.value);
+  if (execution) {
+    executionResults.value = {
+      status: 'completed',
+      nodeResults: execution.context?.nodeResults || new Map(),
+      duration: execution.endTime - execution.startTime
+    };
+    showResultsPanel.value = true;
+  }
+  
+  uiStore.addNotification({
+    type: 'success',
+    title: '执行完成',
+    message: `工作流执行成功完成`,
+    timeout: 3000
+  });
+}
+
+// 处理执行失败
+function handleExecutionFailed() {
+  const error = workflowStore.error;
+  
+  uiStore.addNotification({
+    type: 'error',
+    title: '执行失败',
+    message: error || '工作流执行过程中发生错误',
+    timeout: 5000
+  });
 }
 
 function cancelExecution() {
@@ -390,6 +501,60 @@ function getConnectionY2(connection) {
   padding: 1rem;
   margin-bottom: 1rem;
   backdrop-filter: blur(10px);
+}
+
+.execution-results {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.results-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.results-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.result-status {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.result-status.completed {
+  color: #4CAF50;
+}
+
+.result-status.failed {
+  color: #f44336;
+}
+
+.result-duration {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.result-summary {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.result-summary p {
+  margin: 0;
 }
 
 .progress-header {
