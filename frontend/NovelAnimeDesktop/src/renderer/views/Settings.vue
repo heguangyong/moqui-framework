@@ -1,32 +1,33 @@
 <template>
   <div class="settings-view">
-    <div class="settings-sidebar">
-      <div 
-        v-for="category in categories" 
-        :key="category.id"
-        class="category-item"
-        :class="{ 'category-item--active': activeCategory === category.id }"
-        @click="activeCategory = category.id"
-      >
-        <component :is="category.icon" :size="18" />
-        <span>{{ category.label }}</span>
-      </div>
-    </div>
+    <!-- 视图头部 -->
+    <ViewHeader 
+      :title="currentCategoryLabel" 
+      :subtitle="currentCategoryDescription"
+    />
     
     <div class="settings-content">
       <!-- AI服务配置 -->
       <div v-if="activeCategory === 'ai'" class="settings-section">
-        <h2>AI服务配置</h2>
-        <p class="section-description">配置AI服务提供商和API密钥</p>
-        
         <div class="setting-group">
           <label class="setting-label">AI服务提供商</label>
-          <select v-model="settings.ai.provider" class="setting-select">
-            <option value="zhipu">智谱AI (GLM-4)</option>
-            <option value="openai">OpenAI (GPT-4)</option>
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="local">本地模型</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'provider' }">
+            <div class="custom-select__trigger" @click="toggleSelect('provider')">
+              <span>{{ getOptionLabel(providerOptions, settings.ai.provider) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'provider'" class="custom-select__options">
+              <div 
+                v-for="option in providerOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.ai.provider === option.value }"
+                @click="selectOption('ai', 'provider', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
@@ -58,13 +59,23 @@
         
         <div class="setting-group">
           <label class="setting-label">模型选择</label>
-          <select v-model="settings.ai.model" class="setting-select">
-            <option value="glm-4">GLM-4</option>
-            <option value="glm-4v">GLM-4V (视觉)</option>
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-            <option value="claude-3">Claude 3</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'model' }">
+            <div class="custom-select__trigger" @click="toggleSelect('model')">
+              <span>{{ getOptionLabel(modelOptions, settings.ai.model) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'model'" class="custom-select__options">
+              <div 
+                v-for="option in modelOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.ai.model === option.value }"
+                @click="selectOption('ai', 'model', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <button class="test-btn" @click="testConnection">
@@ -75,37 +86,67 @@
       
       <!-- 生成参数 -->
       <div v-if="activeCategory === 'generation'" class="settings-section">
-        <h2>生成参数</h2>
-        <p class="section-description">配置视频生成的默认参数</p>
-        
         <div class="setting-group">
           <label class="setting-label">视频风格</label>
-          <select v-model="settings.generation.style" class="setting-select">
-            <option value="anime">日式动漫</option>
-            <option value="cartoon">卡通风格</option>
-            <option value="realistic">写实风格</option>
-            <option value="watercolor">水彩风格</option>
-            <option value="pixel">像素风格</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'style' }">
+            <div class="custom-select__trigger" @click="toggleSelect('style')">
+              <span>{{ getOptionLabel(styleOptions, settings.generation.style) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'style'" class="custom-select__options">
+              <div 
+                v-for="option in styleOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.generation.style === option.value }"
+                @click="selectOption('generation', 'style', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
           <label class="setting-label">视频分辨率</label>
-          <select v-model="settings.generation.resolution" class="setting-select">
-            <option value="720p">720p (1280×720)</option>
-            <option value="1080p">1080p (1920×1080)</option>
-            <option value="2k">2K (2560×1440)</option>
-            <option value="4k">4K (3840×2160)</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'resolution' }">
+            <div class="custom-select__trigger" @click="toggleSelect('resolution')">
+              <span>{{ getOptionLabel(resolutionOptions, settings.generation.resolution) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'resolution'" class="custom-select__options">
+              <div 
+                v-for="option in resolutionOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.generation.resolution === option.value }"
+                @click="selectOption('generation', 'resolution', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
           <label class="setting-label">帧率</label>
-          <select v-model="settings.generation.fps" class="setting-select">
-            <option value="24">24 FPS (电影)</option>
-            <option value="30">30 FPS (标准)</option>
-            <option value="60">60 FPS (流畅)</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'fps' }">
+            <div class="custom-select__trigger" @click="toggleSelect('fps')">
+              <span>{{ getOptionLabel(fpsOptions, settings.generation.fps) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'fps'" class="custom-select__options">
+              <div 
+                v-for="option in fpsOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.generation.fps === option.value }"
+                @click="selectOption('generation', 'fps', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
@@ -132,46 +173,89 @@
         
         <div class="setting-group" v-if="settings.generation.enableVoice">
           <label class="setting-label">语音风格</label>
-          <select v-model="settings.generation.voiceStyle" class="setting-select">
-            <option value="natural">自然</option>
-            <option value="dramatic">戏剧化</option>
-            <option value="calm">平静</option>
-            <option value="energetic">活力</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'voiceStyle' }">
+            <div class="custom-select__trigger" @click="toggleSelect('voiceStyle')">
+              <span>{{ getOptionLabel(voiceStyleOptions, settings.generation.voiceStyle) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'voiceStyle'" class="custom-select__options">
+              <div 
+                v-for="option in voiceStyleOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.generation.voiceStyle === option.value }"
+                @click="selectOption('generation', 'voiceStyle', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
       <!-- 界面设置 -->
       <div v-if="activeCategory === 'interface'" class="settings-section">
-        <h2>界面设置</h2>
-        <p class="section-description">自定义应用界面外观</p>
-        
         <div class="setting-group">
           <label class="setting-label">主题</label>
-          <select v-model="settings.interface.theme" class="setting-select">
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-            <option value="system">跟随系统</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'theme' }">
+            <div class="custom-select__trigger" @click="toggleSelect('theme')">
+              <span>{{ getOptionLabel(themeOptions, settings.interface.theme) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'theme'" class="custom-select__options">
+              <div 
+                v-for="option in themeOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.interface.theme === option.value }"
+                @click="selectOption('interface', 'theme', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
           <label class="setting-label">语言</label>
-          <select v-model="settings.interface.language" class="setting-select">
-            <option value="zh-CN">简体中文</option>
-            <option value="zh-TW">繁体中文</option>
-            <option value="en">English</option>
-            <option value="ja">日本語</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'language' }">
+            <div class="custom-select__trigger" @click="toggleSelect('language')">
+              <span>{{ getOptionLabel(languageOptions, settings.interface.language) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'language'" class="custom-select__options">
+              <div 
+                v-for="option in languageOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.interface.language === option.value }"
+                @click="selectOption('interface', 'language', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
           <label class="setting-label">字体大小</label>
-          <select v-model="settings.interface.fontSize" class="setting-select">
-            <option value="small">小</option>
-            <option value="medium">中</option>
-            <option value="large">大</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'fontSize' }">
+            <div class="custom-select__trigger" @click="toggleSelect('fontSize')">
+              <span>{{ getOptionLabel(fontSizeOptions, settings.interface.fontSize) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'fontSize'" class="custom-select__options">
+              <div 
+                v-for="option in fontSizeOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.interface.fontSize === option.value }"
+                @click="selectOption('interface', 'fontSize', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="setting-group">
@@ -188,9 +272,6 @@
       
       <!-- 存储设置 -->
       <div v-if="activeCategory === 'storage'" class="settings-section">
-        <h2>存储设置</h2>
-        <p class="section-description">管理项目存储和缓存</p>
-        
         <div class="setting-group">
           <label class="setting-label">默认项目目录</label>
           <div class="input-with-action">
@@ -257,9 +338,6 @@
       
       <!-- 关于 -->
       <div v-if="activeCategory === 'about'" class="settings-section">
-        <h2>关于</h2>
-        <p class="section-description">应用信息和更新</p>
-        
         <div class="about-info">
           <div class="app-logo">
             <component :is="icons.sparkles" :size="48" />
@@ -300,266 +378,280 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useUIStore } from '../stores/ui.js';
+import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
+import ViewHeader from '../components/ui/ViewHeader.vue';
 
 const uiStore = useUIStore();
+const navigationStore = useNavigationStore();
 
-// 分类
-const categories = [
-  { id: 'ai', label: 'AI服务', icon: icons.zap },
-  { id: 'generation', label: '生成参数', icon: icons.settings },
-  { id: 'interface', label: '界面设置', icon: icons.eye },
-  { id: 'storage', label: '存储设置', icon: icons.folder },
-  { id: 'about', label: '关于', icon: icons.info }
+// 下拉框选项配置
+const providerOptions = [
+  { value: 'zhipu', label: '智谱AI (GLM-4)' },
+  { value: 'openai', label: 'OpenAI (GPT-4)' },
+  { value: 'anthropic', label: 'Anthropic (Claude)' },
+  { value: 'local', label: '本地模型' }
 ];
 
-const activeCategory = ref('ai');
+const modelOptions = [
+  { value: 'glm-4', label: 'GLM-4' },
+  { value: 'glm-4v', label: 'GLM-4V (视觉)' },
+  { value: 'gpt-4', label: 'GPT-4' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+  { value: 'claude-3', label: 'Claude 3' }
+];
+
+const styleOptions = [
+  { value: 'anime', label: '日式动漫' },
+  { value: 'cartoon', label: '卡通风格' },
+  { value: 'realistic', label: '写实风格' },
+  { value: 'watercolor', label: '水彩风格' },
+  { value: 'pixel', label: '像素风格' }
+];
+
+const resolutionOptions = [
+  { value: '720p', label: '720p (1280×720)' },
+  { value: '1080p', label: '1080p (1920×1080)' },
+  { value: '2k', label: '2K (2560×1440)' },
+  { value: '4k', label: '4K (3840×2160)' }
+];
+
+const fpsOptions = [
+  { value: 24, label: '24 FPS (电影)' },
+  { value: 30, label: '30 FPS (标准)' },
+  { value: 60, label: '60 FPS (流畅)' }
+];
+
+const voiceStyleOptions = [
+  { value: 'natural', label: '自然' },
+  { value: 'dramatic', label: '戏剧化' },
+  { value: 'calm', label: '平静' },
+  { value: 'energetic', label: '活力' }
+];
+
+const themeOptions = [
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' },
+  { value: 'system', label: '跟随系统' }
+];
+
+const languageOptions = [
+  { value: 'zh-CN', label: '简体中文' },
+  { value: 'zh-TW', label: '繁体中文' },
+  { value: 'en', label: 'English' },
+  { value: 'ja', label: '日本語' }
+];
+
+const fontSizeOptions = [
+  { value: 'small', label: '小' },
+  { value: 'medium', label: '中' },
+  { value: 'large', label: '大' }
+];
+
+// 分类配置
+const categoryConfig = {
+  ai: { label: 'AI服务配置', description: '配置AI服务提供商和API密钥' },
+  generation: { label: '生成参数', description: '配置视频生成的默认参数' },
+  interface: { label: '界面设置', description: '自定义应用界面外观' },
+  storage: { label: '存储设置', description: '管理项目存储和缓存' },
+  about: { label: '关于', description: '应用信息和更新' }
+};
+
+// 从 navigationStore 获取当前分类
+const activeCategory = computed(() => {
+  return navigationStore.panelContext.settings?.activeCategory || 'ai';
+});
+
+// 当前分类标签和描述
+const currentCategoryLabel = computed(() => {
+  return categoryConfig[activeCategory.value]?.label || '设置';
+});
+
+const currentCategoryDescription = computed(() => {
+  return categoryConfig[activeCategory.value]?.description || '';
+});
+
 const showApiKey = ref(false);
 const cacheSize = ref('128 MB');
+const openSelect = ref(null);
 
 // 设置数据
 const settings = reactive({
-  ai: {
-    provider: 'zhipu',
-    apiKey: '',
-    endpoint: '',
-    model: 'glm-4'
-  },
-  generation: {
-    style: 'anime',
-    resolution: '1080p',
-    fps: 30,
-    episodeDuration: 5,
-    enableVoice: true,
-    voiceStyle: 'natural'
-  },
-  interface: {
-    theme: 'light',
-    language: 'zh-CN',
-    fontSize: 'medium',
-    animations: true
-  },
-  storage: {
-    projectDir: '~/Documents/NovelAnime/Projects',
-    cacheDir: '~/Documents/NovelAnime/Cache',
-    autoSave: true,
-    autoSaveInterval: 5
+  ai: { provider: 'zhipu', apiKey: '', endpoint: '', model: 'glm-4' },
+  generation: { style: 'anime', resolution: '1080p', fps: 30, episodeDuration: 5, enableVoice: true, voiceStyle: 'natural' },
+  interface: { theme: 'light', language: 'zh-CN', fontSize: 'medium', animations: true },
+  storage: { projectDir: '~/Documents/NovelAnime/Projects', cacheDir: '~/Documents/NovelAnime/Cache', autoSave: true, autoSaveInterval: 5 }
+});
+
+// 下拉框方法
+function toggleSelect(name) {
+  openSelect.value = openSelect.value === name ? null : name;
+}
+
+function selectOption(category, field, value) {
+  settings[category][field] = value;
+  openSelect.value = null;
+}
+
+function getOptionLabel(options, value) {
+  const option = options.find(o => o.value === value);
+  return option ? option.label : value;
+}
+
+// 点击外部关闭下拉框
+function handleClickOutside(event) {
+  if (!event.target.closest('.custom-select')) {
+    openSelect.value = null;
+  }
+}
+
+// 初始化时加载设置
+onMounted(() => {
+  loadSettings();
+  document.addEventListener('click', handleClickOutside);
+  const currentCategory = navigationStore.panelContext.settings?.activeCategory;
+  if (!currentCategory || !categoryConfig[currentCategory]) {
+    navigationStore.updatePanelContext('settings', { activeCategory: 'ai' });
   }
 });
 
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
+// 加载设置
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('novel-anime-settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(settings, parsed);
+    }
+  } catch (e) {
+    console.error('加载设置失败:', e);
+  }
+}
+
 // 方法
 function testConnection() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '测试连接',
-    message: '正在测试AI服务连接...',
-    timeout: 2000
-  });
-  
-  // 模拟测试
+  uiStore.addNotification({ type: 'info', title: '测试连接', message: '正在测试AI服务连接...', timeout: 2000 });
   setTimeout(() => {
     if (settings.ai.apiKey) {
-      uiStore.addNotification({
-        type: 'success',
-        title: '连接成功',
-        message: 'AI服务连接正常',
-        timeout: 3000
-      });
+      uiStore.addNotification({ type: 'success', title: '连接成功', message: 'AI服务连接正常', timeout: 3000 });
     } else {
-      uiStore.addNotification({
-        type: 'error',
-        title: '连接失败',
-        message: '请先输入API密钥',
-        timeout: 3000
-      });
+      uiStore.addNotification({ type: 'error', title: '连接失败', message: '请先输入API密钥', timeout: 3000 });
     }
   }, 1500);
 }
 
 function selectProjectDir() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '选择目录',
-    message: '请选择项目存储目录',
-    timeout: 2000
-  });
+  uiStore.addNotification({ type: 'info', title: '选择目录', message: '请选择项目存储目录', timeout: 2000 });
 }
 
 function selectCacheDir() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '选择目录',
-    message: '请选择缓存目录',
-    timeout: 2000
-  });
+  uiStore.addNotification({ type: 'info', title: '选择目录', message: '请选择缓存目录', timeout: 2000 });
 }
 
 function clearCache() {
   if (confirm('确定要清除所有缓存吗？')) {
-    uiStore.addNotification({
-      type: 'success',
-      title: '清除成功',
-      message: '缓存已清除',
-      timeout: 2000
-    });
+    uiStore.addNotification({ type: 'success', title: '清除成功', message: '缓存已清除', timeout: 2000 });
     cacheSize.value = '0 B';
   }
 }
 
 function resetSettings() {
   if (confirm('确定要重置所有设置为默认值吗？')) {
-    // 重置设置
-    settings.ai = {
-      provider: 'zhipu',
-      apiKey: '',
-      endpoint: '',
-      model: 'glm-4'
-    };
-    settings.generation = {
-      style: 'anime',
-      resolution: '1080p',
-      fps: 30,
-      episodeDuration: 5,
-      enableVoice: true,
-      voiceStyle: 'natural'
-    };
-    settings.interface = {
-      theme: 'light',
-      language: 'zh-CN',
-      fontSize: 'medium',
-      animations: true
-    };
-    settings.storage = {
-      projectDir: '~/Documents/NovelAnime/Projects',
-      cacheDir: '~/Documents/NovelAnime/Cache',
-      autoSave: true,
-      autoSaveInterval: 5
-    };
-    
-    uiStore.addNotification({
-      type: 'success',
-      title: '重置成功',
-      message: '设置已重置为默认值',
-      timeout: 2000
-    });
+    settings.ai = { provider: 'zhipu', apiKey: '', endpoint: '', model: 'glm-4' };
+    settings.generation = { style: 'anime', resolution: '1080p', fps: 30, episodeDuration: 5, enableVoice: true, voiceStyle: 'natural' };
+    settings.interface = { theme: 'light', language: 'zh-CN', fontSize: 'medium', animations: true };
+    settings.storage = { projectDir: '~/Documents/NovelAnime/Projects', cacheDir: '~/Documents/NovelAnime/Cache', autoSave: true, autoSaveInterval: 5 };
+    uiStore.addNotification({ type: 'success', title: '重置成功', message: '设置已重置为默认值', timeout: 2000 });
   }
 }
 
 function saveSettings() {
-  // 保存设置到本地存储
   try {
     localStorage.setItem('novel-anime-settings', JSON.stringify(settings));
-    uiStore.addNotification({
-      type: 'success',
-      title: '保存成功',
-      message: '设置已保存',
-      timeout: 2000
-    });
+    uiStore.addNotification({ type: 'success', title: '保存成功', message: '设置已保存', timeout: 2000 });
   } catch (e) {
-    uiStore.addNotification({
-      type: 'error',
-      title: '保存失败',
-      message: e.message,
-      timeout: 3000
-    });
+    uiStore.addNotification({ type: 'error', title: '保存失败', message: e.message, timeout: 3000 });
   }
 }
 </script>
 
+
 <style scoped>
 .settings-view {
   display: flex;
+  flex-direction: column;
   height: 100%;
-  gap: 24px;
+  padding: 20px 24px;
+  gap: 16px;
 }
 
-/* 侧边栏 */
-.settings-sidebar {
-  width: 200px;
-  flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.category-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #4a4a4c;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.category-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.category-item--active {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #fff;
-}
-
-/* 内容区域 */
 .settings-content {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
 }
 
 .settings-section {
-  max-width: 600px;
-}
-
-.settings-section h2 {
-  margin: 0 0 8px;
-  font-size: 22px;
-  color: #2c2c2e;
-}
-
-.section-description {
-  margin: 0 0 24px;
-  font-size: 14px;
-  color: #6c6c6e;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
 }
 
 /* 设置项 */
 .setting-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
 }
 
 .setting-label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #2c2c2e;
-  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c6c6e;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.setting-input,
-.setting-select {
+.setting-input {
   width: 100%;
-  padding: 10px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
-  transition: border-color 0.2s;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2c2e;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.setting-input:focus,
-.setting-select:focus {
+.setting-input:focus {
   outline: none;
-  border-color: #8a8a8a;
+  border-color: rgba(138, 138, 138, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.1);
 }
 
 .setting-hint {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #8a8a8c;
 }
 
@@ -573,17 +665,90 @@ function saveSettings() {
 }
 
 .input-action {
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   color: #4a4a4c;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .input-action:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(138, 138, 138, 0.5);
+}
+
+/* 自定义下拉框 */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.custom-select__trigger:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.custom-select--open .custom-select__trigger {
+  border-color: rgba(138, 138, 138, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.1);
+}
+
+.select-arrow {
+  color: #6c6c6e;
+  transition: transform 0.2s;
+}
+
+.custom-select--open .select-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-select__options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(240, 240, 240, 0.98);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.custom-select__option {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.custom-select__option:hover {
+  background: rgba(180, 180, 180, 0.3);
+}
+
+.custom-select__option--selected {
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  font-weight: 500;
 }
 
 /* 开关 */
@@ -591,13 +756,15 @@ function saveSettings() {
   display: flex;
   align-items: center;
   gap: 12px;
+  font-size: 13px;
+  color: #4a4a4c;
 }
 
 .toggle {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 40px;
+  height: 22px;
 }
 
 .toggle input {
@@ -613,49 +780,53 @@ function saveSettings() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background: rgba(160, 160, 160, 0.4);
   transition: 0.3s;
-  border-radius: 24px;
+  border-radius: 22px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 16px;
+  width: 16px;
   left: 3px;
   bottom: 3px;
   background-color: white;
   transition: 0.3s;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #8a8a8a;
+  background: linear-gradient(90deg, rgba(130, 160, 140, 0.8), rgba(150, 180, 165, 0.7));
 }
 
 .toggle input:checked + .toggle-slider:before {
-  transform: translateX(20px);
+  transform: translateX(18px);
 }
 
 /* 测试按钮 */
 .test-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  background: rgba(150, 150, 150, 0.1);
-  border: 1px solid #8a8a8a;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  color: #6a6a6a;
-  font-size: 14px;
+  color: #2c2c2e;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  margin-top: 8px;
 }
 
 .test-btn:hover {
-  background: rgba(150, 150, 150, 0.2);
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
 }
 
 /* 存储信息 */
@@ -663,10 +834,10 @@ function saveSettings() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.03);
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 8px;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .info-item {
@@ -675,12 +846,14 @@ function saveSettings() {
 }
 
 .info-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #6c6c6e;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .info-value {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #2c2c2e;
 }
@@ -689,112 +862,127 @@ function saveSettings() {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: none;
-  border: 1px solid #e74c3c;
+  padding: 8px 14px;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.3);
   border-radius: 6px;
-  color: #e74c3c;
-  font-size: 13px;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .clear-cache-btn:hover {
-  background: rgba(231, 76, 60, 0.1);
+  background: rgba(231, 76, 60, 0.15);
+  border-color: rgba(231, 76, 60, 0.5);
 }
 
 /* 关于页面 */
 .about-info {
   text-align: center;
-  padding: 32px;
-  background: rgba(0, 0, 0, 0.03);
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .app-logo {
   color: #6a6a6a;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .about-info h3 {
-  margin: 0 0 8px;
-  font-size: 20px;
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c2c2e;
 }
 
 .about-info .version {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0 0 10px;
+  font-size: 13px;
   color: #6c6c6e;
 }
 
 .about-info .description {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #4a4a4c;
+  line-height: 1.5;
 }
 
 .about-links {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .about-link {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.03);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: #4a4a4c;
+  font-size: 13px;
   text-decoration: none;
   transition: all 0.2s;
 }
 
 .about-link:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #6a6a6a;
+  background: rgba(255, 255, 255, 0.25);
+  color: #2c2c2e;
 }
 
 /* 操作按钮 */
 .settings-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 480px;
 }
 
 .btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 100px;
 }
 
 .btn--secondary {
+  background: rgba(0, 0, 0, 0.06);
+  color: #5a5a5c;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn--secondary:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #4a4a4c;
 }
 
-.btn--secondary:hover {
-  background: rgba(0, 0, 0, 0.15);
-}
-
 .btn--primary {
   background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #fff;
+  color: #2c2c2e;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
 }
 </style>

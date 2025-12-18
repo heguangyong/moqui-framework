@@ -1,8 +1,8 @@
 <template>
   <div class="settings-panel">
-    <!-- Settings Categories -->
+    <!-- 设置分类 -->
     <div class="section section--categories">
-      <div class="section-title">Settings</div>
+      <div class="section-title">设置</div>
       <div class="section-items">
         <div 
           v-for="category in categories"
@@ -13,25 +13,20 @@
         >
           <component :is="category.icon" :size="16" />
           <span>{{ category.name }}</span>
-          <component :is="icons.chevronRight" :size="14" class="item-arrow" />
         </div>
       </div>
     </div>
     
-    <!-- App Info -->
+    <!-- 应用信息 -->
     <div class="section section--info">
-      <div class="section-title">About</div>
+      <div class="section-title">关于</div>
       <div class="app-info">
         <div class="app-logo">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <component :is="icons.sparkles" :size="28" />
         </div>
         <div class="app-details">
-          <div class="app-name">Novel Anime Desktop</div>
-          <div class="app-version">Version {{ appVersion }}</div>
+          <div class="app-name">小说动漫生成器</div>
+          <div class="app-version">版本 {{ appVersion }}</div>
         </div>
       </div>
     </div>
@@ -39,44 +34,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUIStore } from '../../stores/ui.js';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useNavigationStore } from '../../stores/navigation.js';
 import { icons } from '../../utils/icons.js';
 
-const router = useRouter();
-const uiStore = useUIStore();
 const navigationStore = useNavigationStore();
 
-// 状态
-const activeCategory = ref('ai-config');
+// 应用版本
 const appVersion = ref('1.0.0');
 
 // 设置分类
 const categories = ref([
-  { id: 'ai-config', name: 'AI 配置', icon: icons.sparkles },
-  { id: 'generation', name: '生成参数', icon: icons.zap },
-  { id: 'interface', name: '界面设置', icon: icons.layers },
+  { id: 'ai', name: 'AI服务', icon: icons.zap },
+  { id: 'generation', name: '生成参数', icon: icons.settings },
+  { id: 'interface', name: '界面设置', icon: icons.eye },
+  { id: 'storage', name: '存储设置', icon: icons.folder },
   { id: 'about', name: '关于', icon: icons.info }
 ]);
 
+// 当前激活的分类 - 从 navigationStore 获取
+const activeCategory = computed(() => {
+  return navigationStore.panelContext.settings?.activeCategory || 'ai';
+});
+
 // 分类点击处理
 function handleCategoryClick(category) {
-  activeCategory.value = category.id;
-  
-  // 更新面板上下文
+  // 更新面板上下文，Settings.vue 会监听这个变化
   navigationStore.updatePanelContext('settings', { activeCategory: category.id });
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: category.name,
-    message: `正在打开 ${category.name}`,
-    timeout: 2000
-  });
-  
-  router.push(`/settings/${category.id}`);
 }
+
+// 有效的分类ID列表
+const validCategoryIds = categories.value.map(c => c.id);
+
+// 初始化
+onMounted(() => {
+  // 如果没有设置过或是无效值，默认选中第一个
+  const currentCategory = navigationStore.panelContext.settings?.activeCategory;
+  if (!currentCategory || !validCategoryIds.includes(currentCategory)) {
+    navigationStore.updatePanelContext('settings', { activeCategory: 'ai' });
+  }
+});
 </script>
 
 <style scoped>
@@ -137,17 +134,19 @@ function handleCategoryClick(category) {
 .section-item {
   display: flex;
   align-items: center;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 6px 10px;
   cursor: pointer;
   transition: all 0.15s ease;
-  gap: 10px;
+  gap: 8px;
   font-size: 13px;
-  color: #2c2c2e;
+  color: #5a5a5c;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .section-item:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  color: #2c2c2e;
 }
 
 .section-item--active {

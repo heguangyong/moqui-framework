@@ -295,8 +295,11 @@ const showSearch = computed(() => {
   return ['home', 'files', 'edit'].includes(route.name);
 });
 
-// 侧边栏交互处理
+// 侧边栏交互处理（设置按钮）
 function handleSidebarClick(item) {
+  // 更新 navigation store 的激活状态
+  navigationStore.setActiveNav('settings');
+  
   // 更新UI状态
   uiStore.setActiveRoute(item.route);
   
@@ -453,6 +456,13 @@ onMounted(() => {
 
 // 监听路由变化，同步激活状态 - 需求 1.4
 watch(() => route.path, (newPath) => {
+  // 检查是否是设置页面
+  if (newPath.startsWith('/settings')) {
+    navigationStore.setActiveNav('settings');
+    return;
+  }
+  
+  // 检查其他导航项
   const matchedNav = navItems.find(nav => newPath.startsWith(nav.route));
   if (matchedNav) {
     navigationStore.setActiveNav(matchedNav.id);

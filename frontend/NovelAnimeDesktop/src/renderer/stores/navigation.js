@@ -64,7 +64,7 @@ export const useNavigationStore = defineStore('navigation', {
         filterLocked: null
       },
       settings: {
-        activeCategory: 'ai-config'
+        activeCategory: 'ai'
       }
     },
     
@@ -153,7 +153,7 @@ export const useNavigationStore = defineStore('navigation', {
         workflow: { selectedWorkflow: null, executionFilter: null },
         assets: { category: null, searchQuery: '' },
         characters: { searchQuery: '', filterLocked: null },
-        settings: { activeCategory: 'ai-config' }
+        settings: { activeCategory: 'ai' }
       };
       
       if (defaultContexts[navId]) {
