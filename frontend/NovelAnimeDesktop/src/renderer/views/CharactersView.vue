@@ -1,5 +1,28 @@
 <template>
   <div class="characters-view">
+    <!-- 视图头部 -->
+    <ViewHeader 
+      title="角色管理" 
+      subtitle="管理角色档案和一致性"
+    >
+      <template #actions>
+        <!-- 确认所有角色按钮 - 需求 5.3, 5.4 -->
+        <button 
+          v-if="showConfirmAllButton"
+          class="confirm-btn"
+          @click="confirmAllCharacters"
+          :disabled="allCharactersConfirmed"
+        >
+          <component :is="icons.check" :size="16" />
+          <span>{{ allCharactersConfirmed ? '已确认' : '确认全部' }}</span>
+        </button>
+        <button class="add-character-btn" @click="handleAddCharacter">
+          <component :is="icons.plus" :size="16" />
+          <span>添加角色</span>
+        </button>
+      </template>
+    </ViewHeader>
+    
     <!-- 工具栏 -->
     <div class="characters-toolbar">
       <div class="search-box">
@@ -11,11 +34,6 @@
           class="search-input"
         />
       </div>
-      
-      <button class="add-btn" @click="handleAddCharacter">
-        <component :is="icons.plus" :size="16" />
-        <span>添加角色</span>
-      </button>
     </div>
     
     <!-- 角色卡片列表 -->
@@ -41,13 +59,16 @@
           <p class="character-description">{{ character.description || '暂无描述' }}</p>
           
           <div class="character-tags">
-            <span 
-              v-for="tag in character.tags" 
-              :key="tag"
-              class="tag"
-            >
-              {{ tag }}
-            </span>
+            <template v-if="character.tags && character.tags.length > 0">
+              <span 
+                v-for="tag in character.tags" 
+                :key="tag"
+                class="tag"
+              >
+                {{ tag }}
+              </span>
+            </template>
+            <span v-else class="tag tag--placeholder">暂无标签</span>
           </div>
           
           <div class="character-stats">
@@ -104,6 +125,7 @@
     </div>
     
     <!-- 角色详情面板 -->
+    <div v-if="selectedCharacter" class="panel-overlay" @click.self="selectedCharacter = null"></div>
     <div v-if="selectedCharacter" class="character-detail-panel">
       <div class="panel-header">
         <h2>角色详情</h2>
@@ -130,12 +152,23 @@
         
         <div class="detail-section">
           <label>角色类型</label>
-          <select v-model="editingCharacter.role" class="detail-select">
-            <option value="protagonist">主角</option>
-            <option value="supporting">配角</option>
-            <option value="antagonist">反派</option>
-            <option value="minor">龙套</option>
-          </select>
+          <div class="custom-select" :class="{ 'custom-select--open': roleSelectOpen }">
+            <div class="custom-select__trigger" @click="roleSelectOpen = !roleSelectOpen">
+              <span>{{ getRoleLabel(editingCharacter.role) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="roleSelectOpen" class="custom-select__options">
+              <div 
+                v-for="option in roleOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': editingCharacter.role === option.value }"
+                @click="selectRole(option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
         </div>
         
         <div class="detail-section">
@@ -192,11 +225,14 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUIStore } from '../stores/ui.js';
 import { useProjectStore } from '../stores/project.js';
+import { useNavigationStore } from '../stores/navigation.js';
 import { CharacterSystem } from '../services/CharacterSystem.ts';
 import { icons } from '../utils/icons.js';
+import ViewHeader from '../components/ui/ViewHeader.vue';
 
 const uiStore = useUIStore();
 const projectStore = useProjectStore();
+const navigationStore = useNavigationStore();
 
 // 状态
 const searchQuery = ref('');
@@ -204,6 +240,21 @@ const selectedCharacter = ref(null);
 const editingCharacter = ref({});
 const newTag = ref('');
 const isLocking = ref(false);
+const roleSelectOpen = ref(false);
+
+// 角色类型选项
+const roleOptions = [
+  { value: 'protagonist', label: '主角' },
+  { value: 'supporting', label: '配角' },
+  { value: 'antagonist', label: '反派' },
+  { value: 'minor', label: '龙套' }
+];
+
+// 选择角色类型
+function selectRole(value) {
+  editingCharacter.value.role = value;
+  roleSelectOpen.value = false;
+}
 
 // 角色数据 - 从项目Store获取或使用本地数据
 const characters = ref([]);
@@ -236,7 +287,7 @@ function loadCharacters() {
         role: 'protagonist',
         description: '故事的主角，一个勇敢而善良的年轻人',
         tags: ['勇敢', '善良', '正义'],
-        color: 'linear-gradient(135deg, #667eea, #764ba2)',
+        color: 'linear-gradient(135deg, #6a7a72, #8fa89e)',
         appearances: 45,
         scenes: 12,
         appearance: '黑色短发，身材高大，眼神坚定',
@@ -248,7 +299,7 @@ function loadCharacters() {
         role: 'supporting',
         description: '主角的青梅竹马，聪明伶俐',
         tags: ['聪明', '温柔', '坚强'],
-        color: 'linear-gradient(135deg, #f093fb, #f5576c)',
+        color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)',
         appearances: 32,
         scenes: 8,
         appearance: '长发飘飘，面容清秀',
@@ -260,7 +311,7 @@ function loadCharacters() {
         role: 'antagonist',
         description: '故事的反派，野心勃勃',
         tags: ['狡猾', '野心', '冷酷'],
-        color: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+        color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)',
         appearances: 18,
         scenes: 6,
         appearance: '面容阴沉，眼神锐利',
@@ -272,7 +323,7 @@ function loadCharacters() {
         role: 'minor',
         description: '村里的老人，见多识广',
         tags: ['智慧', '和蔼'],
-        color: 'linear-gradient(135deg, #43e97b, #38f9d7)',
+        color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)',
         appearances: 8,
         scenes: 3,
         appearance: '白发苍苍，慈眉善目',
@@ -316,11 +367,28 @@ const filteredCharacters = computed(() => {
   );
 });
 
+// 是否显示确认所有角色按钮 - 需求 5.3
+const showConfirmAllButton = computed(() => {
+  // 当处于角色审核阶段时显示
+  return navigationStore.workflowState.stage === 'character-review' ||
+         (characters.value.length > 0 && !navigationStore.workflowState.charactersConfirmed);
+});
+
+// 是否所有角色都已确认 - 需求 5.4
+const allCharactersConfirmed = computed(() => {
+  return navigationStore.workflowState.charactersConfirmed;
+});
+
 // 监听选中角色变化
 watch(selectedCharacter, (newVal) => {
   if (newVal) {
-    editingCharacter.value = { ...newVal, tags: [...(newVal.tags || [])] };
+    editingCharacter.value = { 
+      ...newVal, 
+      tags: Array.isArray(newVal.tags) ? [...newVal.tags] : [] 
+    };
   }
+  // 关闭角色类型下拉框
+  roleSelectOpen.value = false;
 });
 
 // 方法
@@ -335,7 +403,7 @@ function handleAddCharacter() {
     role: 'minor',
     description: '',
     tags: [],
-    color: getRandomColor(),
+    color: getColorByRole('minor'),
     appearances: 0,
     scenes: 0,
     appearance: ''
@@ -376,6 +444,8 @@ function deleteCharacter(character) {
 function saveCharacter() {
   const index = characters.value.findIndex(c => c.id === editingCharacter.value.id);
   if (index > -1) {
+    // 根据角色类型更新颜色
+    editingCharacter.value.color = getColorByRole(editingCharacter.value.role);
     characters.value[index] = { ...editingCharacter.value };
     
     // 同步到项目Store
@@ -489,10 +559,41 @@ function confirmCharacter(character) {
   }
 }
 
+// 确认所有角色 - 需求 5.3, 5.4
+function confirmAllCharacters() {
+  // 标记所有角色为已确认
+  characters.value.forEach(character => {
+    character.confirmed = true;
+    
+    // 自动锁定主要角色
+    if (character.role === 'protagonist' || character.role === 'antagonist') {
+      if (!character.isLocked) {
+        lockCharacter(character);
+      }
+    }
+  });
+  
+  // 更新导航状态 - 需求 5.4: 角色确认后启用工作流执行
+  navigationStore.confirmCharacters();
+  
+  uiStore.addNotification({
+    type: 'success',
+    title: '角色确认完成',
+    message: '所有角色已确认，现在可以执行工作流了',
+    timeout: 3000
+  });
+}
+
 function addTag() {
-  if (newTag.value.trim() && !editingCharacter.value.tags.includes(newTag.value.trim())) {
-    editingCharacter.value.tags.push(newTag.value.trim());
-    newTag.value = '';
+  if (newTag.value.trim()) {
+    // 确保 tags 数组存在
+    if (!editingCharacter.value.tags) {
+      editingCharacter.value.tags = [];
+    }
+    if (!editingCharacter.value.tags.includes(newTag.value.trim())) {
+      editingCharacter.value.tags.push(newTag.value.trim());
+      newTag.value = '';
+    }
   }
 }
 
@@ -510,14 +611,26 @@ function getRoleLabel(role) {
   return labels[role] || role;
 }
 
+// 根据角色类型获取对应颜色
+function getColorByRole(role) {
+  const roleColors = {
+    protagonist: 'linear-gradient(135deg, #6a7a72, #8fa89e)', // 主角 - 绿灰色
+    supporting: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)',  // 配角 - 蓝灰色
+    antagonist: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)',  // 反派 - 深灰色
+    minor: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)'        // 龙套 - 浅灰色
+  };
+  return roleColors[role] || roleColors.minor;
+}
+
 function getRandomColor() {
+  // 统一使用灰色系渐变，与系统风格一致
   const colors = [
-    'linear-gradient(135deg, #667eea, #764ba2)',
-    'linear-gradient(135deg, #f093fb, #f5576c)',
-    'linear-gradient(135deg, #4facfe, #00f2fe)',
-    'linear-gradient(135deg, #43e97b, #38f9d7)',
-    'linear-gradient(135deg, #fa709a, #fee140)',
-    'linear-gradient(135deg, #a8edea, #fed6e3)'
+    'linear-gradient(135deg, #6a7a72, #8fa89e)', // 绿灰
+    'linear-gradient(135deg, #7a8a9a, #9ab0c0)', // 蓝灰
+    'linear-gradient(135deg, #5a5a5a, #7a7a7a)', // 深灰
+    'linear-gradient(135deg, #9a9a9a, #b8c0bc)', // 浅灰
+    'linear-gradient(135deg, #8a8a8a, #a0a8a4)', // 中灰
+    'linear-gradient(135deg, #7a7a82, #9a9aa8)'  // 紫灰
   ];
   return colors[Math.floor(Math.random() * colors.length)];
 }
@@ -563,8 +676,8 @@ function getRandomColor() {
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.4);
-  border-color: #4a90d9;
+  background: rgba(200, 200, 200, 0.5);
+  border-color: #8a8a8a;
 }
 
 .add-btn {
@@ -572,10 +685,10 @@ function getRandomColor() {
   align-items: center;
   gap: 6px;
   padding: 10px 20px;
-  background: #4a90d9;
-  border: none;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  color: #fff;
+  color: #2c2c2e;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -583,26 +696,28 @@ function getRandomColor() {
 }
 
 .add-btn:hover {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
 }
 
 /* 角色卡片网格 */
 .characters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
   flex: 1;
   overflow-y: auto;
+  align-content: start;
 }
 
 .character-card {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  height: fit-content;
 }
 
 .character-card:hover {
@@ -612,56 +727,57 @@ function getRandomColor() {
 }
 
 .character-card--selected {
-  border-color: #4a90d9;
-  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3);
+  border-color: #8a8a8a;
+  box-shadow: 0 0 0 2px rgba(138, 138, 138, 0.3);
 }
 
 .character-avatar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .avatar-placeholder {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #fff;
+  flex-shrink: 0;
 }
 
 .character-role {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 3px 8px;
+  border-radius: 10px;
 }
 
-.role--protagonist { background: #e8f5e9; color: #2e7d32; }
-.role--supporting { background: #e3f2fd; color: #1565c0; }
-.role--antagonist { background: #ffebee; color: #c62828; }
-.role--minor { background: #f5f5f5; color: #616161; }
+.role--protagonist { background: rgba(130, 160, 140, 0.3); color: #4a6a52; }
+.role--supporting { background: rgba(100, 140, 180, 0.3); color: #3a5a7a; }
+.role--antagonist { background: rgba(180, 120, 120, 0.3); color: #7a4a4a; }
+.role--minor { background: rgba(160, 160, 160, 0.3); color: #5a5a5a; }
 
 .character-info {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .character-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #2c2c2e;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
 }
 
 .character-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #6c6c6e;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -672,21 +788,27 @@ function getRandomColor() {
 .character-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .tag {
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: 10px;
+  padding: 2px 6px;
   background: rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
+  border-radius: 8px;
   color: #4a4a4c;
+}
+
+.tag--placeholder {
+  color: #9a9a9c;
+  font-style: italic;
+  background: transparent;
 }
 
 .character-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
 .stat {
@@ -695,12 +817,12 @@ function getRandomColor() {
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #8a8a8c;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #2c2c2e;
 }
@@ -766,147 +888,245 @@ function getRandomColor() {
   color: #fff;
 }
 
-/* 添加角色卡片 */
+/* 添加角色卡片 - 与普通卡片大小一致 */
 .character-card--add {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border: 1.5px dashed rgba(0, 0, 0, 0.15);
   background: transparent;
+  padding: 12px;
+  min-height: 212px;
 }
 
 .character-card--add:hover {
-  border-color: #4a90d9;
-  background: rgba(74, 144, 217, 0.05);
+  border-color: #8a8a8a;
+  background: rgba(138, 138, 138, 0.06);
 }
 
 .add-icon {
-  color: #8a8a8c;
-  margin-bottom: 8px;
+  color: #9a9a9c;
+  margin-bottom: 4px;
 }
 
 .character-card--add:hover .add-icon {
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
 .character-card--add span {
-  font-size: 13px;
-  color: #8a8a8c;
+  font-size: 11px;
+  color: #9a9a9c;
 }
 
 .character-card--add:hover span {
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
-/* 详情面板 */
+/* 详情面板 - 毛玻璃风格，居中弹窗 */
 .character-detail-panel {
   position: fixed;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  right: 50%;
+  top: 50%;
+  transform: translate(50%, -50%);
   width: 380px;
-  background: rgba(255, 255, 255, 0.98);
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  max-height: 85vh;
+  background: linear-gradient(180deg, rgba(230, 230, 230, 0.98), rgba(215, 225, 220, 0.96));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   z-index: 100;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .panel-header h2 {
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
+  color: #2c2c2e;
 }
 
 .close-btn {
-  background: none;
+  background: rgba(0, 0, 0, 0.05);
   border: none;
   color: #6c6c6e;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #2c2c2e;
 }
 
 .panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 18px;
 }
 
 .detail-avatar {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .avatar-large {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 600;
   color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .detail-section {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .detail-section label {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: #6c6c6e;
   margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .detail-input,
-.detail-select,
 .detail-textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  font-size: 14px;
-  background: #fff;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2c2e;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .detail-input:focus,
-.detail-select:focus,
 .detail-textarea:focus {
   outline: none;
-  border-color: #4a90d9;
+  border-color: rgba(138, 138, 138, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.1);
+}
+
+/* 自定义下拉框 */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.custom-select__trigger:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.custom-select--open .custom-select__trigger {
+  border-color: rgba(138, 138, 138, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.1);
+}
+
+.select-arrow {
+  color: #6c6c6e;
+  transition: transform 0.2s;
+}
+
+.custom-select--open .select-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-select__options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(240, 240, 240, 0.98);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.custom-select__option {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.custom-select__option:hover {
+  background: rgba(180, 180, 180, 0.3);
+}
+
+.custom-select__option--selected {
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  font-weight: 500;
 }
 
 .detail-textarea {
   resize: vertical;
+  min-height: 80px;
 }
 
 .tags-input {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.5);
+  min-height: 44px;
 }
 
 .tag--editable {
   display: flex;
   align-items: center;
   gap: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 3px 8px;
+  border-radius: 10px;
 }
 
 .tag-remove {
@@ -917,6 +1137,7 @@ function getRandomColor() {
   font-size: 14px;
   padding: 0;
   line-height: 1;
+  transition: color 0.2s;
 }
 
 .tag-remove:hover {
@@ -930,13 +1151,15 @@ function getRandomColor() {
   outline: none;
   font-size: 12px;
   padding: 4px;
+  background: transparent;
 }
 
 .panel-actions {
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn {
@@ -944,27 +1167,88 @@ function getRandomColor() {
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn--secondary {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   color: #4a4a4c;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .btn--secondary:hover {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .btn--primary {
-  background: #4a90d9;
-  color: #fff;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  color: #2c2c2e;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .btn--primary:hover {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+}
+
+/* 头部按钮样式 */
+.confirm-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(90deg, rgba(130, 160, 140, 0.9), rgba(150, 180, 165, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #2c2c2e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.confirm-btn:hover {
+  background: linear-gradient(90deg, rgba(110, 140, 120, 0.9), rgba(130, 160, 145, 0.8));
+}
+
+.confirm-btn:disabled {
+  background: rgba(160, 160, 160, 0.5);
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+.add-character-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #2c2c2e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.add-character-btn:hover {
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+}
+
+/* 弹窗遮罩层 */
+.panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+  z-index: 99;
 }
 </style>

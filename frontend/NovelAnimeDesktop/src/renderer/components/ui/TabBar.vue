@@ -200,7 +200,7 @@ watch(() => props.tabs.length, () => {
   left: 0;
   right: 0;
   height: 2px;
-  background: #4a90d9;
+  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
   border-radius: 2px 2px 0 0;
 }
 
@@ -307,8 +307,8 @@ watch(() => props.tabs.length, () => {
 }
 
 .overflow-item--active {
-  background: rgba(74, 144, 217, 0.1);
-  color: #4a90d9;
+  background: rgba(150, 150, 150, 0.15);
+  color: #6a6a6a;
 }
 
 .overflow-icon {
@@ -339,6 +339,6 @@ watch(() => props.tabs.length, () => {
 
 .add-tab-btn:hover {
   background: rgba(0, 0, 0, 0.1);
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 </style>

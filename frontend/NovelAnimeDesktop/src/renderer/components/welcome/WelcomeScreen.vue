@@ -194,7 +194,7 @@ onMounted(() => {
 .welcome-screen {
   height: 100%;
   overflow-y: auto;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8a8a8a 0%, #a0b0aa 100%);
   color: white;
 }
 

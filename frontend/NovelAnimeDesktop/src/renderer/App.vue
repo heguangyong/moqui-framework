@@ -65,227 +65,20 @@
         </div>
       </aside>
       
-      <!-- 中间内容面板 -->
+      <!-- 中间内容面板 - 需求 2.1-2.5: 使用 ContextPanel 动态渲染 -->
       <div class="middle-panel">
-        <!-- 左侧菜单区域 -->
+        <!-- 左侧菜单区域 - 使用 ContextPanel 组件 -->
         <div class="menu-column">
-        <!-- 用户信息区域 -->
-        <div class="user-section">
-          <div class="user-avatar">
-            <div class="avatar-circle">
-              <component :is="icons.user" :size="18" />
-            </div>
-          </div>
-          <div class="user-info">
-            <div class="user-name">John Doe <span class="dropdown-arrow">▾</span></div>
-            <div class="user-email">customerpop@gmail.com</div>
-          </div>
-          
-          <!-- 用户下拉菜单 -->
-          <div v-if="userMenuVisible" class="user-menu">
-            <div class="user-menu-item" @click="handleUserAction('profile')">
-              <component :is="icons.user" :size="16" />
-              <span>Profile</span>
-            </div>
-            <div class="user-menu-item" @click="handleUserAction('settings')">
-              <component :is="icons.settings" :size="16" />
-              <span>Settings</span>
-            </div>
-            <div class="user-menu-divider"></div>
-            <div class="user-menu-item" @click="handleUserAction('logout')">
-              <component :is="icons.logOut" :size="16" />
-              <span>Logout</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Projects 分组 -->
-        <div class="section">
-          <div class="section-title">Projects</div>
-          <div class="section-items">
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeProjectView === 'dashboard' }"
-              @click="handleProjectClick('dashboard')"
-            >
-              <component :is="icons.grid" :size="16" />
-              <span>Dashboard</span>
-              <span class="item-badge">{{ projectStore.projectCounts.total }}</span>
-            </div>
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeProjectView === 'library' }"
-              @click="handleProjectClick('library')"
-            >
-              <component :is="icons.book" :size="16" />
-              <span>我的项目</span>
-              <span v-if="projectStore.projectCounts.my > 0" class="item-badge">{{ projectStore.projectCounts.my }}</span>
-            </div>
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeProjectView === 'shared' }"
-              @click="handleProjectClick('shared')"
-            >
-              <component :is="icons.share" :size="16" />
-              <span>共享项目</span>
-              <span v-if="projectStore.projectCounts.shared > 0" class="item-badge">{{ projectStore.projectCounts.shared }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Status 分组 -->
-        <div class="section">
-          <div class="section-title">Status</div>
-          <div class="section-items">
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeStatusView === 'new' }"
-              @click="handleStatusClick('new')"
-            >
-              <component :is="icons.circle" :size="16" />
-              <span>新建</span>
-              <span v-if="taskStore.taskCounts.new > 0" class="item-badge">{{ taskStore.taskCounts.new }}</span>
-            </div>
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeStatusView === 'running' }"
-              @click="handleStatusClick('running')"
-            >
-              <component :is="icons.refresh" :size="16" />
-              <span>处理中</span>
-              <span v-if="taskStore.taskCounts.running > 0" class="item-badge item-badge--highlight">{{ taskStore.taskCounts.running }}</span>
-            </div>
-            <div 
-              class="section-item"
-              :class="{ 'section-item--active': activeStatusView === 'review' }"
-              @click="handleStatusClick('review')"
-            >
-              <component :is="icons.users" :size="16" />
-              <span>待审核</span>
-              <span v-if="taskStore.taskCounts.review > 0" class="item-badge">{{ taskStore.taskCounts.review }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- History 分组 -->
-        <div class="section section--history">
-          <div class="section-title">History</div>
-          <div class="section-items">
-            <div 
-              class="section-item"
-              @click="handleHistoryClick('recent')"
-            >
-              <component :is="icons.clock" :size="16" />
-              <span>Recently Edited</span>
-            </div>
-            <div 
-              class="section-item"
-              @click="handleHistoryClick('archive')"
-            >
-              <component :is="icons.archive" :size="16" />
-              <span>Archive</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Documents 分组 -->
-        <div class="section section--documents">
-          <div class="section-header">
-            <div class="section-title">Documents</div>
-            <span class="add-btn" @click="handleCreateDocument">+</span>
-          </div>
-          
-          <!-- 文档树组件 -->
-          <DocumentTree
-            @select="handleDocumentSelect"
-            @open="handleDocumentOpen"
-            @create="handleDocumentCreate"
-            @delete="handleDocumentDelete"
+          <ContextPanel 
+            user-name="John Doe"
+            user-email="customerpop@gmail.com"
           />
         </div>
-        </div>
         
-        <!-- 右侧主工作区（内嵌在中间面板） -->
+        <!-- 右侧主工作区 - 需求 3.1: 各视图自行管理头部 -->
         <main class="main-area">
-        <div class="workspace-header">
-          <div class="workspace-title">
-            <h1>Dashboard</h1>
-            <p class="workspace-subtitle">All Your Workflows And Processes</p>
-          </div>
-          <div class="workspace-actions">
-            <button class="action-btn action-btn--primary" @click="handleCreateNew">
-              <component :is="icons.plus" :size="16" />
-              <span>New</span>
-            </button>
-            <button class="action-btn" @click="handleRefresh">
-              <component :is="icons.refresh" :size="16" />
-            </button>
-          </div>
-        </div>
-        
-        <div class="workspace-content">
-          <!-- 统计卡片 -->
-          <div class="stats-section">
-            <div class="stat-card">
-              <div class="stat-header">
-                <div class="stat-label">Executions</div>
-                <div class="stat-icon">
-                  <component :is="icons.trending" :size="20" />
-                </div>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">340</div>
-                <div class="stat-change">
-                  <component :is="icons.trendingUp" :size="14" />
-                  <span>+204%</span>
-                </div>
-              </div>
-            </div>
-            <div class="stat-action-btn" @click="handleStatCardClick">
-              <span>See Report</span>
-              <component :is="icons.arrowRight" :size="16" />
-            </div>
-          </div>
-          
-          <!-- 标签页区域 -->
-          <div class="tabs-section">
-            <div class="section-header">
-              <h2>Executions</h2>
-            </div>
-            
-            <div class="tabs">
-              <button 
-                v-for="tab in tabs" 
-                :key="tab.id"
-                class="tab"
-                :class="{ 'tab--active': activeTab === tab.id }"
-                @click="handleTabClick(tab.id)"
-              >
-                {{ tab.label }}
-              </button>
-            </div>
-            
-            <!-- 搜索框 -->
-            <div class="workspace-search">
-              <component :is="icons.search" :size="16" class="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Search workflows, permissions, executions..." 
-                class="search-input"
-                v-model="searchQuery"
-                @input="handleSearch"
-                @keyup.enter="handleSearchEnter"
-              />
-              <button 
-                v-if="searchQuery" 
-                class="search-clear"
-                @click="clearSearch"
-              >
-                <component :is="icons.x" :size="16" />
-              </button>
-            </div>
-            
-            <!-- 内容区域 -->
+          <div class="workspace-content">
+            <!-- 内容区域 - 需求 6.4: 视图切换动画 -->
             <div class="content-area">
               <div v-if="uiStore.loading.global" class="loading-overlay">
                 <div class="loading-spinner">
@@ -293,10 +86,13 @@
                 </div>
                 <p>Loading...</p>
               </div>
-              <router-view v-else />
+              <router-view v-else v-slot="{ Component }">
+                <transition name="view-fade" mode="out-in">
+                  <component :is="Component" />
+                </transition>
+              </router-view>
             </div>
           </div>
-        </div>
         </main>
       </div>
     </div>
@@ -312,12 +108,12 @@
         <div class="notification-icon">
           <component 
             :is="getNotificationIcon(notification.type)" 
-            :size="20" 
+            :size="16" 
           />
         </div>
         <div class="notification-content">
-          <div class="notification-title">{{ notification.title }}</div>
-          <div class="notification-message">{{ notification.message }}</div>
+          <span class="notification-title">{{ notification.title }}</span>
+          <span class="notification-message">{{ notification.message }}</span>
         </div>
         <button 
           class="notification-close"
@@ -337,8 +133,10 @@ import { useProjectStore } from './stores/project.js';
 import { useUIStore } from './stores/ui.js';
 import { useTaskStore } from './stores/task.js';
 import { useFileStore } from './stores/file.js';
+import { useNavigationStore } from './stores/navigation.js';
 import { icons } from './utils/icons.js';
 import DocumentTree from './components/explorer/DocumentTree.vue';
+import ContextPanel from './components/panels/ContextPanel.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -346,11 +144,12 @@ const projectStore = useProjectStore();
 const uiStore = useUIStore();
 const taskStore = useTaskStore();
 const fileStore = useFileStore();
+const navigationStore = useNavigationStore();
 
 const currentProject = computed(() => projectStore.currentProject);
 
-// 状态视图
-const activeStatusView = ref('');
+// 状态视图 - 已移至 DashboardPanel
+// const activeStatusView = ref('');
 
 // 工具提示状态
 const tooltip = reactive({
@@ -360,80 +159,70 @@ const tooltip = reactive({
   left: 0
 });
 
-// 用户菜单状态
-const userMenuVisible = ref(false);
+// 用户菜单状态 - 已移至 ContextPanel
+// const userMenuVisible = ref(false);
 
 // 文档树展开状态 - 现在由 fileStore 管理
 
-// 项目视图状态
-const activeProjectView = ref('dashboard');
+// 项目视图状态 - 已移至 DashboardPanel
+// const activeProjectView = ref('dashboard');
 
-// 标签页状态
-const activeTab = ref('workflows');
-const tabs = [
-  { id: 'workflows', label: 'Workflows' },
-  { id: 'permissions', label: 'Permissions' },
-  { id: 'executions', label: 'Executions' }
-];
+// 标签页状态 - 已移至各视图组件
+// const activeTab = ref('workflows');
+// const tabs = [...];
 
-// 搜索状态
-const searchQuery = ref('');
+// 搜索状态 - 已移至各视图组件
+// const searchQuery = ref('');
 
-// 侧边栏导航项 - 映射到小说动漫生成器功能模块
+// 侧边栏导航项 - 精简为4个核心功能模块
+// 需求: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
 const navItems = [
   {
-    id: 'home',
-    route: '/home',
-    label: 'Dashboard',
+    id: 'dashboard',
+    route: '/dashboard',
+    label: '项目概览',
     icon: icons.home,
-    description: '项目概览和快速操作'
+    description: '查看项目统计和快速操作'
   },
   {
     id: 'workflow',
     route: '/workflow',
     label: '工作流',
-    icon: icons.workflow,
-    description: '可视化工作流编辑器'
-  },
-  {
-    id: 'favorites',
-    route: '/favorites',
-    label: '收藏',
-    icon: icons.star,
-    description: '收藏的项目和模板'
-  },
-  {
-    id: 'api-config',
-    route: '/api-config',
-    label: 'API配置',
-    icon: icons.key,
-    description: 'AI服务密钥管理'
+    icon: icons.gitBranch,
+    description: '编辑和执行转换流程'
   },
   {
     id: 'assets',
     route: '/assets',
     label: '资源库',
-    icon: icons.grid,
-    description: '角色、场景等资源管理'
+    icon: icons.folderOpen,
+    description: '管理项目资源文件'
   },
   {
     id: 'characters',
     route: '/characters',
     label: '角色管理',
     icon: icons.users,
-    description: '角色档案和一致性管理'
+    description: '管理角色档案和一致性'
   }
 ];
 
-// 当前激活的导航ID
-const activeNavId = ref('home');
+// 当前激活的导航ID - 使用 navigation store 管理
+// 需求: 1.3, 1.4
+const activeNavId = computed(() => navigationStore.activeNavId);
 
-// 导航点击处理
+// 导航点击处理 - 需求 1.3, 1.4: 使用 navigation store 管理状态
 function handleNavClick(nav) {
-  activeNavId.value = nav.id;
+  // 使用 navigation store 更新激活状态
+  navigationStore.setActiveNav(nav.id);
+  
+  // 更新 UI store 中的路由状态
   uiStore.setActiveRoute(nav.route);
+  
+  // 导航到对应路由
   router.push(nav.route);
   
+  // 显示简短的切换提示
   uiStore.addNotification({
     type: 'info',
     title: nav.label,
@@ -525,17 +314,35 @@ function handleSidebarClick(item) {
   });
 }
 
-// 工具提示显示
+// 工具提示定时器
+let tooltipTimer = null;
+
+// 工具提示显示 - 需求 1.2: 300ms 延迟显示
 function showTooltip(item, event) {
+  // 清除之前的定时器
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = null;
+  }
+  
   const rect = event.target.getBoundingClientRect();
-  tooltip.visible = true;
-  tooltip.text = item.label;
-  tooltip.top = rect.top + rect.height / 2 - 16;
-  tooltip.left = rect.right + 12;
+  
+  // 300ms 延迟后显示 tooltip
+  tooltipTimer = setTimeout(() => {
+    tooltip.visible = true;
+    tooltip.text = item.label;
+    tooltip.top = rect.top + rect.height / 2 - 16;
+    tooltip.left = rect.right + 12;
+  }, 300);
 }
 
 // 工具提示隐藏
 function hideTooltip() {
+  // 清除定时器
+  if (tooltipTimer) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = null;
+  }
   tooltip.visible = false;
 }
 
@@ -573,233 +380,19 @@ function handleUserAction(action) {
   }
 }
 
-// 项目点击处理
-function handleProjectClick(projectType) {
-  activeProjectView.value = projectType;
-  
-  const labels = {
-    dashboard: 'Dashboard',
-    library: '我的项目',
-    shared: '共享项目'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: labels[projectType],
-    message: `正在加载 ${labels[projectType]} 内容`,
-    timeout: 2000
-  });
-  
-  // 根据项目类型导航到对应视图
-  if (projectType === 'dashboard') {
-    router.push('/home');
-  } else if (projectType === 'library') {
-    router.push('/projects/my');
-  } else if (projectType === 'shared') {
-    router.push('/projects/shared');
-  }
-}
-
-// 状态点击处理
-function handleStatusClick(statusType) {
-  activeStatusView.value = statusType;
-  
-  const statusLabels = {
-    new: '新建任务',
-    running: '处理中',
-    review: '待审核'
-  };
-  
-  const counts = {
-    new: taskStore.taskCounts.new,
-    running: taskStore.taskCounts.running,
-    review: taskStore.taskCounts.review
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: statusLabels[statusType],
-    message: `共 ${counts[statusType]} 个任务`,
-    timeout: 2000
-  });
-  
-  // 导航到任务列表视图
-  router.push(`/tasks/${statusType}`);
-}
-
-// 历史记录点击处理
-function handleHistoryClick(historyType) {
-  const historyLabels = {
-    recent: 'Recently Edited',
-    archive: 'Archive'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: historyLabels[historyType],
-    message: `正在查看 ${historyLabels[historyType]} 内容`,
-    timeout: 2000
-  });
-  
-  console.log('History clicked:', historyType);
-}
+// 项目点击处理 - 已移至 DashboardPanel
+// 状态点击处理 - 已移至 DashboardPanel
+// 历史记录点击处理 - 已移至 DashboardPanel
 
 // 文件夹展开/折叠处理 - 现在由 DocumentTree 组件和 fileStore 管理
 
-// 创建新项目处理
-function handleCreateNew() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '创建新项目',
-    message: '正在打开创建项目对话框',
-    timeout: 2000
-  });
-}
+// 创建新项目处理 - 已移至各视图组件
+// 文档树事件处理 - 已移至 DashboardPanel
 
-// 文档树事件处理
-function handleCreateDocument() {
-  const name = prompt('请输入文件夹名称:');
-  if (name && name.trim()) {
-    fileStore.addFolder(null, { name: name.trim() });
-    uiStore.addNotification({
-      type: 'success',
-      title: '创建成功',
-      message: `文件夹 "${name}" 已创建`,
-      timeout: 2000
-    });
-  }
-}
-
-function handleDocumentSelect(node) {
-  if (node.type === 'file') {
-    uiStore.addNotification({
-      type: 'info',
-      title: '选中文件',
-      message: `已选中: ${node.name}`,
-      timeout: 1500
-    });
-  }
-}
-
-function handleDocumentOpen(node) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '打开文件',
-    message: `正在打开: ${node.name}`,
-    timeout: 2000
-  });
-  // 根据文件类型导航到对应的编辑器
-  const fileType = node.fileType || 'other';
-  switch (fileType) {
-    case 'novel':
-      router.push(`/edit/novel/${node.id}`);
-      break;
-    case 'script':
-      router.push(`/edit/script/${node.id}`);
-      break;
-    case 'storyboard':
-      router.push(`/edit/storyboard/${node.id}`);
-      break;
-    case 'video':
-      router.push(`/preview/video/${node.id}`);
-      break;
-    default:
-      router.push(`/edit/file/${node.id}`);
-  }
-}
-
-function handleDocumentCreate({ type, parentId }) {
-  if (type === 'folder') {
-    const name = prompt('请输入文件夹名称:');
-    if (name && name.trim()) {
-      fileStore.addFolder(parentId, { name: name.trim() });
-      uiStore.addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: `文件夹 "${name}" 已创建`,
-        timeout: 2000
-      });
-    }
-  } else {
-    const name = prompt('请输入文件名称:');
-    if (name && name.trim()) {
-      fileStore.addFile(parentId, { name: name.trim() });
-      uiStore.addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: `文件 "${name}" 已创建`,
-        timeout: 2000
-      });
-    }
-  }
-}
-
-function handleDocumentDelete(node) {
-  uiStore.addNotification({
-    type: 'success',
-    title: '删除成功',
-    message: `"${node.name}" 已删除`,
-    timeout: 2000
-  });
-}
-
-// 刷新处理
-function handleRefresh() {
-  uiStore.addNotification({
-    type: 'success',
-    title: '刷新完成',
-    message: '数据已刷新',
-    timeout: 2000
-  });
-}
-
-// 统计卡片点击处理
-function handleStatCardClick() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '查看报告',
-    message: '正在打开执行报告',
-    timeout: 2000
-  });
-}
-
-// 标签页点击处理
-function handleTabClick(tabId) {
-  activeTab.value = tabId;
-  const tab = tabs.find(t => t.id === tabId);
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: `切换到 ${tab.label}`,
-    message: `正在加载 ${tab.label} 内容`,
-    timeout: 2000
-  });
-}
-
-// 搜索处理
-function handleSearch() {
-  if (searchQuery.value.length > 2) {
-    console.log('Searching for:', searchQuery.value);
-    // 这里可以添加实际的搜索逻辑
-  }
-}
-
-// 搜索回车处理
-function handleSearchEnter() {
-  if (searchQuery.value.trim()) {
-    uiStore.addNotification({
-      type: 'info',
-      title: '搜索',
-      message: `正在搜索: ${searchQuery.value}`,
-      timeout: 2000
-    });
-  }
-}
-
-// 清除搜索
-function clearSearch() {
-  searchQuery.value = '';
-}
+// 刷新处理 - 已移至各视图组件
+// 统计卡片点击处理 - 已移至各视图组件
+// 标签页点击处理 - 已移至各视图组件
+// 搜索处理 - 已移至各视图组件
 
 // 获取通知图标
 function getNotificationIcon(type) {
@@ -816,6 +409,9 @@ onMounted(() => {
   // 初始化UI状态
   uiStore.initializeFromStorage();
   
+  // 初始化导航状态 - 需求 1.4
+  navigationStore.initializeFromStorage();
+  
   // 加载任务数据
   taskStore.loadTasks();
   
@@ -829,7 +425,7 @@ onMounted(() => {
   const currentPath = route.path;
   const matchedNav = navItems.find(nav => currentPath.startsWith(nav.route));
   if (matchedNav) {
-    activeNavId.value = matchedNav.id;
+    navigationStore.setActiveNav(matchedNav.id);
   }
   
   console.log('App mounted, UI store initialized');
@@ -855,11 +451,11 @@ onMounted(() => {
   }
 });
 
-// 监听路由变化，同步激活状态
+// 监听路由变化，同步激活状态 - 需求 1.4
 watch(() => route.path, (newPath) => {
   const matchedNav = navItems.find(nav => newPath.startsWith(nav.route));
   if (matchedNav) {
-    activeNavId.value = matchedNav.id;
+    navigationStore.setActiveNav(matchedNav.id);
   }
 });
 
@@ -1147,10 +743,13 @@ function generateAnimation() {
   color: #ffffff;
 }
 
-/* 选中的图标 - 只增加灰色背景 */
+/* 选中的图标 - 需求 1.3: 明显的高亮状态 */
 .sidebar-icon-btn--active {
-  background-color: rgba(100, 100, 100, 0.5);
+  background-color: rgba(100, 100, 100, 0.6);
   color: #ffffff;
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 /* 设置按钮 - 正方形，亮色 */
@@ -1161,20 +760,33 @@ function generateAnimation() {
   color: #e0e0e0;
 }
 
-/* 工具提示样式 */
+/* 工具提示样式 - 需求 1.2: 优化显示效果 */
 .sidebar-tooltip {
   position: fixed;
   z-index: 1000;
   background-color: #1a202c;
   color: #ffffff;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   pointer-events: none;
   transform: translateY(-50%);
+  opacity: 0;
+  animation: tooltipFadeIn 0.15s ease forwards;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 .sidebar-tooltip::before {
@@ -1205,7 +817,7 @@ function generateAnimation() {
 }
 
 .logo-icon {
-  color: #2563eb;
+  color: #7a7a7a;
 }
 
 .logo-text {
@@ -1249,8 +861,8 @@ function generateAnimation() {
 }
 
 .nav-item--active {
-  background-color: #2563eb;
-  color: #ffffff;
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
+  color: #2c2c2e;
 }
 
 .nav-item__icon {
@@ -1326,7 +938,7 @@ function generateAnimation() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #8a8a8a, #a0b0aa);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1799,14 +1411,14 @@ function generateAnimation() {
 }
 
 .action-btn--primary {
-  background-color: #3182ce;
-  border-color: #3182ce;
-  color: #ffffff;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  border-color: #8a8a8a;
+  color: #2c2c2e;
 }
 
 .action-btn--primary:hover {
-  background-color: #2c5aa0;
-  border-color: #2c5aa0;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  border-color: #7a7a7a;
 }
 
 /* 主工作区内容 */
@@ -1814,7 +1426,11 @@ function generateAnimation() {
   flex: 1;
   padding: 24px 32px;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 /* 统计卡片 */
@@ -2022,6 +1638,9 @@ function generateAnimation() {
   flex: 1;
   min-height: 200px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 /* 加载状态 */
@@ -2045,7 +1664,7 @@ function generateAnimation() {
 
 .spin {
   animation: spin 1s linear infinite;
-  color: #3182ce;
+  color: #6a6a6a;
 }
 
 @keyframes spin {
@@ -2105,39 +1724,40 @@ function generateAnimation() {
 
 .notification {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.7), rgba(200, 218, 212, 0.6));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   animation: slideInRight 0.3s ease forwards;
 }
 
 .notification--success {
-  border-left: 4px solid #38a169;
 }
 
 .notification--error {
-  border-left: 4px solid #e53e3e;
 }
 
 .notification--warning {
-  border-left: 4px solid #d69e2e;
 }
 
 .notification--info {
-  border-left: 4px solid #3182ce;
 }
 
 .notification-icon {
   flex-shrink: 0;
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
 }
 
 .notification--success .notification-icon {
-  color: #38a169;
+  color: #6a8a7a;
 }
 
 .notification--error .notification-icon {
@@ -2149,30 +1769,36 @@ function generateAnimation() {
 }
 
 .notification--info .notification-icon {
-  color: #3182ce;
+  color: #6a6a6a;
 }
 
 .notification-content {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .notification-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 4px;
+  color: #2c2c2e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .notification-message {
   font-size: 13px;
-  color: #718096;
-  line-height: 1.4;
+  color: #5a5a5c;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .notification-close {
   background: transparent;
   border: none;
-  color: #a0aec0;
+  color: #5a5a5c;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -2180,8 +1806,8 @@ function generateAnimation() {
 }
 
 .notification-close:hover {
-  background-color: #edf2f7;
-  color: #4a5568;
+  background-color: rgba(255, 255, 255, 0.3);
+  color: #2c2c2e;
 }
 
 @keyframes slideInRight {
@@ -2299,5 +1925,46 @@ function generateAnimation() {
   .workspace-search {
     max-width: 100%;
   }
+}
+
+/* 视图切换动画 - 需求 6.4: 300ms 以内的平滑切换 */
+.view-fade-enter-active,
+.view-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.view-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.view-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* 交互反馈优化 - 需求 6.5 */
+button,
+.clickable {
+  transition: all 0.15s ease;
+}
+
+button:active,
+.clickable:active {
+  transform: scale(0.98);
+}
+
+/* 统一可点击元素的 hover 和 active 状态 - 需求 6.5 */
+.interactive-element {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.interactive-element:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.interactive-element:active {
+  transform: scale(0.98);
 }
 </style>

@@ -508,7 +508,7 @@ function formatWordCount(count) {
 }
 
 .step--active {
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
 .step--completed {
@@ -528,7 +528,7 @@ function formatWordCount(count) {
 }
 
 .step--active .step-number {
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
 }
 
@@ -591,7 +591,7 @@ function formatWordCount(count) {
 }
 
 .parsing-icon {
-  color: #4a90d9;
+  color: #6a6a6a;
   margin-bottom: 16px;
 }
 
@@ -616,7 +616,7 @@ function formatWordCount(count) {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4a90d9, #667eea);
+  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
   transition: width 0.3s ease;
 }
 
@@ -673,7 +673,7 @@ function formatWordCount(count) {
   display: block;
   font-size: 24px;
   font-weight: 700;
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
 .stat-label {
@@ -712,7 +712,7 @@ function formatWordCount(count) {
 .chapter-number {
   width: 24px;
   height: 24px;
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
   border-radius: 50%;
   display: flex;
@@ -742,8 +742,8 @@ function formatWordCount(count) {
 
 .character-tag {
   padding: 6px 12px;
-  background: rgba(74, 144, 217, 0.1);
-  color: #4a90d9;
+  background: rgba(150, 150, 150, 0.15);
+  color: #6a6a6a;
   border-radius: 16px;
   font-size: 12px;
 }
@@ -766,7 +766,7 @@ function formatWordCount(count) {
 
 .project-name-input:focus {
   outline: none;
-  border-color: #4a90d9;
+  border-color: #8a8a8a;
 }
 
 /* 对话框底部 */
@@ -807,11 +807,11 @@ function formatWordCount(count) {
 }
 
 .btn--primary {
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
 }
 </style>

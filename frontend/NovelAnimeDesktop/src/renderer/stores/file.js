@@ -73,10 +73,28 @@ export const useFileStore = defineStore('file', {
             count: 0
           },
           {
+            id: 'characters',
+            name: '角色设定',
+            type: 'folder',
+            path: '/characters',
+            icon: 'folder',
+            children: [],
+            count: 0
+          },
+          {
             id: 'storyboards',
             name: '分镜文件',
             type: 'folder',
             path: '/storyboards',
+            icon: 'folder',
+            children: [],
+            count: 0
+          },
+          {
+            id: 'audio',
+            name: '音频文件',
+            type: 'folder',
+            path: '/audio',
             icon: 'folder',
             children: [],
             count: 0
@@ -239,15 +257,19 @@ export const useFileStore = defineStore('file', {
     loadFromStorage() {
       try {
         const saved = localStorage.getItem('novel-anime-file-tree');
-        if (saved) {
+        const schemaVersion = localStorage.getItem('novel-anime-file-tree-version');
+        const currentVersion = '2'; // 版本2: 6个目录分类
+        
+        if (saved && schemaVersion === currentVersion) {
           const data = JSON.parse(saved);
           this.fileTree = data.fileTree || [];
           this.expandedFolders = data.expandedFolders || [];
           // 恢复日期对象
           restoreDates(this.fileTree);
         } else {
-          // 如果没有保存的数据，初始化默认结构
+          // 版本不匹配或无数据，重新初始化
           this.initializeFileTree();
+          localStorage.setItem('novel-anime-file-tree-version', currentVersion);
         }
       } catch (e) {
         console.error('Failed to load file tree:', e);

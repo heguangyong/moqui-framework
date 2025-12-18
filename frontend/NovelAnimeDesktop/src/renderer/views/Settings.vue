@@ -501,7 +501,7 @@ function saveSettings() {
 }
 
 .category-item--active {
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
 }
 
@@ -554,7 +554,7 @@ function saveSettings() {
 .setting-input:focus,
 .setting-select:focus {
   outline: none;
-  border-color: #4a90d9;
+  border-color: #8a8a8a;
 }
 
 .setting-hint {
@@ -631,7 +631,7 @@ function saveSettings() {
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #4a90d9;
+  background-color: #8a8a8a;
 }
 
 .toggle input:checked + .toggle-slider:before {
@@ -644,10 +644,10 @@ function saveSettings() {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: rgba(74, 144, 217, 0.1);
-  border: 1px solid #4a90d9;
+  background: rgba(150, 150, 150, 0.1);
+  border: 1px solid #8a8a8a;
   border-radius: 8px;
-  color: #4a90d9;
+  color: #6a6a6a;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -655,7 +655,7 @@ function saveSettings() {
 }
 
 .test-btn:hover {
-  background: rgba(74, 144, 217, 0.2);
+  background: rgba(150, 150, 150, 0.2);
 }
 
 /* 存储信息 */
@@ -713,7 +713,7 @@ function saveSettings() {
 }
 
 .app-logo {
-  color: #4a90d9;
+  color: #6a6a6a;
   margin-bottom: 16px;
 }
 
@@ -754,7 +754,7 @@ function saveSettings() {
 
 .about-link:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
 /* 操作按钮 */
@@ -790,11 +790,11 @@ function saveSettings() {
 }
 
 .btn--primary {
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
 }
 
 .btn--primary:hover {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
 }
 </style>

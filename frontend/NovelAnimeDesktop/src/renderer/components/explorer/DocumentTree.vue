@@ -5,7 +5,7 @@
       <component :is="icons.search" :size="16" class="search-icon" />
       <input 
         type="text" 
-        placeholder="Search" 
+        placeholder="搜索" 
         class="search-input"
         v-model="searchQuery"
         @input="handleSearch"
@@ -236,6 +236,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 /* 搜索框样式 */
@@ -268,7 +270,7 @@ onUnmounted(() => {
 
 .search-input:focus {
   outline: none;
-  background-color: #ffffff;
+  background-color: rgba(220, 220, 220, 0.6);
 }
 
 .search-input::placeholder {
@@ -299,12 +301,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  border: 1.5px solid #7a7a7a;
+  border: none;
   border-radius: 10px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.03);
-  max-height: 300px;
+  background: rgba(0, 0, 0, 0.04);
+  flex: 1;
+  min-height: 120px;
   overflow-y: auto;
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 .tree-empty {
@@ -322,10 +328,13 @@ onUnmounted(() => {
 .context-menu {
   position: fixed;
   z-index: 1000;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+  background: rgba(220, 220, 220, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(180, 180, 180, 0.5);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    0 1px 4px rgba(0, 0, 0, 0.1);
   min-width: 160px;
   padding: 4px 0;
 }
@@ -342,20 +351,20 @@ onUnmounted(() => {
 }
 
 .context-menu-item:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(180, 198, 192, 0.4);
 }
 
 .context-menu-item--danger {
-  color: #dc3545;
+  color: #c53030;
 }
 
 .context-menu-item--danger:hover {
-  background-color: #fff5f5;
+  background-color: rgba(197, 48, 48, 0.15);
 }
 
 .context-menu-divider {
   height: 1px;
-  background-color: #e0e0e0;
+  background-color: rgba(0, 0, 0, 0.1);
   margin: 4px 0;
 }
 </style>

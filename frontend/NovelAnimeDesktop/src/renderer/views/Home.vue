@@ -163,7 +163,7 @@ function formatDate(date) {
 .welcome-header h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #8a8a8a, #a0b0aa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -1,17 +1,35 @@
 <template>
   <div class="workflow-editor">
-    <div class="editor-header">
-      <div class="editor-title">
-        <h2>工作流编辑器</h2>
-        <p v-if="currentWorkflow">当前工作流: {{ currentWorkflow.name }}</p>
-      </div>
-      <div class="editor-actions">
-        <select v-model="selectedWorkflowId" @change="switchWorkflow" class="workflow-select">
-          <option value="">选择工作流</option>
-          <option v-for="workflow in workflows" :key="workflow.id" :value="workflow.id">
-            {{ workflow.name }}
-          </option>
-        </select>
+    <!-- 视图头部 -->
+    <ViewHeader 
+      title="工作流编辑器" 
+      :subtitle="currentWorkflow ? `当前: ${currentWorkflow.name}` : '设计和执行工作流程'"
+    >
+      <template #actions>
+        <div class="custom-select" :class="{ open: dropdownOpen }">
+          <div class="select-trigger" @click="toggleDropdown">
+            <span>{{ selectedWorkflowName }}</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="select-dropdown" v-if="dropdownOpen">
+            <div 
+              class="select-option" 
+              :class="{ selected: selectedWorkflowId === '' }"
+              @click="selectWorkflow('')"
+            >
+              选择工作流
+            </div>
+            <div 
+              v-for="workflow in workflows" 
+              :key="workflow.id"
+              class="select-option"
+              :class="{ selected: selectedWorkflowId === workflow.id }"
+              @click="selectWorkflow(workflow.id)"
+            >
+              {{ workflow.name }}
+            </div>
+          </div>
+        </div>
         <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
         <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
         <button @click="saveWorkflow" class="btn btn-primary" :disabled="!currentWorkflow">
@@ -20,8 +38,8 @@
         <button @click="runWorkflow" class="btn btn-success" :disabled="!currentWorkflow || isExecuting">
           {{ isExecuting ? '执行中...' : '运行工作流' }}
         </button>
-      </div>
-    </div>
+      </template>
+    </ViewHeader>
 
     <!-- Execution Progress -->
     <div v-if="isExecuting" class="execution-progress">
@@ -62,27 +80,37 @@
           <div class="category">
             <h4>输入节点</h4>
             <div class="node-item" draggable="true" @dragstart="startDrag($event, 'novel-parser')">
-              📖 小说解析器
+              <span class="node-item-icon">📖</span>
+              <span class="node-item-divider"></span>
+              <span class="node-item-text">小说解析器</span>
             </div>
           </div>
           
           <div class="category">
             <h4>处理节点</h4>
             <div class="node-item" draggable="true" @dragstart="startDrag($event, 'character-analyzer')">
-              👤 角色分析器
+              <span class="node-item-icon">👤</span>
+              <span class="node-item-divider"></span>
+              <span class="node-item-text">角色分析器</span>
             </div>
             <div class="node-item" draggable="true" @dragstart="startDrag($event, 'scene-generator')">
-              🎬 场景生成器
+              <span class="node-item-icon">🎬</span>
+              <span class="node-item-divider"></span>
+              <span class="node-item-text">场景生成器</span>
             </div>
             <div class="node-item" draggable="true" @dragstart="startDrag($event, 'script-converter')">
-              📝 脚本转换器
+              <span class="node-item-icon">📝</span>
+              <span class="node-item-divider"></span>
+              <span class="node-item-text">脚本转换器</span>
             </div>
           </div>
           
           <div class="category">
             <h4>输出节点</h4>
             <div class="node-item" draggable="true" @dragstart="startDrag($event, 'video-generator')">
-              🎥 视频生成器
+              <span class="node-item-icon">🎥</span>
+              <span class="node-item-divider"></span>
+              <span class="node-item-text">视频生成器</span>
             </div>
           </div>
         </div>
@@ -165,14 +193,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useWorkflowStore } from '../stores/workflow.js';
 import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
+import { useNavigationStore } from '../stores/navigation.js';
+import ViewHeader from '../components/ui/ViewHeader.vue';
 
 const workflowStore = useWorkflowStore();
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
+const navigationStore = useNavigationStore();
 
 // Reactive data
 const selectedWorkflowId = ref('');
@@ -180,6 +211,42 @@ const validationResult = ref(null);
 const currentExecutionId = ref(null);
 const executionResults = ref(null);
 const showResultsPanel = ref(false);
+const dropdownOpen = ref(false);
+
+// Computed for selected workflow name
+const selectedWorkflowName = computed(() => {
+  if (!selectedWorkflowId.value) return '选择工作流';
+  const workflow = workflows.value.find(w => w.id === selectedWorkflowId.value);
+  return workflow ? workflow.name : '选择工作流';
+});
+
+// Custom dropdown functions
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value;
+}
+
+function selectWorkflow(id) {
+  selectedWorkflowId.value = id;
+  dropdownOpen.value = false;
+  switchWorkflow();
+}
+
+// Close dropdown when clicking outside
+function handleClickOutside(event) {
+  const customSelect = document.querySelector('.custom-select');
+  if (customSelect && !customSelect.contains(event.target)) {
+    dropdownOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  workflowStore.loadAllWorkflows();
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // 监听执行状态变化
 watch(() => workflowStore.executionStatus, (newStatus) => {
@@ -308,6 +375,9 @@ async function runWorkflow() {
     executionResults.value = null;
     showResultsPanel.value = false;
     
+    // 更新导航状态 - 需求 5.4: 开始执行工作流
+    navigationStore.startExecution();
+    
     currentExecutionId.value = await workflowStore.executeWorkflow(
       currentWorkflow.value.id,
       initialData
@@ -329,16 +399,20 @@ async function runWorkflow() {
   }
 }
 
-// 处理执行完成
+// 处理执行完成 - 需求 5.5
 function handleExecutionComplete() {
   const execution = workflowStore.getExecutionStatus(currentExecutionId.value);
   if (execution) {
-    executionResults.value = {
+    const results = {
       status: 'completed',
       nodeResults: execution.context?.nodeResults || new Map(),
       duration: execution.endTime - execution.startTime
     };
+    executionResults.value = results;
     showResultsPanel.value = true;
+    
+    // 更新导航状态 - 需求 5.5: 执行完成后显示结果预览
+    navigationStore.setExecutionResult(results);
   }
   
   uiStore.addNotification({
@@ -456,43 +530,92 @@ function getConnectionY2(connection) {
   flex-direction: column;
 }
 
-.editor-header {
+/* ViewHeader actions styling */
+:deep(.header-actions) {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 1rem;
-}
-
-.editor-title h2 {
-  margin-bottom: 0.5rem;
-}
-
-.editor-title p {
-  opacity: 0.7;
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-.editor-actions {
-  display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
-.workflow-select {
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: white;
-  font-size: 0.875rem;
+/* Custom Select Dropdown */
+.custom-select {
+  position: relative;
 }
 
-.workflow-select option {
-  background: #333;
-  color: white;
+.select-trigger {
+  height: 28px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #6a6a6a;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.select-trigger:hover {
+  color: #4a4a4a;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* 选中状态 - 完整样式 */
+.custom-select.open .select-trigger {
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #2c2c2e;
+}
+
+.select-trigger .arrow {
+  font-size: 0.5rem;
+  opacity: 0.6;
+  transition: transform 0.2s;
+}
+
+.custom-select.open .select-trigger .arrow {
+  transform: rotate(180deg);
+}
+
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  margin-top: 2px;
+  background: rgba(240, 240, 240, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(200, 200, 200, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.select-option {
+  padding: 6px 12px;
+  color: #2c2c2e;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.select-option:hover {
+  background: rgba(200, 200, 200, 0.4);
+}
+
+.select-option.selected {
+  background: rgba(180, 180, 180, 0.5);
 }
 
 .execution-progress {
@@ -504,12 +627,13 @@ function getConnectionY2(connection) {
 }
 
 .execution-results {
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.3), rgba(200, 218, 212, 0.25));
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .results-header {
@@ -536,11 +660,11 @@ function getConnectionY2(connection) {
 }
 
 .result-status.completed {
-  color: #4CAF50;
+  color: #6a8a7a;
 }
 
 .result-status.failed {
-  color: #f44336;
+  color: #a07070;
 }
 
 .result-duration {
@@ -575,7 +699,7 @@ function getConnectionY2(connection) {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
   transition: width 0.3s ease;
 }
 
@@ -586,8 +710,12 @@ function getConnectionY2(connection) {
 }
 
 .btn-danger {
-  background: #f44336;
-  color: white;
+  background: linear-gradient(90deg, rgba(180, 140, 140, 0.7), rgba(200, 170, 170, 0.6));
+  color: #5a4040;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(90deg, rgba(170, 130, 130, 0.8), rgba(190, 160, 160, 0.7));
 }
 
 .empty-canvas {
@@ -625,28 +753,28 @@ function getConnectionY2(connection) {
 }
 
 .validation-success {
-  color: #4CAF50;
+  color: #6a8a7a;
   margin-bottom: 0.5rem;
 }
 
 .validation-errors .error-item {
-  color: #f44336;
+  color: #a07070;
   margin-bottom: 0.25rem;
 }
 
 .validation-warnings .warning-item {
-  color: #FF9800;
+  color: #a09060;
   margin-bottom: 0.25rem;
 }
 
 .workflow-node.node-running {
-  border-color: #2196F3;
-  box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+  border-color: #8a8a8a;
+  box-shadow: 0 0 10px rgba(140, 140, 140, 0.5);
 }
 
 .workflow-node.node-completed {
-  border-color: #4CAF50;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  border-color: #7a9a8a;
+  box-shadow: 0 0 10px rgba(120, 150, 140, 0.5);
 }
 
 .editor-content {
@@ -656,46 +784,109 @@ function getConnectionY2(connection) {
 }
 
 .node-palette {
-  width: 250px;
-  background: rgba(255, 255, 255, 0.1);
+  width: 180px;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.875rem;
   backdrop-filter: blur(10px);
   overflow-y: auto;
 }
 
 .node-palette h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.875rem;
   text-align: center;
+  font-size: 0.9rem;
+  color: #5a5a5c;
 }
 
 .category {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .category h4 {
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 0.75rem;
+  color: #8a8a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* 节点项 - 灰色系立体控件风格 */
 .node-item {
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  padding: 0;
+  background: linear-gradient(145deg, rgba(160, 160, 160, 0.35), rgba(140, 140, 140, 0.25));
+  border: 1px solid rgba(180, 180, 180, 0.4);
+  border-radius: 6px;
   margin-bottom: 0.5rem;
   cursor: grab;
-  transition: all 0.3s;
-  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  color: #4a4a4c;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
 }
 
 .node-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateX(5px);
+  background: linear-gradient(145deg, rgba(170, 170, 170, 0.4), rgba(150, 150, 150, 0.3));
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.14),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .node-item:active {
   cursor: grabbing;
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(145deg, rgba(140, 140, 140, 0.35), rgba(120, 120, 120, 0.25));
+}
+
+/* 节点图标区域 */
+.node-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* 分割线 */
+.node-item-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(
+    180deg,
+    transparent 10%,
+    rgba(0, 0, 0, 0.12) 30%,
+    rgba(0, 0, 0, 0.12) 70%,
+    transparent 90%
+  );
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* 节点文字区域 */
+.node-item-text {
+  flex: 1;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4a4a4c;
+  display: flex;
+  align-items: center;
 }
 
 .workflow-canvas {
@@ -784,27 +975,77 @@ function getConnectionY2(connection) {
   pointer-events: none;
 }
 
+/* 基础按钮 - 简洁无样式 */
 .btn {
-  padding: 0.5rem 1rem;
+  height: 28px;
+  padding: 0 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-success {
-  background: #FF9800;
-  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  background: transparent;
+  color: #6a6a6a;
+  box-sizing: border-box;
 }
 
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: #4a4a4a;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* 次要按钮 - 简洁风格 */
+.btn-secondary {
+  background: transparent;
+  color: #6a6a6a;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #4a4a4a;
+}
+
+/* 主要按钮 - 完整样式 */
+.btn-primary {
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.7), rgba(180, 198, 192, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #2c2c2e;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(90deg, rgba(140, 140, 140, 0.8), rgba(170, 188, 182, 0.7));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 成功按钮 - 完整样式 */
+.btn-success {
+  background: linear-gradient(90deg, rgba(140, 160, 150, 0.7), rgba(170, 198, 182, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #2c2c2e;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-success:hover {
+  background: linear-gradient(90deg, rgba(130, 150, 140, 0.8), rgba(160, 188, 172, 0.7));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-small {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
 }
 </style>

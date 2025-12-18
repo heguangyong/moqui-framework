@@ -23,6 +23,7 @@ import {
   Square,
   MoreHorizontal,
   X,
+  XCircle,
   Check,
   AlertCircle,
   Info,
@@ -73,7 +74,9 @@ import {
   Image,
   Video,
   Lock,
-  Unlock
+  Unlock,
+  GitBranch,
+  Music
 } from 'lucide-vue-next';
 
 // 导航图标映射
@@ -82,7 +85,9 @@ export const navigationIcons = {
   files: FileText,
   edit: Edit3,
   workflow: Workflow,
-  settings: Settings
+  gitBranch: GitBranch,
+  settings: Settings,
+  folderOpen: FolderOpen
 };
 
 // 操作图标映射
@@ -221,7 +226,13 @@ export const icons = {
   x: X,
   plus: Plus,
   lock: Lock,
-  unlock: Unlock
+  unlock: Unlock,
+  gitBranch: GitBranch,
+  folderOpen: FolderOpen,
+  alertCircle: AlertCircle,
+  fileText: FileText,
+  xCircle: XCircle,
+  music: Music
 };
 
 // 默认图标属性

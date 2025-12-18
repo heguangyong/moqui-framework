@@ -176,13 +176,16 @@ export const useUIStore = defineStore('ui', {
       this.project.searchFilters = [];
     },
     
-    // 通知操作
+    // 通知操作 - 需求 6.2, 6.3
     addNotification(notification) {
       const id = Date.now().toString();
       this.notifications.unshift({
         id,
         read: false,
         timestamp: new Date(),
+        // 支持操作按钮 - 需求 6.2, 6.3
+        action: notification.action || null,
+        actionLabel: notification.actionLabel || null,
         ...notification
       });
       
@@ -192,6 +195,17 @@ export const useUIStore = defineStore('ui', {
         setTimeout(() => {
           this.removeNotification(id);
         }, timeout);
+      }
+      
+      return id;
+    },
+    
+    // 执行通知操作 - 需求 6.2, 6.3
+    executeNotificationAction(id) {
+      const notification = this.notifications.find(n => n.id === id);
+      if (notification && notification.action) {
+        notification.action();
+        this.removeNotification(id);
       }
     },
     

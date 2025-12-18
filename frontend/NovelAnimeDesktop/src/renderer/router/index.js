@@ -11,11 +11,22 @@ import DashboardView from '../views/DashboardView.vue';
 import AssetsView from '../views/AssetsView.vue';
 import CharactersView from '../views/CharactersView.vue';
 import FilePreviewView from '../views/FilePreviewView.vue';
+import MyProjectsView from '../views/MyProjectsView.vue';
+import SharedProjectsView from '../views/SharedProjectsView.vue';
+import TasksView from '../views/TasksView.vue';
+import RecentlyEditedView from '../views/RecentlyEditedView.vue';
+import ArchiveView from '../views/ArchiveView.vue';
+import WorkflowStatusView from '../views/WorkflowStatusView.vue';
+import WorkflowTemplatesView from '../views/WorkflowTemplatesView.vue';
+import WorkflowExecutionsView from '../views/WorkflowExecutionsView.vue';
+import WorkflowDetailView from '../views/WorkflowDetailView.vue';
+import AssetCategoryView from '../views/AssetCategoryView.vue';
+import CharacterDetailView from '../views/CharacterDetailView.vue';
 
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/dashboard'
   },
   {
     path: '/home',
@@ -43,6 +54,45 @@ const routes = [
     component: WorkflowEditor
   },
   {
+    path: '/workflow/new',
+    name: 'workflow-new',
+    component: WorkflowEditor
+  },
+  {
+    path: '/workflow/status/:status',
+    name: 'workflow-status',
+    component: WorkflowStatusView,
+    props: true
+  },
+  {
+    path: '/workflow/templates',
+    name: 'workflow-templates',
+    component: WorkflowTemplatesView
+  },
+  {
+    path: '/workflow/templates/:id',
+    name: 'workflow-template-detail',
+    component: WorkflowTemplatesView,
+    props: true
+  },
+  {
+    path: '/workflow/executions',
+    name: 'workflow-executions',
+    component: WorkflowExecutionsView
+  },
+  {
+    path: '/workflow/executions/:id',
+    name: 'workflow-execution-detail',
+    component: WorkflowExecutionsView,
+    props: true
+  },
+  {
+    path: '/workflow/detail/:id',
+    name: 'workflow-detail',
+    component: WorkflowDetailView,
+    props: true
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: Settings
@@ -53,9 +103,58 @@ const routes = [
     component: AssetsView
   },
   {
+    path: '/assets/:category',
+    name: 'asset-category',
+    component: AssetCategoryView,
+    props: true
+  },
+  {
+    path: '/assets/detail/:id',
+    name: 'asset-detail',
+    component: AssetCategoryView,
+    props: true
+  },
+  {
     path: '/characters',
     name: 'characters',
     component: CharactersView
+  },
+  {
+    path: '/characters/new',
+    name: 'character-new',
+    component: CharacterDetailView
+  },
+  {
+    path: '/characters/:id',
+    name: 'character-detail',
+    component: CharacterDetailView,
+    props: true
+  },
+  {
+    path: '/projects/my',
+    name: 'my-projects',
+    component: MyProjectsView
+  },
+  {
+    path: '/projects/shared',
+    name: 'shared-projects',
+    component: SharedProjectsView
+  },
+  {
+    path: '/tasks/:status',
+    name: 'tasks',
+    component: TasksView,
+    props: true
+  },
+  {
+    path: '/history/recent',
+    name: 'recently-edited',
+    component: RecentlyEditedView
+  },
+  {
+    path: '/history/archive',
+    name: 'archive',
+    component: ArchiveView
   },
   {
     path: '/edit/:type/:id',

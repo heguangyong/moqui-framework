@@ -204,13 +204,13 @@ function formatSize(bytes) {
 }
 
 .drop-zone--active {
-  border-color: #4a90d9;
+  border-color: #8a8a8a;
   border-style: solid;
-  background: rgba(74, 144, 217, 0.1);
+  background: rgba(150, 150, 150, 0.1);
 }
 
 .drop-zone--active .drop-zone-icon {
-  color: #4a90d9;
+  color: #6a6a6a;
   transform: scale(1.1);
 }
 
@@ -257,7 +257,7 @@ function formatSize(bytes) {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -268,7 +268,7 @@ function formatSize(bytes) {
 }
 
 .browse-btn:hover {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
   transform: translateY(-1px);
 }
 

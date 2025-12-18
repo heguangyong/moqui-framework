@@ -1,32 +1,11 @@
 <template>
   <div class="assets-view">
-    <!-- 工具栏 -->
-    <div class="assets-toolbar">
-      <div class="toolbar-left">
-        <div class="search-box">
-          <component :is="icons.search" :size="16" class="search-icon" />
-          <input 
-            type="text" 
-            placeholder="搜索资源..." 
-            v-model="searchQuery"
-            class="search-input"
-          />
-        </div>
-        
-        <div class="filter-group">
-          <button 
-            v-for="filter in filters" 
-            :key="filter.id"
-            class="filter-btn"
-            :class="{ 'filter-btn--active': activeFilter === filter.id }"
-            @click="setFilter(filter.id)"
-          >
-            {{ filter.label }}
-          </button>
-        </div>
-      </div>
-      
-      <div class="toolbar-right">
+    <!-- 视图头部 -->
+    <ViewHeader 
+      title="资源库" 
+      subtitle="管理项目资源文件"
+    >
+      <template #actions>
         <div class="view-toggle">
           <button 
             class="view-btn"
@@ -43,10 +22,34 @@
             <component :is="icons.list" :size="16" />
           </button>
         </div>
-        
         <button class="upload-btn" @click="handleUpload">
           <component :is="icons.upload" :size="16" />
           <span>上传资源</span>
+        </button>
+      </template>
+    </ViewHeader>
+    
+    <!-- 工具栏 -->
+    <div class="assets-toolbar">
+      <div class="search-box">
+        <component :is="icons.search" :size="16" class="search-icon" />
+        <input 
+          type="text" 
+          placeholder="搜索资源..." 
+          v-model="searchQuery"
+          class="search-input"
+        />
+      </div>
+      
+      <div class="filter-group">
+        <button 
+          v-for="filter in filters" 
+          :key="filter.id"
+          class="filter-btn"
+          :class="{ 'filter-btn--active': activeFilter === filter.id }"
+          @click="setFilter(filter.id)"
+        >
+          {{ filter.label }}
         </button>
       </div>
     </div>
@@ -64,7 +67,7 @@
         <div class="asset-preview">
           <component 
             :is="getAssetIcon(asset.type)" 
-            :size="48" 
+            :size="28" 
             class="asset-icon"
             :class="`asset-icon--${asset.type}`"
           />
@@ -184,6 +187,7 @@
 import { ref, computed } from 'vue';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
+import ViewHeader from '../components/ui/ViewHeader.vue';
 
 const uiStore = useUIStore();
 
@@ -194,23 +198,25 @@ const viewMode = ref('grid');
 const selectedAsset = ref(null);
 const previewingAsset = ref(null);
 
-// 筛选器
+// 筛选器 - 与 AssetsPanel 保持一致
 const filters = [
   { id: 'all', label: '全部' },
   { id: 'character', label: '角色' },
   { id: 'scene', label: '场景' },
   { id: 'image', label: '图片' },
+  { id: 'audio', label: '音频' },
   { id: 'video', label: '视频' }
 ];
 
-// 模拟资源数据
+// 模拟资源数据 - 包含所有分类
 const assets = ref([
   { id: '1', name: '主角立绘', type: 'character', size: 2048000, createdAt: new Date('2024-01-15'), modifiedAt: new Date('2024-01-20') },
   { id: '2', name: '城市背景', type: 'scene', size: 5120000, createdAt: new Date('2024-01-10'), modifiedAt: new Date('2024-01-18') },
   { id: '3', name: '配角A', type: 'character', size: 1536000, createdAt: new Date('2024-01-12'), modifiedAt: new Date('2024-01-12') },
   { id: '4', name: '森林场景', type: 'scene', size: 4096000, createdAt: new Date('2024-01-08'), modifiedAt: new Date('2024-01-16') },
   { id: '5', name: '特效素材1', type: 'image', size: 512000, createdAt: new Date('2024-01-05'), modifiedAt: new Date('2024-01-05') },
-  { id: '6', name: '片头动画', type: 'video', size: 10240000, createdAt: new Date('2024-01-01'), modifiedAt: new Date('2024-01-14') }
+  { id: '6', name: '背景音乐1', type: 'audio', size: 3072000, createdAt: new Date('2024-01-03'), modifiedAt: new Date('2024-01-10') },
+  { id: '7', name: '片头动画', type: 'video', size: 10240000, createdAt: new Date('2024-01-01'), modifiedAt: new Date('2024-01-14') }
 ]);
 
 // 过滤后的资源
@@ -288,6 +294,7 @@ function getAssetIcon(type) {
     character: icons.users,
     scene: icons.layers,
     image: icons.image,
+    audio: icons.music,
     video: icons.video
   };
   return iconMap[type] || icons.file;
@@ -298,6 +305,7 @@ function getTypeLabel(type) {
     character: '角色',
     scene: '场景',
     image: '图片',
+    audio: '音频',
     video: '视频'
   };
   return labels[type] || type;
@@ -372,8 +380,8 @@ function formatDate(date) {
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.4);
-  border-color: #4a90d9;
+  background: rgba(200, 200, 200, 0.5);
+  border-color: #8a8a8a;
 }
 
 .filter-group {
@@ -397,9 +405,9 @@ function formatDate(date) {
 }
 
 .filter-btn--active {
-  background: #4a90d9;
-  border-color: #4a90d9;
-  color: #fff;
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
+  border-color: #8a8a8a;
+  color: #2c2c2e;
 }
 
 .view-toggle {
@@ -423,8 +431,8 @@ function formatDate(date) {
 }
 
 .view-btn--active {
-  background: #4a90d9;
-  color: #fff;
+  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
+  color: #2c2c2e;
 }
 
 .upload-btn {
@@ -432,10 +440,10 @@ function formatDate(date) {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #4a90d9;
-  border: none;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  color: #fff;
+  color: #2c2c2e;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -443,25 +451,27 @@ function formatDate(date) {
 }
 
 .upload-btn:hover {
-  background: #3a7bc8;
+  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
 }
 
 /* 网格视图 */
 .assets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
   flex: 1;
   overflow-y: auto;
+  align-content: start;
 }
 
 .asset-card {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
-  padding: 12px;
+  padding: 10px;
   cursor: pointer;
   transition: all 0.2s;
+  height: fit-content;
 }
 
 .asset-card:hover {
@@ -470,27 +480,28 @@ function formatDate(date) {
 }
 
 .asset-card--selected {
-  border-color: #4a90d9;
-  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3);
+  border-color: #8a8a8a;
+  box-shadow: 0 0 0 2px rgba(138, 138, 138, 0.3);
 }
 
 .asset-preview {
-  height: 100px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  margin-bottom: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
 
 .asset-icon--character { color: #9b59b6; }
 .asset-icon--scene { color: #27ae60; }
 .asset-icon--image { color: #e67e22; }
+.asset-icon--audio { color: #3498db; }
 .asset-icon--video { color: #e74c3c; }
 
 .asset-info {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .asset-name {

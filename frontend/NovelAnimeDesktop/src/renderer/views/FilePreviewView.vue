@@ -369,7 +369,7 @@ onMounted(() => {
   gap: 8px;
 }
 
-.file-icon--novel { color: #4a90d9; }
+.file-icon--novel { color: #6a6a6a; }
 .file-icon--script { color: #27ae60; }
 .file-icon--storyboard { color: #e67e22; }
 .file-icon--video { color: #e74c3c; }
@@ -399,7 +399,7 @@ onMounted(() => {
 }
 
 .toolbar-btn--active {
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
 }
 
@@ -457,7 +457,7 @@ onMounted(() => {
 }
 
 .chapter--active {
-  background: #4a90d9 !important;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8)) !important;
   color: #fff !important;
 }
 
@@ -499,7 +499,7 @@ onMounted(() => {
 
 .text-editor:focus {
   outline: none;
-  border-color: #4a90d9;
+  border-color: #8a8a8a;
 }
 
 /* 剧本预览 */
@@ -532,7 +532,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
-  background: #4a90d9;
+  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
   color: #fff;
   border-radius: 12px;
 }
@@ -566,7 +566,7 @@ onMounted(() => {
 .character-name {
   font-size: 13px;
   font-weight: 600;
-  color: #4a90d9;
+  color: #6a6a6a;
   min-width: 80px;
 }
 
@@ -612,7 +612,7 @@ onMounted(() => {
 .frame-duration {
   font-size: 12px;
   font-weight: 600;
-  color: #4a90d9;
+  color: #6a6a6a;
   margin-bottom: 6px;
 }
 
@@ -681,7 +681,7 @@ onMounted(() => {
 
 .progress-fill {
   height: 100%;
-  background: #4a90d9;
+  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
   border-radius: 2px;
 }
 

@@ -237,11 +237,11 @@ function getFileTypeFromName(name) {
 }
 
 .tree-icon--folder {
-  color: #f5a623;
+  color: #7a7a7a;
 }
 
 .tree-icon--novel {
-  color: #4a90d9;
+  color: #6a6a6a;
 }
 
 .tree-icon--script {
