@@ -15,11 +15,12 @@
     </ViewHeader>
     
     <div class="view-content">
-      <div v-if="!workflow" class="empty-state">
-        <component :is="icons.gitBranch" :size="48" class="empty-icon" />
-        <h3>工作流不存在</h3>
-        <p>未找到指定的工作流</p>
-      </div>
+      <EmptyState 
+        v-if="!workflow"
+        icon="workflow"
+        title="工作流不存在"
+        description="未找到指定的工作流"
+      />
       
       <div v-else class="workflow-detail">
         <!-- 工作流信息卡片 -->
@@ -83,6 +84,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -162,32 +164,7 @@ function runWorkflow() {
   overflow-y: auto;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  color: #6a6a6a;
-}
 
-.empty-icon {
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  color: #5a5a5c;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
 
 .workflow-detail {
   display: flex;

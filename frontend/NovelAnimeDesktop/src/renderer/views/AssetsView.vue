@@ -90,11 +90,12 @@
       </div>
       
       <!-- 空状态 -->
-      <div v-if="filteredAssets.length === 0" class="empty-state">
-        <component :is="icons.box" :size="48" />
-        <h3>暂无资源</h3>
-        <p>{{ searchQuery ? '没有找到匹配的资源' : '点击上传按钮添加资源' }}</p>
-      </div>
+      <EmptyState 
+        v-if="filteredAssets.length === 0"
+        icon="box"
+        title="暂无资源"
+        :description="searchQuery ? '没有找到匹配的资源' : '点击上传按钮添加资源'"
+      />
     </div>
     
     <!-- 资源列表视图 -->
@@ -132,11 +133,12 @@
         </div>
       </div>
       
-      <div v-if="filteredAssets.length === 0" class="empty-state">
-        <component :is="icons.box" :size="48" />
-        <h3>暂无资源</h3>
-        <p>{{ searchQuery ? '没有找到匹配的资源' : '点击上传按钮添加资源' }}</p>
-      </div>
+      <EmptyState 
+        v-if="filteredAssets.length === 0"
+        icon="box"
+        title="暂无资源"
+        :description="searchQuery ? '没有找到匹配的资源' : '点击上传按钮添加资源'"
+      />
     </div>
     
     <!-- 资源预览面板 -->
@@ -188,6 +190,7 @@ import { ref, computed } from 'vue';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const uiStore = useUIStore();
 
@@ -603,27 +606,7 @@ function formatDate(date) {
   gap: 4px;
 }
 
-/* 空状态 */
-.empty-state {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  color: #8a8a8c;
-  text-align: center;
-}
 
-.empty-state h3 {
-  margin: 16px 0 8px;
-  font-size: 16px;
-  color: #4a4a4c;
-}
-
-.empty-state p {
-  font-size: 13px;
-}
 
 /* 预览面板 */
 .preview-panel {

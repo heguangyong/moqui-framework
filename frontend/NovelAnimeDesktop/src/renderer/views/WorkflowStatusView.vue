@@ -6,11 +6,12 @@
     />
     
     <div class="view-content">
-      <div v-if="filteredWorkflows.length === 0" class="empty-state">
-        <component :is="statusIcon" :size="48" class="empty-icon" />
-        <h3>{{ emptyTitle }}</h3>
-        <p>{{ emptyMessage }}</p>
-      </div>
+      <EmptyState 
+        v-if="filteredWorkflows.length === 0"
+        :icon="statusIconName"
+        :title="emptyTitle"
+        :description="emptyMessage"
+      />
       
       <div v-else class="workflow-list">
         <div 
@@ -42,6 +43,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -52,21 +54,21 @@ const statusConfig = {
   running: {
     title: '运行中的工作流',
     subtitle: '当前正在执行的工作流',
-    icon: icons.refresh,
+    iconName: 'refresh',
     emptyTitle: '没有运行中的工作流',
     emptyMessage: '当前没有正在执行的工作流'
   },
   completed: {
     title: '已完成的工作流',
     subtitle: '执行成功的工作流',
-    icon: icons.check,
+    iconName: 'circle',
     emptyTitle: '没有已完成的工作流',
     emptyMessage: '还没有工作流执行完成'
   },
   failed: {
     title: '失败的工作流',
     subtitle: '执行失败的工作流',
-    icon: icons.xCircle,
+    iconName: 'circle',
     emptyTitle: '没有失败的工作流',
     emptyMessage: '太棒了！没有失败的工作流'
   }
@@ -74,7 +76,7 @@ const statusConfig = {
 
 const statusTitle = computed(() => statusConfig[status.value]?.title || '工作流');
 const statusSubtitle = computed(() => statusConfig[status.value]?.subtitle || '');
-const statusIcon = computed(() => statusConfig[status.value]?.icon || icons.gitBranch);
+const statusIconName = computed(() => statusConfig[status.value]?.iconName || 'workflow');
 const emptyTitle = computed(() => statusConfig[status.value]?.emptyTitle || '暂无数据');
 const emptyMessage = computed(() => statusConfig[status.value]?.emptyMessage || '');
 
@@ -109,32 +111,7 @@ function openWorkflow(workflow) {
   overflow-y: auto;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  color: #6a6a6a;
-}
 
-.empty-icon {
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  color: #5a5a5c;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
 
 .workflow-list {
   display: flex;

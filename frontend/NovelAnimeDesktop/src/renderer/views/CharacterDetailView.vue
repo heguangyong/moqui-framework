@@ -137,12 +137,14 @@
     </div>
 
     <!-- 未找到 -->
-    <div v-else class="empty-state">
-      <component :is="icons.userX" :size="48" />
-      <h3>未找到角色</h3>
-      <p>该角色不存在或已被删除</p>
-      <button class="btn btn--primary" @click="goBack">返回角色列表</button>
-    </div>
+    <EmptyState 
+      v-else
+      icon="userX"
+      title="未找到角色"
+      description="该角色不存在或已被删除"
+      actionText="返回角色列表"
+      @action="goBack"
+    />
   </div>
 </template>
 
@@ -153,6 +155,7 @@ import { useUIStore } from '../stores/ui.js';
 import { useProjectStore } from '../stores/project.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -701,26 +704,5 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-/* 空状态 */
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #8a8a8c;
-}
 
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #5a5a5c;
-  margin: 0;
-}
-
-.empty-state p {
-  font-size: 14px;
-  margin: 0 0 16px 0;
-}
 </style>

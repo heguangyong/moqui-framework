@@ -69,12 +69,14 @@
       </ViewHeader>
       
       <div class="view-content">
-        <div v-if="templates.length === 0" class="empty-state">
-          <component :is="icons.layers" :size="48" class="empty-icon" />
-          <h3>暂无模板</h3>
-          <p>还没有创建任何工作流模板</p>
-          <button class="btn btn-primary" @click="createTemplate">创建第一个模板</button>
-        </div>
+        <EmptyState 
+          v-if="templates.length === 0"
+          icon="layers"
+          title="暂无模板"
+          description="还没有创建任何工作流模板"
+          actionText="创建第一个模板"
+          @action="createTemplate"
+        />
         
         <div v-else class="templates-grid">
           <div 
@@ -107,6 +109,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -214,32 +217,7 @@ function useCurrentTemplate() {
   overflow-y: auto;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  color: #6a6a6a;
-}
 
-.empty-icon {
-  opacity: 0.5;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  color: #5a5a5c;
-}
-
-.empty-state p {
-  margin: 0 0 1rem 0;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
 
 .templates-grid {
   display: grid;

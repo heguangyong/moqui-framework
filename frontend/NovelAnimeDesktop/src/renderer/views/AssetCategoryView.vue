@@ -70,11 +70,12 @@
       </div>
       
       <!-- 空状态 -->
-      <div v-if="filteredAssets.length === 0" class="empty-state">
-        <component :is="categoryConfig.icon" :size="48" :style="{ color: categoryConfig.color, opacity: 0.5 }" />
-        <h3>{{ categoryConfig.emptyTitle }}</h3>
-        <p>{{ searchQuery ? '没有找到匹配的资源' : categoryConfig.emptyMessage }}</p>
-      </div>
+      <EmptyState 
+        v-if="filteredAssets.length === 0"
+        :icon="categoryIconName"
+        :title="categoryConfig.emptyTitle"
+        :description="searchQuery ? '没有找到匹配的资源' : categoryConfig.emptyMessage"
+      />
     </div>
     
     <!-- 列表视图 -->
@@ -112,11 +113,12 @@
         </div>
       </div>
       
-      <div v-if="filteredAssets.length === 0" class="empty-state">
-        <component :is="categoryConfig.icon" :size="48" :style="{ color: categoryConfig.color, opacity: 0.5 }" />
-        <h3>{{ categoryConfig.emptyTitle }}</h3>
-        <p>{{ searchQuery ? '没有找到匹配的资源' : categoryConfig.emptyMessage }}</p>
-      </div>
+      <EmptyState 
+        v-if="filteredAssets.length === 0"
+        :icon="categoryIconName"
+        :title="categoryConfig.emptyTitle"
+        :description="searchQuery ? '没有找到匹配的资源' : categoryConfig.emptyMessage"
+      />
     </div>
   </div>
 </template>
@@ -127,6 +129,7 @@ import { useRoute } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const props = defineProps({
   category: {
@@ -192,6 +195,19 @@ const categoryConfigs = {
 
 const categoryConfig = computed(() => {
   return categoryConfigs[categoryId.value] || categoryConfigs.character;
+});
+
+// 图标名称映射
+const categoryIconNames = {
+  character: 'users',
+  scene: 'layers',
+  image: 'image',
+  audio: 'inbox',
+  video: 'video'
+};
+
+const categoryIconName = computed(() => {
+  return categoryIconNames[categoryId.value] || 'box';
 });
 
 // 状态
@@ -497,28 +513,6 @@ function formatDate(date) {
 .action-btn--danger:hover {
   background: #e74c3c;
   color: #fff;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  color: #8a8a8c;
-  text-align: center;
-}
-
-.empty-state h3 {
-  margin: 16px 0 8px;
-  font-size: 16px;
-  color: #4a4a4c;
-}
-
-.empty-state p {
-  margin: 0 0 16px 0;
-  font-size: 13px;
 }
 
 .btn {
