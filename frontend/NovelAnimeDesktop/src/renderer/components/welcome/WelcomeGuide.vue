@@ -250,17 +250,17 @@ function formatDate(date) {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .step-card:hover {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.45);
 }
 
-/* 选中状态 - 简洁高亮 */
+/* 选中状态 - 简洁高亮，保持相同尺寸 */
 .step-card--active {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .step-number {
