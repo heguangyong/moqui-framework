@@ -337,13 +337,20 @@ function formatDate(date) {
   color: #3a4a42;
 }
 
+/* 未选中状态的按钮 - 带线框 */
 .step-btn-placeholder {
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 14px;
   background: transparent;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
   color: #9a9a9c;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* 最近项目 */
