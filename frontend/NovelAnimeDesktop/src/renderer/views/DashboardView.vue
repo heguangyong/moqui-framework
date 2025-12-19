@@ -152,12 +152,8 @@ function formatDate(date) {
 
 // 操作处理
 function handleImportNovel() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '导入小说',
-    message: '请拖拽TXT文件到窗口或点击选择文件',
-    timeout: 2000
-  });
+  // TODO: 打开导入小说对话框
+  router.push('/import');
 }
 
 function handleOpenWorkflow() {
@@ -169,12 +165,7 @@ function handleOpenSettings() {
 }
 
 function handleViewAllActivity() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '活动记录',
-    message: '正在打开活动记录页面',
-    timeout: 2000
-  });
+  router.push('/history/recent');
 }
 </script>
 

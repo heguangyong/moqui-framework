@@ -156,12 +156,6 @@ function formatDate(date) {
 }
 
 function handleOpenTask(task) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '打开任务',
-    message: `正在打开: ${task.name}`,
-    timeout: 2000
-  });
   // 根据任务类型跳转到对应页面
   if (task.projectId) {
     router.push(`/project/${task.projectId}`);
@@ -170,12 +164,6 @@ function handleOpenTask(task) {
 
 function handleRefresh() {
   taskStore.loadTasks();
-  uiStore.addNotification({
-    type: 'success',
-    title: '刷新完成',
-    message: '任务列表已刷新',
-    timeout: 2000
-  });
 }
 </script>
 

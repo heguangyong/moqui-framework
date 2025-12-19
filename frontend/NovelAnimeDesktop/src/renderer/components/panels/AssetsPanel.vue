@@ -138,14 +138,6 @@ function handleCategoryClick(category) {
   activeCategory.value = category.id;
   activeAsset.value = null; // 清除最近资源的选中状态
   navigationStore.updatePanelContext('assets', { category: category.id });
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: category.name,
-    message: `正在加载 ${category.name} 资源`,
-    timeout: 2000
-  });
-  
   router.push(`/assets/${category.id}`);
 }
 
@@ -163,14 +155,6 @@ function toggleFilter(filterId) {
 function handleAssetClick(asset) {
   activeAsset.value = asset.id;
   activeCategory.value = null; // 清除分类的选中状态
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: asset.name,
-    message: '正在打开资源详情',
-    timeout: 2000
-  });
-  
   // 根据资源类型导航到对应分类页面
   router.push(`/assets/${asset.type}?highlight=${asset.id}`);
 }

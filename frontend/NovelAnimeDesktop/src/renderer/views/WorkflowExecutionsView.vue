@@ -204,23 +204,13 @@ function viewExecution(execution) {
 }
 
 function rerunExecution() {
+  // TODO: 实现重新执行逻辑
   if (currentExecution.value) {
-    uiStore.addNotification({
-      type: 'info',
-      title: '重新执行',
-      message: `正在重新执行: ${currentExecution.value.name}`,
-      timeout: 2000
-    });
+    console.log('Rerunning execution:', currentExecution.value.name);
   }
 }
 
 function viewWorkflow() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '查看工作流',
-    message: '正在打开工作流编辑器',
-    timeout: 2000
-  });
   router.push('/workflow');
 }
 </script>

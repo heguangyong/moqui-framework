@@ -309,25 +309,12 @@ function goBack() {
 
 // 编辑角色
 function editCharacter() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '编辑角色',
-    message: '正在打开编辑面板',
-    timeout: 2000
-  });
-  // 可以跳转到编辑页面或打开编辑弹窗
   router.push('/characters');
 }
 
 // 删除角色
 function deleteCharacter() {
   if (confirm(`确定要删除角色 "${character.value?.name}" 吗？`)) {
-    uiStore.addNotification({
-      type: 'success',
-      title: '删除成功',
-      message: `角色 "${character.value?.name}" 已删除`,
-      timeout: 2000
-    });
     router.push('/characters');
   }
 }
@@ -336,12 +323,6 @@ function deleteCharacter() {
 function lockCharacter() {
   if (character.value) {
     character.value.isLocked = true;
-    uiStore.addNotification({
-      type: 'success',
-      title: '锁定成功',
-      message: `角色 "${character.value.name}" 的档案已锁定`,
-      timeout: 2000
-    });
   }
 }
 
@@ -349,12 +330,6 @@ function lockCharacter() {
 function unlockCharacter() {
   if (character.value) {
     character.value.isLocked = false;
-    uiStore.addNotification({
-      type: 'info',
-      title: '已解锁',
-      message: `角色 "${character.value.name}" 的档案已解锁`,
-      timeout: 2000
-    });
   }
 }
 

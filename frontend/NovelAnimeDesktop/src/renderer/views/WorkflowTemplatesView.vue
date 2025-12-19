@@ -175,12 +175,7 @@ function isFirstTemplate(id) {
 }
 
 function createTemplate() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '创建模板',
-    message: '正在打开模板创建向导',
-    timeout: 2000
-  });
+  router.push('/workflow/templates/new');
 }
 
 function viewTemplate(template) {
@@ -188,12 +183,6 @@ function viewTemplate(template) {
 }
 
 function useTemplate(template) {
-  uiStore.addNotification({
-    type: 'info',
-    title: template.name,
-    message: '正在使用模板创建工作流',
-    timeout: 2000
-  });
   router.push('/workflow/new');
 }
 

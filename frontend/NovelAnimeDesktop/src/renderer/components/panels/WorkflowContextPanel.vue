@@ -150,82 +150,32 @@ function getExecutionIcon(status) {
 // 工作流点击处理
 function handleWorkflowClick(workflow) {
   activeView.value = `workflow-${workflow.id}`;
-  
-  // 更新面板上下文
   navigationStore.updatePanelContext('workflow', { selectedWorkflow: workflow.id });
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: workflow.name,
-    message: '正在查看工作流详情',
-    timeout: 2000
-  });
-  
   router.push(`/workflow/detail/${workflow.id}`);
 }
 
 // 模板点击处理
 function handleTemplateClick(template) {
   activeView.value = `template-${template.id}`;
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: template.name,
-    message: '正在加载模板',
-    timeout: 2000
-  });
-  
   router.push(`/workflow/templates/${template.id}`);
 }
 
 // 执行记录点击处理
 function handleExecutionClick(execution) {
   activeView.value = `execution-${execution.id}`;
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: execution.name,
-    message: '正在查看执行详情',
-    timeout: 2000
-  });
-  
   router.push(`/workflow/executions/${execution.id}`);
 }
 
 // 创建工作流
 function handleCreateWorkflow() {
   activeView.value = '';
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: '创建工作流',
-    message: '正在打开工作流创建向导',
-    timeout: 2000
-  });
-  
   router.push('/workflow/new');
 }
 
 // 状态点击处理
 function handleStatusClick(statusType) {
   activeView.value = `status-${statusType}`;
-  
-  // 更新面板上下文
   navigationStore.updatePanelContext('workflow', { statusFilter: statusType });
-  
-  const statusLabels = {
-    running: '运行中',
-    completed: '已完成',
-    failed: '失败'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: statusLabels[statusType],
-    message: `共 ${workflowCounts.value[statusType]} 个工作流`,
-    timeout: 2000
-  });
-  
   router.push(`/workflow/status/${statusType}`);
 }
 </script>

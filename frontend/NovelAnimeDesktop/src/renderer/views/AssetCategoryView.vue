@@ -258,30 +258,20 @@ function selectAsset(asset) {
 }
 
 function editAsset(asset) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '编辑资源',
-    message: `正在编辑: ${asset.name}`,
-    timeout: 2000
-  });
+  // TODO: 打开资源编辑对话框
+  console.log('Editing asset:', asset.name);
 }
 
 function deleteAsset(asset) {
-  uiStore.addNotification({
-    type: 'warning',
-    title: '删除资源',
-    message: `确认删除: ${asset.name}`,
-    timeout: 2000
-  });
+  if (confirm(`确定要删除 "${asset.name}" 吗？`)) {
+    // TODO: 实现删除逻辑
+    console.log('Deleting asset:', asset.name);
+  }
 }
 
 function handleUpload() {
-  uiStore.addNotification({
-    type: 'info',
-    title: categoryConfig.value.uploadText,
-    message: '请选择要上传的文件',
-    timeout: 2000
-  });
+  // TODO: 打开文件选择对话框
+  console.log('Opening upload dialog');
 }
 
 function formatSize(bytes) {

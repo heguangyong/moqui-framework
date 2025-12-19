@@ -119,12 +119,6 @@ function handleOpenProject(project) {
 
 function handleRefresh() {
   projectStore.loadAllProjects();
-  uiStore.addNotification({
-    type: 'success',
-    title: '刷新完成',
-    message: '项目列表已刷新',
-    timeout: 2000
-  });
 }
 </script>
 

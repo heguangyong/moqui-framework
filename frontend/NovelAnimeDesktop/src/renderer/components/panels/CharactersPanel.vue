@@ -145,26 +145,11 @@ function setFilter(locked) {
 // 角色点击处理
 function handleCharacterClick(character) {
   selectedCharacter.value = character.id;
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: character.name,
-    message: '正在打开角色详情',
-    timeout: 2000
-  });
-  
   router.push(`/characters/${character.id}`);
 }
 
 // 创建角色
 function handleCreateCharacter() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '创建角色',
-    message: '正在打开角色创建向导',
-    timeout: 2000
-  });
-  
   router.push('/characters/new');
 }
 </script>

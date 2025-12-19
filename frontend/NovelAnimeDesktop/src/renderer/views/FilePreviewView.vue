@@ -263,21 +263,11 @@ function handleSave() {
     chapters.value[currentChapter.value].content = editContent.value;
   }
   isEditing.value = false;
-  uiStore.addNotification({
-    type: 'success',
-    title: '保存成功',
-    message: '文件已保存',
-    timeout: 2000
-  });
 }
 
 function handleDownload() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '下载文件',
-    message: '正在准备下载...',
-    timeout: 2000
-  });
+  // TODO: 实现下载逻辑
+  console.log('Downloading file');
 }
 
 function goToChapter(index) {
@@ -289,12 +279,8 @@ function togglePlay() {
 }
 
 function toggleFullscreen() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '全屏模式',
-    message: '进入全屏播放',
-    timeout: 2000
-  });
+  // TODO: 实现全屏逻辑
+  console.log('Toggling fullscreen');
 }
 
 function formatTime(seconds) {

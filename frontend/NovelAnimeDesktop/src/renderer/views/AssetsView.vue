@@ -254,12 +254,8 @@ function previewAsset(asset) {
 }
 
 function editAsset(asset) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '编辑资源',
-    message: `正在编辑: ${asset.name}`,
-    timeout: 2000
-  });
+  // TODO: 打开资源编辑对话框
+  console.log('Editing asset:', asset.name);
 }
 
 function deleteAsset(asset) {
@@ -273,23 +269,13 @@ function deleteAsset(asset) {
       if (previewingAsset.value?.id === asset.id) {
         previewingAsset.value = null;
       }
-      uiStore.addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: `"${asset.name}" 已删除`,
-        timeout: 2000
-      });
     }
   }
 }
 
 function handleUpload() {
-  uiStore.addNotification({
-    type: 'info',
-    title: '上传资源',
-    message: '请选择要上传的文件',
-    timeout: 2000
-  });
+  // TODO: 打开文件选择对话框
+  console.log('Opening upload dialog');
 }
 
 function getAssetIcon(type) {
