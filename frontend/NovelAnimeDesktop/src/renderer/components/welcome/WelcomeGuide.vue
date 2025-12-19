@@ -239,27 +239,28 @@ function formatDate(date) {
   gap: 12px;
 }
 
+/* 列表项 - 统一带线框 */
 .step-card {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .step-card:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
+/* 选中状态 - 简洁高亮 */
 .step-card--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .step-number {
@@ -268,6 +269,7 @@ function formatDate(date) {
   height: 28px;
   border-radius: 50%;
   background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: #8a8a8c;
   font-size: 14px;
   font-weight: 600;
@@ -277,8 +279,9 @@ function formatDate(date) {
 }
 
 .step-card--active .step-number {
-  background: linear-gradient(90deg, #7a7a7a, #8a9a94);
-  color: #ffffff;
+  background: rgba(120, 140, 130, 0.3);
+  border-color: rgba(100, 120, 110, 0.4);
+  color: #4a5a52;
 }
 
 .step-content {
