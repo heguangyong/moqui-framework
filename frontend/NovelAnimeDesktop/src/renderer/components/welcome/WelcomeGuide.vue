@@ -314,20 +314,27 @@ function formatDate(date) {
   flex-shrink: 0;
 }
 
+/* 步骤按钮 - 内容区简洁风格 */
 .step-btn {
-  padding: 8px 16px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 14px;
+  background: rgba(120, 140, 130, 0.25);
+  border: 1px solid rgba(100, 120, 110, 0.3);
   border-radius: 6px;
-  color: #2c2c2e;
-  font-size: 13px;
+  color: #4a5a52;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .step-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 
 .step-btn-placeholder {
