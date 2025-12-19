@@ -30,13 +30,12 @@
       </div>
       
       <!-- 无记录时显示空状态 -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <component :is="icons.clock" :size="48" />
-        </div>
-        <h3 class="empty-title">暂无最近编辑</h3>
-        <p class="empty-description">当您编辑文件或项目后，它们将显示在这里</p>
-      </div>
+      <EmptyState 
+        v-else
+        icon="clock"
+        title="暂无最近编辑"
+        description="当您编辑文件或项目后，它们将显示在这里"
+      />
     </div>
   </div>
 </template>
@@ -48,6 +47,7 @@ import { useFileStore } from '../stores/file.js';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const router = useRouter();
 const fileStore = useFileStore();
@@ -199,31 +199,5 @@ function handleRefresh() {
   flex-shrink: 0;
 }
 
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
 
-.empty-icon {
-  color: #b0b0b0;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a4a4c;
-  margin: 0 0 8px 0;
-}
-
-.empty-description {
-  font-size: 14px;
-  color: #8a8a8c;
-  margin: 0;
-}
 </style>

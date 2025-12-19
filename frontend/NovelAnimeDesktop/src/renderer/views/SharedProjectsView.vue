@@ -39,13 +39,12 @@
       </div>
       
       <!-- 无项目时显示空状态 -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <component :is="icons.users" :size="48" />
-        </div>
-        <h3 class="empty-title">暂无共享项目</h3>
-        <p class="empty-description">当有人与您共享项目时，它们将显示在这里</p>
-      </div>
+      <EmptyState 
+        v-else
+        icon="users"
+        title="暂无共享项目"
+        description="当有人与您共享项目时，它们将显示在这里"
+      />
     </div>
   </div>
 </template>
@@ -56,6 +55,7 @@ import { useRouter } from 'vue-router';
 import { useProjectStore } from '../stores/project.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const router = useRouter();
 const projectStore = useProjectStore();
@@ -186,31 +186,5 @@ function handleOpenProject(project) {
   color: #a0a0a2;
 }
 
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
 
-.empty-icon {
-  color: #b0b0b0;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a4a4c;
-  margin: 0 0 8px 0;
-}
-
-.empty-description {
-  font-size: 14px;
-  color: #8a8a8c;
-  margin: 0;
-}
 </style>

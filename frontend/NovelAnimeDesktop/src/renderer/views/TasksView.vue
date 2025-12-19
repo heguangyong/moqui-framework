@@ -42,13 +42,12 @@
       </div>
       
       <!-- 无任务时显示空状态 -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <component :is="emptyIcon" :size="48" />
-        </div>
-        <h3 class="empty-title">{{ emptyTitle }}</h3>
-        <p class="empty-description">{{ emptyDescription }}</p>
-      </div>
+      <EmptyState 
+        v-else
+        :icon="emptyIconName"
+        :title="emptyTitle"
+        :description="emptyDescription"
+      />
     </div>
   </div>
 </template>
@@ -60,6 +59,7 @@ import { useTaskStore } from '../stores/task.js';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -77,21 +77,21 @@ const viewConfig = computed(() => {
       subtitle: '等待处理的任务',
       emptyTitle: '暂无新建任务',
       emptyDescription: '当有新任务创建时，它们将显示在这里',
-      emptyIcon: icons.circle
+      emptyIconName: 'circle'
     },
     running: {
       title: '处理中',
       subtitle: '正在执行的任务',
       emptyTitle: '暂无处理中的任务',
       emptyDescription: '当有任务开始执行时，它们将显示在这里',
-      emptyIcon: icons.refresh
+      emptyIconName: 'refresh'
     },
     review: {
       title: '待审核',
       subtitle: '需要审核确认的任务',
       emptyTitle: '暂无待审核任务',
       emptyDescription: '当有任务完成需要审核时，它们将显示在这里',
-      emptyIcon: icons.users
+      emptyIconName: 'users'
     }
   };
   return configs[statusType.value] || configs.new;
@@ -99,9 +99,9 @@ const viewConfig = computed(() => {
 
 const viewTitle = computed(() => viewConfig.value.title);
 const viewSubtitle = computed(() => viewConfig.value.subtitle);
+const emptyIconName = computed(() => viewConfig.value.emptyIconName);
 const emptyTitle = computed(() => viewConfig.value.emptyTitle);
 const emptyDescription = computed(() => viewConfig.value.emptyDescription);
-const emptyIcon = computed(() => viewConfig.value.emptyIcon);
 
 // 状态映射
 const statusMapping = {
@@ -278,31 +278,5 @@ function handleRefresh() {
   gap: 4px;
 }
 
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
 
-.empty-icon {
-  color: #b0b0b0;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a4a4c;
-  margin: 0 0 8px 0;
-}
-
-.empty-description {
-  font-size: 14px;
-  color: #8a8a8c;
-  margin: 0;
-}
 </style>

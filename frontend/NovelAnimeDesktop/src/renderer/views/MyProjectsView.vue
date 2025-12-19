@@ -44,13 +44,12 @@
       </div>
       
       <!-- 无项目时显示空状态 -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <component :is="icons.folder" :size="48" />
-        </div>
-        <h3 class="empty-title">暂无项目</h3>
-        <p class="empty-description">点击上方"新建项目"按钮创建您的第一个项目</p>
-      </div>
+      <EmptyState 
+        v-else
+        icon="folder"
+        title="暂无项目"
+        description="点击上方"新建项目"按钮创建您的第一个项目"
+      />
     </div>
   </div>
 </template>
@@ -62,6 +61,7 @@ import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const router = useRouter();
 const projectStore = useProjectStore();
@@ -230,31 +230,5 @@ function handleRefresh() {
   color: #6a6a6a;
 }
 
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
 
-.empty-icon {
-  color: #b0b0b0;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a4a4c;
-  margin: 0 0 8px 0;
-}
-
-.empty-description {
-  font-size: 14px;
-  color: #8a8a8c;
-  margin: 0;
-}
 </style>

@@ -66,7 +66,14 @@ const iconComponent = computed(() => {
     video: icons.video,
     book: icons.book,
     workflow: icons.gitBranch,
-    settings: icons.settings
+    settings: icons.settings,
+    clock: icons.clock,
+    archive: icons.archive,
+    layers: icons.layers,
+    circle: icons.circle,
+    refresh: icons.refresh,
+    box: icons.box,
+    userX: icons.userX
   };
   return iconMap[props.icon] || icons.inbox;
 });

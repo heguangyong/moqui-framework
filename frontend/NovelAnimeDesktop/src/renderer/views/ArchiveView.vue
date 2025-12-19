@@ -38,13 +38,12 @@
       </div>
       
       <!-- 无归档时显示空状态 -->
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <component :is="icons.archive" :size="48" />
-        </div>
-        <h3 class="empty-title">暂无归档内容</h3>
-        <p class="empty-description">当您归档项目或文件后，它们将显示在这里</p>
-      </div>
+      <EmptyState 
+        v-else
+        icon="archive"
+        title="暂无归档内容"
+        description="当您归档项目或文件后，它们将显示在这里"
+      />
     </div>
   </div>
 </template>
@@ -56,6 +55,7 @@ import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import EmptyState from '../components/ui/EmptyState.vue';
 
 const fileStore = useFileStore();
 const projectStore = useProjectStore();
@@ -240,31 +240,5 @@ function handleRefresh() {
   border-color: rgba(220, 38, 38, 0.3);
 }
 
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
 
-.empty-icon {
-  color: #b0b0b0;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #4a4a4c;
-  margin: 0 0 8px 0;
-}
-
-.empty-description {
-  font-size: 14px;
-  color: #8a8a8c;
-  margin: 0;
-}
 </style>
