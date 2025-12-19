@@ -408,9 +408,9 @@ function formatDate(date) {
 }
 
 .filter-btn--active {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
-  border-color: #8a8a8a;
-  color: #2c2c2e;
+  background: rgba(120, 140, 130, 0.25);
+  border-color: rgba(100, 120, 110, 0.3);
+  color: #4a5a52;
 }
 
 .view-toggle {
@@ -423,38 +423,40 @@ function formatDate(date) {
 .view-btn {
   padding: 6px 10px;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.3);
   color: #6c6c6e;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .view-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.5);
+  color: #4a4a4c;
 }
 
 .view-btn--active {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
-  color: #2c2c2e;
+  background: rgba(120, 140, 130, 0.25);
+  color: #4a5a52;
 }
 
 .upload-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  color: #2c2c2e;
-  font-size: 13px;
+  padding: 6px 14px;
+  background: rgba(120, 140, 130, 0.25);
+  border: 1px solid rgba(100, 120, 110, 0.3);
+  border-radius: 6px;
+  color: #4a5a52;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .upload-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 
 /* 网格视图 */

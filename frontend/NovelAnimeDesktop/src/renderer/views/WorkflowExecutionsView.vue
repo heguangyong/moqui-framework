@@ -443,27 +443,47 @@ function viewWorkflow() {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 28px;
   padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 6px;
-  cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s;
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
-  color: #2c2c2e;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5a5a5c;
 }
 
 .btn:hover {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.6), rgba(200, 218, 212, 0.5));
+  background: rgba(255, 255, 255, 0.7);
+  color: #2c2c2e;
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
 .btn-secondary {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(160, 160, 160, 0.15);
+  color: #6a6a6a;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background: rgba(160, 160, 160, 0.25);
+  color: #5a5a5a;
 }
 
 .btn-primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.7), rgba(180, 198, 192, 0.6));
+  background: rgba(120, 140, 130, 0.25);
+  color: #4a5a52;
+  border-color: rgba(100, 120, 110, 0.3);
+}
+
+.btn-primary:hover {
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 </style>

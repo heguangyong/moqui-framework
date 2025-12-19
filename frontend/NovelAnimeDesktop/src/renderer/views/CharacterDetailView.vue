@@ -614,33 +614,43 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  padding: 10px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5a5a5c;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+  color: #2c2c2e;
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
 .btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #2c2c2e;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(120, 140, 130, 0.25);
+  color: #4a5a52;
+  border-color: rgba(100, 120, 110, 0.3);
 }
 
 .btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 
 .btn--danger {
-  background: rgba(220, 100, 100, 0.15);
-  color: #a04040;
-  border: 1px solid rgba(220, 100, 100, 0.3);
+  background: rgba(200, 120, 120, 0.15);
+  color: #8a5050;
+  border-color: rgba(200, 120, 120, 0.25);
 }
 
 .btn--danger:hover {
-  background: rgba(220, 100, 100, 0.25);
+  background: rgba(200, 120, 120, 0.25);
+  color: #7a4040;
 }
 
 /* 头部操作按钮 */
@@ -648,36 +658,44 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  color: #2c2c2e;
-  font-size: 13px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  color: #5a5a5c;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .action-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(255, 255, 255, 0.7);
+  color: #2c2c2e;
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
 .action-btn--lock {
-  background: linear-gradient(90deg, rgba(100, 140, 120, 0.9), rgba(120, 160, 140, 0.8));
+  background: rgba(100, 160, 130, 0.2);
+  color: #4a7a5a;
+  border-color: rgba(100, 160, 130, 0.3);
 }
 
 .action-btn--lock:hover {
-  background: linear-gradient(90deg, rgba(80, 120, 100, 0.9), rgba(100, 140, 120, 0.8));
+  background: rgba(100, 160, 130, 0.3);
+  color: #3a6a4a;
 }
 
 .action-btn--unlock {
-  background: linear-gradient(90deg, rgba(180, 140, 100, 0.9), rgba(200, 160, 120, 0.8));
+  background: rgba(180, 150, 100, 0.2);
+  color: #7a6a4a;
+  border-color: rgba(180, 150, 100, 0.3);
 }
 
 .action-btn--unlock:hover {
-  background: linear-gradient(90deg, rgba(160, 120, 80, 0.9), rgba(180, 140, 100, 0.8));
+  background: rgba(180, 150, 100, 0.3);
+  color: #6a5a3a;
 }
 
 /* 加载状态 */

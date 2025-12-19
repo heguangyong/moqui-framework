@@ -577,3 +577,101 @@
     transform: translateY(-1px);
   }
 }
+
+// ===== 内容区统一按钮样式 =====
+// 用于右侧内容区的所有按钮，简洁无渐变风格
+.content-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--text-primary);
+    border-color: rgba(0, 0, 0, 0.18);
+  }
+  
+  &:active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  // 主要按钮
+  &--primary {
+    background: rgba(120, 140, 130, 0.25);
+    color: #4a5a52;
+    border-color: rgba(100, 120, 110, 0.3);
+    
+    &:hover {
+      background: rgba(120, 140, 130, 0.35);
+      color: #3a4a42;
+    }
+  }
+  
+  // 次要按钮
+  &--secondary {
+    background: rgba(160, 160, 160, 0.15);
+    color: #6a6a6a;
+    border-color: rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      background: rgba(160, 160, 160, 0.25);
+      color: #5a5a5a;
+    }
+  }
+  
+  // 成功按钮
+  &--success {
+    background: rgba(100, 160, 130, 0.2);
+    color: #4a7a5a;
+    border-color: rgba(100, 160, 130, 0.3);
+    
+    &:hover {
+      background: rgba(100, 160, 130, 0.3);
+      color: #3a6a4a;
+    }
+  }
+  
+  // 危险按钮
+  &--danger {
+    background: rgba(200, 120, 120, 0.15);
+    color: #8a5050;
+    border-color: rgba(200, 120, 120, 0.25);
+    
+    &:hover {
+      background: rgba(200, 120, 120, 0.25);
+      color: #7a4040;
+    }
+  }
+  
+  // 小尺寸
+  &--sm {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  
+  // 大尺寸
+  &--lg {
+    height: 36px;
+    padding: 0 20px;
+    font-size: 14px;
+  }
+}
