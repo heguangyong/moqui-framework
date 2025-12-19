@@ -221,14 +221,6 @@ function handleNavClick(nav) {
   
   // 导航到对应路由
   router.push(nav.route);
-  
-  // 显示简短的切换提示
-  uiStore.addNotification({
-    type: 'info',
-    title: nav.label,
-    message: nav.description,
-    timeout: 2000
-  });
 }
 
 // 动态计算页面标题和内容
@@ -307,14 +299,6 @@ function handleSidebarClick(item) {
   if (item.route) {
     router.push(`/${item.route}`);
   }
-  
-  // 添加点击反馈
-  uiStore.addNotification({
-    type: 'info',
-    title: `切换到 ${item.label}`,
-    message: `已切换到 ${item.label} 页面`,
-    timeout: 2000
-  });
 }
 
 // 工具提示定时器
@@ -361,24 +345,12 @@ function handleUserAction(action) {
   switch (action) {
     case 'profile':
       router.push('/profile');
-      uiStore.addNotification({
-        type: 'info',
-        title: '用户资料',
-        message: '正在打开用户资料页面',
-        timeout: 2000
-      });
       break;
     case 'settings':
       router.push('/settings');
       break;
     case 'logout':
-      // 处理登出逻辑
-      uiStore.addNotification({
-        type: 'success',
-        title: '已登出',
-        message: '您已成功登出系统',
-        timeout: 3000
-      });
+      // TODO: 处理登出逻辑
       break;
   }
 }
