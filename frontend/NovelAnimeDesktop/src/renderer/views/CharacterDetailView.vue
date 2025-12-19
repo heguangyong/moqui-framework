@@ -390,12 +390,12 @@ onMounted(() => {
   gap: 20px;
 }
 
-/* 基本信息卡片 */
+/* 基本信息卡片 - 统一简洁风格 */
 .info-card {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 24px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 20px;
 }
 
 .card-header {
@@ -410,16 +410,16 @@ onMounted(() => {
 }
 
 .avatar-large {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 600;
   color: #fff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .locked-badge {
@@ -431,10 +431,11 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: linear-gradient(90deg, rgba(100, 140, 120, 0.9), rgba(120, 160, 140, 0.8));
+  background: rgba(100, 160, 130, 0.3);
+  border: 1px solid rgba(100, 160, 130, 0.4);
   border-radius: 12px;
   font-size: 10px;
-  color: #fff;
+  color: #4a7a5a;
   white-space: nowrap;
 }
 
@@ -478,10 +479,10 @@ onMounted(() => {
 }
 
 .detail-card {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-  padding: 18px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 16px;
 }
 
 .detail-card--wide {
@@ -562,17 +563,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .relationship-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .rel-avatar {

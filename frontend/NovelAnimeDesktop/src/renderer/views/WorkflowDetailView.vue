@@ -172,9 +172,10 @@ function runWorkflow() {
   gap: 1.5rem;
 }
 
+/* 信息卡片 - 统一简洁风格 */
 .info-card {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.3), rgba(200, 218, 212, 0.25));
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -184,8 +185,8 @@ function runWorkflow() {
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .card-header h3 {
@@ -221,8 +222,8 @@ function runWorkflow() {
 }
 
 .section {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.2), rgba(200, 218, 212, 0.15));
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 10px;
   padding: 1rem;
 }
@@ -255,7 +256,8 @@ function runWorkflow() {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 6px;
 }
 

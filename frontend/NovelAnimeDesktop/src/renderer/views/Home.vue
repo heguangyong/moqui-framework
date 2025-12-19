@@ -206,38 +206,38 @@ function formatDate(date) {
   flex-wrap: wrap;
 }
 
+/* 快速开始卡片 - 统一简洁风格 */
 .action-card {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 24px;
-  width: 200px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  width: 180px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
   text-align: center;
 }
 
 .action-card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .action-card__icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  font-size: 32px;
+  margin-bottom: 10px;
 }
 
 .action-card__title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #2c2c2e;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
 }
 
 .action-card__description {
-  font-size: 12px;
+  font-size: 11px;
   color: #6c6c6e;
   margin: 0;
   line-height: 1.4;
@@ -265,21 +265,22 @@ function formatDate(date) {
   gap: 8px;
 }
 
+/* 项目卡片 - 统一简洁风格 */
 .project-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 }
 
 .project-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .project-card__info {
@@ -318,13 +319,13 @@ function formatDate(date) {
   gap: 16px;
 }
 
+/* 功能卡片 - 统一简洁风格 */
 .feature-card {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 16px;
   text-align: center;
-  backdrop-filter: blur(10px);
 }
 
 .feature-card__icon {

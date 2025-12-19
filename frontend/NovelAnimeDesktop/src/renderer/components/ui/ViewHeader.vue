@@ -92,33 +92,38 @@ defineEmits(['new', 'refresh']);
   flex-shrink: 0;
 }
 
+/* 内容区统一按钮样式 - 简洁无渐变风格 */
 .action-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #4a4a4c;
-  font-size: 13px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5a5a5c;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.7);
+  color: #2c2c2e;
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
 .action-btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #2c2c2e;
+  background: rgba(120, 140, 130, 0.25);
+  color: #4a5a52;
+  border-color: rgba(100, 120, 110, 0.3);
 }
 
 .action-btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 </style>

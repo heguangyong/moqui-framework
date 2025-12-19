@@ -140,19 +140,6 @@ function handleProjectClick(projectType) {
   // 更新面板上下文
   navigationStore.updatePanelContext('dashboard', { selectedProject: projectType });
   
-  const labels = {
-    dashboard: '仪表盘',
-    library: '我的项目',
-    shared: '共享项目'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: labels[projectType],
-    message: `正在加载 ${labels[projectType]} 内容`,
-    timeout: 2000
-  });
-  
   if (projectType === 'dashboard') {
     router.push('/dashboard');
   } else if (projectType === 'library') {
@@ -169,37 +156,12 @@ function handleStatusClick(statusType) {
   // 更新面板上下文
   navigationStore.updatePanelContext('dashboard', { statusFilter: statusType });
   
-  const statusLabels = {
-    new: '新建任务',
-    running: '处理中',
-    review: '待审核'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: statusLabels[statusType],
-    message: `共 ${taskCounts.value[statusType]} 个任务`,
-    timeout: 2000
-  });
-  
   router.push(`/tasks/${statusType}`);
 }
 
 // 历史记录点击处理
 function handleHistoryClick(historyType) {
   activeView.value = `history-${historyType}`;
-  
-  const historyLabels = {
-    recent: '最近编辑',
-    archive: '归档'
-  };
-  
-  uiStore.addNotification({
-    type: 'info',
-    title: historyLabels[historyType],
-    message: `正在查看 ${historyLabels[historyType]} 内容`,
-    timeout: 2000
-  });
   
   if (historyType === 'recent') {
     router.push('/history/recent');
@@ -223,24 +185,11 @@ function handleCreateDocument() {
 }
 
 function handleDocumentSelect(node) {
-  if (node.type === 'file') {
-    uiStore.addNotification({
-      type: 'info',
-      title: '选中文件',
-      message: `已选中: ${node.name}`,
-      timeout: 1500
-    });
-  }
+  // 文件选中时不显示通知，直接处理选中逻辑
+  console.log('Selected:', node.name);
 }
 
 function handleDocumentOpen(node) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '打开文件',
-    message: `正在打开: ${node.name}`,
-    timeout: 2000
-  });
-  
   const fileType = node.fileType || 'other';
   switch (fileType) {
     case 'novel':

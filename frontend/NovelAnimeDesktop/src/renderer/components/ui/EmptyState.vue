@@ -122,20 +122,25 @@ const iconSize = computed(() => {
   margin-top: 8px;
 }
 
+/* 内容区统一按钮样式 - 简洁无渐变风格 */
 .action-btn {
-  padding: 10px 20px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
+  background: rgba(120, 140, 130, 0.25);
+  border: 1px solid rgba(100, 120, 110, 0.3);
+  border-radius: 6px;
+  color: #4a5a52;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {
-  background: #2c5aa0;
-  transform: translateY(-1px);
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 </style>

@@ -148,19 +148,20 @@ function handleRefresh() {
   gap: 16px;
 }
 
+/* 项目卡片 - 统一简洁风格 */
 .project-card {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
   padding: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .project-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .project-header {
@@ -174,11 +175,11 @@ function handleRefresh() {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #8a8a8a, #a0b0aa);
+  background: rgba(120, 140, 130, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #4a5a52;
 }
 
 .project-status {

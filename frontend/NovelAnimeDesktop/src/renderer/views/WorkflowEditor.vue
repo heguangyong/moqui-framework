@@ -565,12 +565,10 @@ function getConnectionY2(connection) {
   background: rgba(0, 0, 0, 0.05);
 }
 
-/* 选中状态 - 完整样式 */
+/* 选中状态 - 简洁风格 */
 .custom-select.open .select-trigger {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   color: #2c2c2e;
 }
 
@@ -591,49 +589,46 @@ function getConnectionY2(connection) {
   min-width: 100%;
   width: max-content;
   margin-top: 2px;
-  background: rgba(240, 240, 240, 0.98);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(200, 200, 200, 0.5);
+  background: rgba(250, 250, 250, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 6px;
   overflow: hidden;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .select-option {
   padding: 6px 12px;
-  color: #2c2c2e;
-  font-size: 0.875rem;
+  color: #4a4a4c;
+  font-size: 12px;
   cursor: pointer;
   transition: background 0.15s;
   white-space: nowrap;
 }
 
 .select-option:hover {
-  background: rgba(200, 200, 200, 0.4);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .select-option.selected {
-  background: rgba(180, 180, 180, 0.5);
+  background: rgba(120, 140, 130, 0.2);
+  color: #3a4a42;
 }
 
 .execution-progress {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
-  backdrop-filter: blur(10px);
 }
 
 .execution-results {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.3), rgba(200, 218, 212, 0.25));
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .results-header {
@@ -699,7 +694,7 @@ function getConnectionY2(connection) {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
+  background: rgba(100, 160, 130, 0.6);
   transition: width 0.3s ease;
 }
 
@@ -975,72 +970,82 @@ function getConnectionY2(connection) {
   pointer-events: none;
 }
 
-/* 基础按钮 - 简洁无样式 */
+/* 内容区统一按钮样式 - 简洁无渐变风格 */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 28px;
-  padding: 0 10px;
-  border: none;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s;
-  background: transparent;
-  color: #6a6a6a;
+  transition: all 0.15s ease;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5a5a5c;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .btn:hover {
-  color: #4a4a4a;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+  color: #2c2c2e;
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
-/* 次要按钮 - 简洁风格 */
+/* 次要按钮 */
 .btn-secondary {
-  background: transparent;
+  background: rgba(160, 160, 160, 0.15);
   color: #6a6a6a;
-  border: none;
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .btn-secondary:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #4a4a4a;
+  background: rgba(160, 160, 160, 0.25);
+  color: #5a5a5a;
 }
 
-/* 主要按钮 - 完整样式 */
+/* 主要按钮 */
 .btn-primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.7), rgba(180, 198, 192, 0.6));
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #2c2c2e;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(120, 140, 130, 0.25);
+  color: #4a5a52;
+  border-color: rgba(100, 120, 110, 0.3);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(90deg, rgba(140, 140, 140, 0.8), rgba(170, 188, 182, 0.7));
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(120, 140, 130, 0.35);
+  color: #3a4a42;
 }
 
-/* 成功按钮 - 完整样式 */
+/* 成功按钮 */
 .btn-success {
-  background: linear-gradient(90deg, rgba(140, 160, 150, 0.7), rgba(170, 198, 182, 0.6));
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #2c2c2e;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(100, 160, 130, 0.2);
+  color: #4a7a5a;
+  border-color: rgba(100, 160, 130, 0.3);
 }
 
 .btn-success:hover {
-  background: linear-gradient(90deg, rgba(130, 150, 140, 0.8), rgba(160, 188, 172, 0.7));
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(100, 160, 130, 0.3);
+  color: #3a6a4a;
+}
+
+/* 危险按钮 */
+.btn-danger {
+  background: rgba(200, 120, 120, 0.15);
+  color: #8a5050;
+  border-color: rgba(200, 120, 120, 0.25);
+}
+
+.btn-danger:hover {
+  background: rgba(200, 120, 120, 0.25);
+  color: #7a4040;
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 
 .btn-small {
