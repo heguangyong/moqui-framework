@@ -227,6 +227,7 @@ import { useUIStore } from '../stores/ui.js';
 import { useProjectStore } from '../stores/project.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { CharacterSystem } from '../services/CharacterSystem.ts';
+import { characterApi } from '../services/index.ts';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 
@@ -240,7 +241,11 @@ const selectedCharacter = ref(null);
 const editingCharacter = ref({});
 const newTag = ref('');
 const isLocking = ref(false);
+const isLoading = ref(false);
 const roleSelectOpen = ref(false);
+
+// 从 panelContext 获取 novelId
+const novelId = computed(() => navigationStore.panelContext.characters?.novelId);
 
 // 角色类型选项
 const roleOptions = [
@@ -263,6 +268,52 @@ const characters = ref([]);
 onMounted(() => {
   loadCharacters();
 });
+
+// 监听 novelId 变化
+watch(novelId, (newVal) => {
+  if (newVal) {
+    loadCharactersFromBackend(newVal);
+  }
+}, { immediate: true });
+
+// 从后端加载角色数据
+async function loadCharactersFromBackend(nId) {
+  if (!nId) return;
+  
+  isLoading.value = true;
+  try {
+    const result = await characterApi.getCharacters(nId);
+    
+    if (result.success && result.characters) {
+      characters.value = result.characters.map(c => ({
+        id: c.characterId,
+        name: c.name,
+        role: c.role || 'minor',
+        description: c.description || '',
+        tags: c.personality ? c.personality.split(',').map(t => t.trim()) : [],
+        color: getColorByRole(c.role || 'minor'),
+        appearances: c.mentionCount || 0,
+        scenes: 0,
+        appearance: c.appearance || '',
+        isLocked: c.isLocked || false,
+        extractionConfidence: c.extractionConfidence || 0
+      }));
+      
+      uiStore.addNotification({
+        type: 'success',
+        title: '加载成功',
+        message: `已加载 ${characters.value.length} 个角色`,
+        timeout: 2000
+      });
+    }
+  } catch (error) {
+    console.error('Failed to load characters from backend:', error);
+    // 回退到本地数据
+    loadCharacters();
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 // 加载角色数据
 function loadCharacters() {

@@ -72,7 +72,8 @@ export const useNavigationStore = defineStore('navigation', {
         searchQuery: '',
         filterLocked: null,
         selectedCharacter: null,
-        viewType: null
+        viewType: null,
+        novelId: null
       },
       settings: {
         activeCategory: 'profile'
@@ -155,7 +156,7 @@ export const useNavigationStore = defineStore('navigation', {
           dashboard: { selectedProject: null, statusFilter: null, viewType: null, historyType: null },
           workflow: { selectedWorkflow: null, executionFilter: null, viewType: null, statusFilter: null, templateId: null, executionId: null },
           assets: { category: null, searchQuery: '', viewType: null, selectedAsset: null, filters: [] },
-          characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null },
+          characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null, novelId: null },
           settings: { activeCategory: 'profile' }
         };
         
@@ -174,7 +175,7 @@ export const useNavigationStore = defineStore('navigation', {
         dashboard: { selectedProject: null, statusFilter: null, viewType: null, historyType: null },
         workflow: { selectedWorkflow: null, executionFilter: null, viewType: null, statusFilter: null, templateId: null, executionId: null },
         assets: { category: null, searchQuery: '', viewType: null, selectedAsset: null, filters: [] },
-        characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null },
+        characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null, novelId: null },
         settings: { activeCategory: 'profile' }
       };
       

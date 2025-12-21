@@ -29,17 +29,28 @@ export class NovelApiService {
     try {
       const response = await apiService.axiosInstance.post('/novels/import-text', data)
       
+      // 处理响应（包括 mock 响应）
+      const responseData = response.data
       return {
-        success: response.data.success || true,
-        novel: response.data.novel,
-        creditsUsed: response.data.creditsUsed,
-        message: response.data.message
+        success: responseData.success !== false,
+        novel: responseData.novel,
+        creditsUsed: responseData.creditsUsed,
+        message: responseData.message
       }
     } catch (error: any) {
       console.error('Failed to import text:', error)
+      // 如果错误响应中有数据，尝试使用它（可能是 mock 数据）
+      if (error.response?.data) {
+        return {
+          success: error.response.data.success !== false,
+          novel: error.response.data.novel,
+          creditsUsed: error.response.data.creditsUsed,
+          message: error.response.data.message
+        }
+      }
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to import text'
+        message: error.message || 'Failed to import text'
       }
     }
   }
@@ -91,17 +102,26 @@ export class NovelApiService {
         novelId
       })
       
+      const responseData = response.data
       return {
-        success: response.data.success || true,
-        chaptersCreated: response.data.chaptersCreated,
-        scenesCreated: response.data.scenesCreated,
-        message: response.data.message
+        success: responseData.success !== false,
+        chaptersCreated: responseData.chaptersCreated,
+        scenesCreated: responseData.scenesCreated,
+        message: responseData.message
       }
     } catch (error: any) {
       console.error('Failed to analyze structure:', error)
+      if (error.response?.data) {
+        return {
+          success: error.response.data.success !== false,
+          chaptersCreated: error.response.data.chaptersCreated,
+          scenesCreated: error.response.data.scenesCreated,
+          message: error.response.data.message
+        }
+      }
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to analyze structure'
+        message: error.message || 'Failed to analyze structure'
       }
     }
   }

@@ -1,5 +1,17 @@
 import axios, { AxiosInstance } from 'axios'
 
+// Vite 环境变量类型声明
+declare global {
+  interface ImportMeta {
+    env: {
+      VITE_API_BASE_URL?: string
+      VITE_DEV_MODE?: string
+      DEV?: boolean
+      [key: string]: any
+    }
+  }
+}
+
 /**
  * API Service for Novel Anime Generator
  * Handles communication with the Moqui backend
@@ -12,7 +24,16 @@ class ApiService {
   constructor() {
     // Updated to match our backend API structure - 使用 import.meta.env 替代 process.env
     this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/rest/s1/novel-anime'
-    this.isDevelopment = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true'
+    // 更宽松的开发模式检测：Vite DEV 模式、环境变量、或者 localhost URL
+    this.isDevelopment = import.meta.env.DEV === true || 
+                         import.meta.env.VITE_DEV_MODE === 'true' ||
+                         this.baseURL.includes('localhost')
+    
+    console.log('🔧 ApiService initialized:', {
+      baseURL: this.baseURL,
+      isDevelopment: this.isDevelopment,
+      'import.meta.env.DEV': import.meta.env.DEV
+    })
     
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
@@ -41,8 +62,17 @@ class ApiService {
       (error: any) => {
         console.error('API Error:', error)
         
-        // 在开发模式下，如果是网络错误，返回模拟数据
-        if (this.isDevelopment && (error.code === 'ECONNREFUSED' || error.code === 'NETWORK_ERROR')) {
+        // 在开发模式下，如果是网络错误或超时，返回模拟数据
+        const isNetworkError = !error.response && (
+          error.code === 'ECONNREFUSED' || 
+          error.code === 'NETWORK_ERROR' ||
+          error.code === 'ERR_NETWORK' ||
+          error.code === 'ECONNABORTED' ||
+          error.message?.includes('timeout') ||
+          error.message?.includes('Network Error')
+        )
+        
+        if (this.isDevelopment && isNetworkError) {
           console.warn('Backend not available, using mock data')
           return this.getMockResponse(error.config)
         }
@@ -62,20 +92,110 @@ class ApiService {
    * 开发模式下的模拟响应
    */
   private getMockResponse(config: any) {
-    const url = config.url || ''
-    const method = config.method || 'get'
+    const url = config?.url || ''
+    const method = config?.method || 'get'
     
-    // 模拟成功响应
-    const mockResponse = {
-      data: {
+    console.log('📦 Generating mock response for:', method.toUpperCase(), url)
+    
+    // 根据不同的API返回不同的模拟数据
+    let mockData: any = {
+      success: true,
+      message: 'Mock response (backend not available)'
+    }
+    
+    // 项目相关
+    if (url.includes('/projects')) {
+      if (method === 'post') {
+        mockData = {
+          success: true,
+          project: {
+            projectId: 'mock-project-' + Date.now(),
+            name: JSON.parse(config.data || '{}').name || 'Mock Project',
+            status: 'active',
+            createdDate: new Date().toISOString()
+          },
+          message: 'Project created (mock)'
+        }
+      } else {
+        mockData = { success: true, projects: [] }
+      }
+    }
+    
+    // 小说导入
+    if (url.includes('/novels/import-text') || url.includes('/novels/import-file')) {
+      mockData = {
         success: true,
-        message: 'Mock response (backend not available)',
-        // 根据不同的API返回不同的模拟数据
-        ...(url.includes('/projects') && { projects: [] }),
-        ...(url.includes('/novels') && { novels: [] }),
-        ...(url.includes('/characters') && { characters: [] }),
-        ...(url.includes('/credits') && { credits: 1000 })
-      },
+        novel: {
+          novelId: 'mock-novel-' + Date.now(),
+          title: JSON.parse(config.data || '{}').title || 'Mock Novel',
+          wordCount: 10000,
+          status: 'imported',
+          createdDate: new Date().toISOString()
+        },
+        creditsUsed: 10,
+        message: 'Novel imported (mock)'
+      }
+    }
+    
+    // 结构分析
+    if (url.includes('/novels/analyze-structure')) {
+      mockData = {
+        success: true,
+        chaptersCreated: 7,
+        scenesCreated: 21,
+        message: 'Structure analyzed (mock)'
+      }
+    }
+    
+    // 角色提取
+    if (url.includes('/novels/extract-characters') || url.includes('/extract-characters')) {
+      mockData = {
+        success: true,
+        charactersExtracted: 4,
+        message: 'Characters extracted (mock)'
+      }
+    }
+    
+    // 角色列表
+    if (url.includes('/characters') && method === 'get') {
+      mockData = {
+        success: true,
+        characters: [
+          {
+            characterId: 'mock-char-1',
+            name: '李明',
+            role: 'protagonist',
+            description: '故事的主角，一个勇敢而善良的年轻人',
+            mentionCount: 45,
+            extractionConfidence: 0.95,
+            isLocked: false
+          },
+          {
+            characterId: 'mock-char-2',
+            name: '王芳',
+            role: 'supporting',
+            description: '主角的青梅竹马，聪明伶俐',
+            mentionCount: 32,
+            extractionConfidence: 0.88,
+            isLocked: false
+          }
+        ],
+        totalCount: 2
+      }
+    }
+    
+    // 认证状态
+    if (url.includes('/auth/status')) {
+      mockData = { success: true, authenticated: false }
+    }
+    
+    // 积分
+    if (url.includes('/credits')) {
+      mockData = { success: true, credits: 1000 }
+    }
+    
+    const mockResponse = {
+      data: mockData,
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -86,14 +206,45 @@ class ApiService {
   }
 
   /**
-   * Test API connection
+   * Test API connection - 检测后端服务是否可用
    */
   async testConnection(): Promise<boolean> {
     try {
-      const response = await this.axiosInstance.get('/auth/status')
+      // 尝试调用一个简单的 API 来检测连接
+      // 使用 projects 端点因为它不需要认证
+      const response = await this.axiosInstance.get('/projects', {
+        params: { userId: 'test-user-001' },
+        timeout: 3000 // 短超时用于快速检测
+      })
+      console.log('✅ Backend connection test:', response.status === 200 ? 'OK' : 'Failed')
       return response.status === 200
-    } catch (error) {
-      console.error('API connection test failed:', error)
+    } catch (error: any) {
+      // 如果有响应（即使是错误响应），说明后端是可用的
+      if (error.response) {
+        console.log('✅ Backend is reachable (status:', error.response.status, ')')
+        return true
+      }
+      console.error('❌ Backend connection test failed:', error.message)
+      return false
+    }
+  }
+
+  /**
+   * Test AI service availability - 检测 AI 服务是否可用
+   */
+  async testAIService(): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.get('/ai/status', {
+        timeout: 3000
+      })
+      return response.data?.available === true || response.data?.success === true
+    } catch (error: any) {
+      // 如果后端返回了响应，检查 AI 配置状态
+      if (error.response?.data) {
+        return error.response.data.available === true
+      }
+      // AI 服务可能未配置，但这不是错误
+      console.warn('AI service status check failed:', error.message)
       return false
     }
   }
@@ -243,29 +394,85 @@ class ApiService {
   }
 
   /**
+   * Get or create default user for development
+   * Returns userId that can be used for API calls
+   */
+  async getOrCreateDefaultUser(): Promise<string> {
+    // Check if we have a stored userId
+    const storedUserId = localStorage.getItem('novel_anime_user_id')
+    if (storedUserId) {
+      return storedUserId
+    }
+    
+    // Try to register a default test user
+    try {
+      const testEmail = `test_${Date.now()}@novelanime.local`
+      const response = await this.axiosInstance.post('/auth/register', {
+        email: testEmail,
+        password: 'test123456',
+        username: '测试用户'
+      })
+      
+      if (response.data.success && response.data.user?.userId) {
+        const newUserId: string = response.data.user.userId
+        localStorage.setItem('novel_anime_user_id', newUserId)
+        console.log('✅ Created default user:', newUserId)
+        return newUserId
+      }
+    } catch (error) {
+      console.warn('Failed to create default user:', error)
+    }
+    
+    // Fallback: use a hardcoded test userId (for development only)
+    const fallbackUserId = 'test-user-001'
+    localStorage.setItem('novel_anime_user_id', fallbackUserId)
+    return fallbackUserId
+  }
+
+  /**
    * Create new project
    */
   async createProject(data: {
     name: string
     description?: string
+    userId?: string
   }): Promise<{
     success: boolean
     project?: any
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.post('/projects', data)
+      // Ensure we have a userId
+      let userId = data.userId || localStorage.getItem('novel_anime_user_id')
+      if (!userId) {
+        userId = await this.getOrCreateDefaultUser()
+      }
       
+      const response = await this.axiosInstance.post('/projects', {
+        name: data.name,
+        description: data.description,
+        userId: userId
+      })
+      
+      const responseData = response.data
       return {
-        success: response.data.success || true,
-        project: response.data.project,
-        message: response.data.message
+        success: responseData.success !== false,
+        project: responseData.project,
+        message: responseData.message
       }
     } catch (error: any) {
       console.error('Failed to create project:', error)
+      // 如果错误响应中有数据，尝试使用它（可能是 mock 数据）
+      if (error.response?.data) {
+        return {
+          success: error.response.data.success !== false,
+          project: error.response.data.project,
+          message: error.response.data.message
+        }
+      }
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to create project'
+        message: error.message || 'Failed to create project'
       }
     }
   }

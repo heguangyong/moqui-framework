@@ -112,7 +112,7 @@
                 class="step-btn"
                 :class="{ 'step-btn--primary': currentStep === index }"
                 @click.stop="handleStepAction(step)"
-                :disabled="!step.enabled"
+                :disabled="!step.enabled || isImporting"
               >
                 {{ step.actionLabel }}
               </button>
@@ -121,6 +121,24 @@
               </span>
             </div>
           </div>
+        </div>
+        
+        <!-- 导入进度显示 -->
+        <div v-if="isImporting" class="import-progress-section">
+          <div class="progress-header">
+            <span class="progress-message">{{ importMessage }}</span>
+            <span class="progress-percent">{{ importProgress }}%</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" :style="{ width: importProgress + '%' }"></div>
+          </div>
+        </div>
+        
+        <!-- 错误提示 -->
+        <div v-if="importError" class="import-error">
+          <component :is="icons.alertCircle" :size="16" />
+          <span>{{ importError }}</span>
+          <button class="error-close" @click="importError = ''">×</button>
         </div>
       </div>
 
@@ -199,7 +217,7 @@ import { useRouter } from 'vue-router';
 import { useNavigationStore } from '../stores/navigation.js';
 import { useProjectStore } from '../stores/project.js';
 import { icons } from '../utils/icons.js';
-import { apiService } from '../services/api.ts';
+import { apiService, novelApi, pipelineApi } from '../services/index.ts';
 
 const router = useRouter();
 const navigationStore = useNavigationStore();
@@ -218,6 +236,13 @@ const currentStep = ref(0);
 // 系统状态
 const backendStatus = ref(false);
 const aiServiceStatus = ref(false);
+
+// 导入状态
+const isImporting = ref(false);
+const importProgress = ref(0);
+const importMessage = ref('');
+const importError = ref('');
+const currentNovelId = ref(null);
 
 // 向导式流程步骤
 const workflowSteps = ref([
@@ -285,9 +310,17 @@ onMounted(async () => {
 // 检查系统状态
 async function checkSystemStatus() {
   try {
+    // 检测后端连接
     backendStatus.value = await apiService.testConnection();
-    // AI服务状态暂时设为与后端一致
-    aiServiceStatus.value = backendStatus.value;
+    console.log('🔌 Backend status:', backendStatus.value ? 'Connected' : 'Disconnected');
+    
+    // 检测 AI 服务状态
+    if (backendStatus.value) {
+      aiServiceStatus.value = await apiService.testAIService();
+    } else {
+      aiServiceStatus.value = false;
+    }
+    console.log('🤖 AI service status:', aiServiceStatus.value ? 'Available' : 'Configuring');
   } catch (error) {
     console.warn('Failed to check system status:', error);
     backendStatus.value = false;
@@ -355,16 +388,13 @@ function handleStepAction(step) {
       startParsing();
       break;
     case 'characters':
-      router.push('/characters');
+      viewCharacters();
       break;
     case 'generate':
       router.push('/workflow');
       break;
   }
 }
-
-// 隐藏的文件输入引用
-const fileInputRef = ref(null);
 
 // 导入小说
 async function importNovel() {
@@ -382,7 +412,7 @@ async function importNovel() {
       
       if (filePath) {
         console.log('📄 File selected:', filePath);
-        handleFileSelected(filePath);
+        await handleElectronFile(filePath);
       }
     } catch (error) {
       console.error('Electron file dialog failed:', error);
@@ -398,49 +428,210 @@ async function importNovel() {
 
 // 触发文件选择
 function triggerFileInput() {
-  // 创建一个临时的 input 元素
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.txt,.docx,.pdf,.epub,.md';
-  input.onchange = (e) => {
+  input.onchange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       console.log('📄 File selected via input:', file.name);
-      handleFileSelected(file.name, file);
+      await handleWebFile(file);
     }
   };
   input.click();
 }
 
-// 处理文件选择
-function handleFileSelected(filePath, file = null) {
-  // 更新步骤状态
-  workflowSteps.value[0].completed = true;
-  workflowSteps.value[1].enabled = true;
-  currentStep.value = 1;
+// 处理 Electron 文件选择
+async function handleElectronFile(filePath) {
+  isImporting.value = true;
+  importProgress.value = 10;
+  importMessage.value = '正在读取文件...';
+  importError.value = '';
   
-  // 存储文件路径，准备解析
-  navigationStore.startImport(filePath);
-  
-  // 如果有文件对象，可以读取内容
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target.result;
-      console.log('📖 File content loaded, length:', content.length);
-      // 可以将内容存储到 store 中
-    };
-    reader.readAsText(file);
+  try {
+    // 读取文件内容
+    const content = await window.electronAPI.readFile(filePath);
+    const fileName = filePath.split('/').pop() || filePath.split('\\').pop();
+    const title = fileName.replace(/\.[^/.]+$/, '');
+    
+    importProgress.value = 30;
+    importMessage.value = '正在上传到服务器...';
+    
+    await uploadNovelToBackend(title, content, fileName);
+  } catch (error) {
+    console.error('Failed to read file:', error);
+    importError.value = '读取文件失败: ' + error.message;
+    isImporting.value = false;
   }
+}
+
+// 处理 Web 文件选择
+async function handleWebFile(file) {
+  isImporting.value = true;
+  importProgress.value = 10;
+  importMessage.value = '正在读取文件...';
+  importError.value = '';
   
-  // 跳转到测试页面（那里有 NovelImporter 组件可以继续处理）
-  router.push('/test');
+  try {
+    const content = await readFileContent(file);
+    const title = file.name.replace(/\.[^/.]+$/, '');
+    
+    importProgress.value = 30;
+    importMessage.value = '正在上传到服务器...';
+    
+    await uploadNovelToBackend(title, content, file.name);
+  } catch (error) {
+    console.error('Failed to read file:', error);
+    importError.value = '读取文件失败: ' + error.message;
+    isImporting.value = false;
+  }
+}
+
+// 读取文件内容
+function readFileContent(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}
+
+// 上传小说到后端
+async function uploadNovelToBackend(title, content, fileName) {
+  try {
+    // 确保有项目ID，如果没有则创建一个默认项目
+    let projectId = projectStore.currentProject?.id;
+    
+    if (!projectId) {
+      importMessage.value = '正在创建项目...';
+      const projectResult = await apiService.createProject({
+        name: title,
+        description: `从文件 ${fileName} 导入的小说项目`
+      });
+      
+      if (projectResult.success && projectResult.project) {
+        projectId = projectResult.project.projectId || projectResult.project.id;
+        // 将项目添加到 store 并设置为当前项目
+        if (!projectStore.projects.find(p => p.id === projectId)) {
+          projectStore.projects.push({
+            id: projectId,
+            ...projectResult.project
+          });
+        }
+        projectStore.setCurrentProject(projectId);
+      } else {
+        // 使用默认项目ID
+        projectId = 'default-project';
+      }
+    }
+    
+    importProgress.value = 50;
+    importMessage.value = '正在导入小说...';
+    
+    // 调用后端 API 导入小说
+    const result = await novelApi.importText({
+      projectId,
+      title,
+      content
+    });
+    
+    if (result.success && result.novel) {
+      currentNovelId.value = result.novel.novelId;
+      
+      importProgress.value = 100;
+      importMessage.value = '导入成功！';
+      
+      // 更新步骤状态
+      workflowSteps.value[0].completed = true;
+      workflowSteps.value[1].enabled = true;
+      currentStep.value = 1;
+      
+      // 存储到 navigation store
+      navigationStore.startImport(fileName);
+      
+      // 短暂延迟后重置导入状态
+      setTimeout(() => {
+        isImporting.value = false;
+        importProgress.value = 0;
+        importMessage.value = '';
+      }, 1500);
+      
+    } else {
+      throw new Error(result.message || '导入失败');
+    }
+  } catch (error) {
+    console.error('Upload failed:', error);
+    importError.value = '导入失败: ' + (error.message || '未知错误');
+    isImporting.value = false;
+  }
 }
 
 // 开始解析
 async function startParsing() {
-  // 跳转到工作流页面进行解析
-  router.push('/workflow');
+  if (!currentNovelId.value) {
+    importError.value = '请先导入小说';
+    return;
+  }
+  
+  isImporting.value = true;
+  importProgress.value = 10;
+  importMessage.value = '正在分析章节结构...';
+  importError.value = '';
+  
+  try {
+    // 调用结构分析 API
+    const structureResult = await novelApi.analyzeStructure(currentNovelId.value);
+    
+    if (!structureResult.success) {
+      throw new Error(structureResult.message || '结构分析失败');
+    }
+    
+    importProgress.value = 50;
+    importMessage.value = '正在提取角色信息...';
+    
+    // 调用角色提取 API
+    const characterResult = await apiService.axiosInstance.post('/novels/extract-characters', {
+      novelId: currentNovelId.value
+    });
+    
+    importProgress.value = 100;
+    importMessage.value = '解析完成！';
+    
+    // 更新步骤状态
+    workflowSteps.value[1].completed = true;
+    workflowSteps.value[2].enabled = true;
+    currentStep.value = 2;
+    
+    // 存储解析结果
+    navigationStore.setParseResult({
+      chaptersCreated: structureResult.chaptersCreated,
+      scenesCreated: structureResult.scenesCreated,
+      charactersExtracted: characterResult.data?.charactersExtracted || 0
+    });
+    
+    setTimeout(() => {
+      isImporting.value = false;
+      importProgress.value = 0;
+      importMessage.value = '';
+    }, 1500);
+    
+  } catch (error) {
+    console.error('Parsing failed:', error);
+    importError.value = '解析失败: ' + (error.message || '未知错误');
+    isImporting.value = false;
+  }
+}
+
+// 查看角色
+function viewCharacters() {
+  if (currentNovelId.value) {
+    // 将 novelId 传递给角色页面
+    navigationStore.updatePanelContext('characters', {
+      novelId: currentNovelId.value
+    });
+  }
+  router.push('/characters');
 }
 
 // 继续处理项目
@@ -845,6 +1036,78 @@ const ProjectList = { template: '<div class="content-placeholder"><span>项目�
 .status-item--ok {
   background: rgba(100, 160, 130, 0.1);
   color: #4a7a5a;
+}
+
+/* 导入进度样式 */
+.import-progress-section {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(100, 140, 120, 0.1);
+  border-radius: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-message {
+  font-size: 13px;
+  color: #4a6a52;
+  font-weight: 500;
+}
+
+.progress-percent {
+  font-size: 12px;
+  color: #6a8a72;
+}
+
+.progress-bar-container {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6a9a7a, #8ab89a);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* 错误提示样式 */
+.import-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(200, 100, 100, 0.1);
+  border: 1px solid rgba(200, 100, 100, 0.2);
+  border-radius: 8px;
+  color: #8a4a4a;
+  font-size: 13px;
+}
+
+.import-error span {
+  flex: 1;
+}
+
+.error-close {
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  color: #8a4a4a;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.error-close:hover {
+  opacity: 1;
 }
 
 /* 视图头部 */

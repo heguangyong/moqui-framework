@@ -488,10 +488,14 @@ import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import { apiService } from '../services/index.ts';
 
 const router = useRouter();
 const uiStore = useUIStore();
 const navigationStore = useNavigationStore();
+
+// 测试连接状态
+const isTesting = ref(false);
 
 // 用户信息（暂时使用模拟数据）
 const userName = ref('用户');
@@ -744,15 +748,82 @@ function loadSettings() {
 }
 
 // 方法
-function testConnection() {
-  uiStore.addNotification({ type: 'info', title: '测试连接', message: '正在测试AI服务连接...', timeout: 2000 });
-  setTimeout(() => {
-    if (settings.ai.apiKey) {
-      uiStore.addNotification({ type: 'success', title: '连接成功', message: 'AI服务连接正常', timeout: 3000 });
+async function testConnection() {
+  if (isTesting.value) return;
+  
+  if (!settings.ai.apiKey) {
+    uiStore.addNotification({ 
+      type: 'error', 
+      title: '连接失败', 
+      message: '请先输入API密钥', 
+      timeout: 3000 
+    });
+    return;
+  }
+  
+  isTesting.value = true;
+  uiStore.addNotification({ 
+    type: 'info', 
+    title: '测试连接', 
+    message: '正在测试AI服务连接...', 
+    timeout: 2000 
+  });
+  
+  try {
+    // 先保存设置到本地
+    localStorage.setItem('novel-anime-settings', JSON.stringify(settings));
+    
+    // 调用后端 API 测试 AI 服务
+    const response = await apiService.axiosInstance.post('/ai/test', {
+      provider: settings.ai.provider,
+      apiKey: settings.ai.apiKey,
+      endpoint: settings.ai.endpoint || undefined,
+      model: settings.ai.model
+    });
+    
+    if (response.data?.success) {
+      uiStore.addNotification({ 
+        type: 'success', 
+        title: '连接成功', 
+        message: response.data.message || 'AI服务连接正常', 
+        timeout: 3000 
+      });
     } else {
-      uiStore.addNotification({ type: 'error', title: '连接失败', message: '请先输入API密钥', timeout: 3000 });
+      throw new Error(response.data?.message || '连接测试失败');
     }
-  }, 1500);
+  } catch (error) {
+    console.error('AI connection test failed:', error);
+    
+    // 如果后端不可用，进行本地模拟测试
+    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      // 模拟测试 - 检查 API 密钥格式
+      const isValidFormat = settings.ai.apiKey.length >= 10;
+      if (isValidFormat) {
+        uiStore.addNotification({ 
+          type: 'success', 
+          title: '配置已保存', 
+          message: 'API密钥格式正确，设置已保存（后端离线，无法验证连接）', 
+          timeout: 4000 
+        });
+      } else {
+        uiStore.addNotification({ 
+          type: 'warning', 
+          title: '格式警告', 
+          message: 'API密钥格式可能不正确，请检查', 
+          timeout: 3000 
+        });
+      }
+    } else {
+      uiStore.addNotification({ 
+        type: 'error', 
+        title: '连接失败', 
+        message: error.response?.data?.message || error.message || '无法连接到AI服务', 
+        timeout: 4000 
+      });
+    }
+  } finally {
+    isTesting.value = false;
+  }
 }
 
 function selectProjectDir() {
@@ -780,9 +851,26 @@ function resetSettings() {
   }
 }
 
-function saveSettings() {
+async function saveSettings() {
   try {
+    // 保存到本地存储
     localStorage.setItem('novel-anime-settings', JSON.stringify(settings));
+    
+    // 如果有 AI 配置，尝试同步到后端
+    if (settings.ai.apiKey) {
+      try {
+        await apiService.axiosInstance.post('/settings/ai', {
+          provider: settings.ai.provider,
+          apiKey: settings.ai.apiKey,
+          endpoint: settings.ai.endpoint || undefined,
+          model: settings.ai.model
+        });
+      } catch (syncError) {
+        console.warn('Failed to sync AI settings to backend:', syncError);
+        // 不阻止本地保存成功
+      }
+    }
+    
     uiStore.addNotification({ type: 'success', title: '保存成功', message: '设置已保存', timeout: 2000 });
   } catch (e) {
     uiStore.addNotification({ type: 'error', title: '保存失败', message: e.message, timeout: 3000 });
