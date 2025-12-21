@@ -135,39 +135,54 @@ const taskCounts = computed(() => taskStore.taskCounts);
 
 // 项目点击处理
 function handleProjectClick(projectType) {
+  console.log('🖱️ Project clicked:', projectType);
   activeView.value = `project-${projectType}`;
   
-  // 更新面板上下文
-  navigationStore.updatePanelContext('dashboard', { selectedProject: projectType });
-  
-  if (projectType === 'dashboard') {
-    router.push('/dashboard');
-  } else if (projectType === 'library') {
-    router.push('/projects/my');
-  } else if (projectType === 'shared') {
-    router.push('/projects/shared');
-  }
+  // 更新面板上下文 - 主视图会监听这个变化
+  // 完全重置所有字段，确保不会残留之前的状态
+  // 注意: 'dashboard' 类型应该显示默认仪表盘，所以 viewType 设为 null
+  const context = { 
+    selectedProject: projectType === 'dashboard' ? null : projectType,
+    viewType: projectType === 'dashboard' ? null : 'project',
+    statusFilter: null,
+    historyType: null
+  };
+  console.log('📤 Updating panelContext:', context);
+  navigationStore.updatePanelContext('dashboard', context);
+  console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
 }
 
 // 状态点击处理
 function handleStatusClick(statusType) {
+  console.log('🖱️ Status clicked:', statusType);
   activeView.value = `status-${statusType}`;
   
-  // 更新面板上下文
-  navigationStore.updatePanelContext('dashboard', { statusFilter: statusType });
-  
-  router.push(`/tasks/${statusType}`);
+  // 更新面板上下文 - 主视图会监听这个变化
+  const context = { 
+    statusFilter: statusType,
+    viewType: 'status',
+    selectedProject: null
+  };
+  console.log('📤 Updating panelContext:', context);
+  navigationStore.updatePanelContext('dashboard', context);
+  console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
 }
 
 // 历史记录点击处理
 function handleHistoryClick(historyType) {
+  console.log('🖱️ History clicked:', historyType);
   activeView.value = `history-${historyType}`;
   
-  if (historyType === 'recent') {
-    router.push('/history/recent');
-  } else if (historyType === 'archive') {
-    router.push('/history/archive');
-  }
+  // 更新面板上下文 - 主视图会监听这个变化
+  const context = { 
+    historyType: historyType,
+    viewType: 'history',
+    selectedProject: null,
+    statusFilter: null
+  };
+  console.log('📤 Updating panelContext:', context);
+  navigationStore.updatePanelContext('dashboard', context);
+  console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
 }
 
 // 文档操作

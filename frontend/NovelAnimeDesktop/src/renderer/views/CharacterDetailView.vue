@@ -165,10 +165,10 @@ const projectStore = useProjectStore();
 const loading = ref(true);
 const character = ref(null);
 
-// 示例角色数据
+// 示例角色数据 - ID 与 CharactersPanel 保持一致
 const sampleCharacters = [
   {
-    id: 'c1',
+    id: '1',
     name: '李明',
     role: 'protagonist',
     description: '故事的主角，一个勇敢而善良的年轻人，在逆境中不断成长',
@@ -180,7 +180,7 @@ const sampleCharacters = [
     isLocked: true
   },
   {
-    id: 'c2',
+    id: '2',
     name: '王芳',
     role: 'supporting',
     description: '主角的青梅竹马，聪明伶俐，是主角最信任的伙伴',
@@ -192,20 +192,8 @@ const sampleCharacters = [
     isLocked: true
   },
   {
-    id: 'c3',
-    name: '张伟',
-    role: 'supporting',
-    description: '主角的好友，性格开朗，总能在关键时刻提供帮助',
-    tags: ['开朗', '忠诚', '幽默'],
-    color: 'linear-gradient(135deg, #8a9a92, #a8b8b0)',
-    appearances: 28,
-    scenes: 7,
-    appearance: '中等身材，总是带着笑容',
-    isLocked: false
-  },
-  {
-    id: 'c4',
-    name: '刘洋',
+    id: '3',
+    name: '张威',
     role: 'antagonist',
     description: '故事的反派，野心勃勃，为达目的不择手段',
     tags: ['狡猾', '野心', '冷酷', '精明'],
@@ -216,42 +204,38 @@ const sampleCharacters = [
     isLocked: false
   },
   {
-    id: 'c5',
-    name: '陈静',
-    role: 'supporting',
-    description: '神秘的女子，身份成谜，似乎知道很多秘密',
-    tags: ['神秘', '冷静', '智慧'],
+    id: '4',
+    name: '老陈',
+    role: 'minor',
+    description: '村里的老人，见多识广，常给主角提供智慧建议',
+    tags: ['智慧', '和蔼', '经验丰富'],
     color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)',
-    appearances: 15,
-    scenes: 5,
-    appearance: '气质优雅，眼神深邃',
-    isLocked: true
+    appearances: 8,
+    scenes: 3,
+    appearance: '白发苍苍，慈眉善目',
+    isLocked: false
   }
 ];
 
-// 角色关系数据
+// 角色关系数据 - ID 与 CharactersPanel 保持一致
 const relationships = computed(() => {
   if (!character.value) return [];
   
   // 根据角色返回不同的关系
   const relMap = {
-    'c1': [
-      { id: 'c2', name: '王芳', relationship: '青梅竹马', color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)' },
-      { id: 'c3', name: '张伟', relationship: '好友', color: 'linear-gradient(135deg, #8a9a92, #a8b8b0)' },
-      { id: 'c4', name: '刘洋', relationship: '宿敌', color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)' }
+    '1': [
+      { id: '2', name: '王芳', relationship: '青梅竹马', color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)' },
+      { id: '3', name: '张威', relationship: '宿敌', color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)' },
+      { id: '4', name: '老陈', relationship: '师徒', color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)' }
     ],
-    'c2': [
-      { id: 'c1', name: '李明', relationship: '青梅竹马', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' },
-      { id: 'c5', name: '陈静', relationship: '闺蜜', color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)' }
+    '2': [
+      { id: '1', name: '李明', relationship: '青梅竹马', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
     ],
-    'c3': [
-      { id: 'c1', name: '李明', relationship: '好友', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
+    '3': [
+      { id: '1', name: '李明', relationship: '宿敌', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
     ],
-    'c4': [
-      { id: 'c1', name: '李明', relationship: '宿敌', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
-    ],
-    'c5': [
-      { id: 'c2', name: '王芳', relationship: '闺蜜', color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)' }
+    '4': [
+      { id: '1', name: '李明', relationship: '师徒', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
     ]
   };
   

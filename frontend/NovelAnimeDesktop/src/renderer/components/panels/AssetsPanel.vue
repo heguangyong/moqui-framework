@@ -137,8 +137,11 @@ function clearSearch() {
 function handleCategoryClick(category) {
   activeCategory.value = category.id;
   activeAsset.value = null; // 清除最近资源的选中状态
-  navigationStore.updatePanelContext('assets', { category: category.id });
-  router.push(`/assets/${category.id}`);
+  navigationStore.updatePanelContext('assets', { 
+    category: category.id,
+    viewType: 'category',
+    selectedAsset: null
+  });
 }
 
 // 筛选器切换
@@ -149,14 +152,20 @@ function toggleFilter(filterId) {
   } else {
     activeFilters.value.push(filterId);
   }
+  navigationStore.updatePanelContext('assets', { 
+    filters: [...activeFilters.value]
+  });
 }
 
 // 资源点击处理
 function handleAssetClick(asset) {
   activeAsset.value = asset.id;
   activeCategory.value = null; // 清除分类的选中状态
-  // 根据资源类型导航到对应分类页面
-  router.push(`/assets/${asset.type}?highlight=${asset.id}`);
+  navigationStore.updatePanelContext('assets', { 
+    selectedAsset: asset.id,
+    viewType: 'asset-detail',
+    category: asset.type
+  });
 }
 </script>
 

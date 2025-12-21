@@ -42,7 +42,8 @@ class NovelAnimeApp {
       // 等待Vite服务器启动
       setTimeout(() => {
         this.mainWindow.loadURL('http://localhost:5174');
-        this.mainWindow.webContents.openDevTools();
+        // 调试窗口已关闭，如需打开可按 Ctrl+Shift+I 或取消下行注释
+        // this.mainWindow.webContents.openDevTools();
       }, 2000);
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../dist-renderer/index.html'));

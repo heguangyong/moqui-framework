@@ -82,27 +82,34 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUIStore } from '../../stores/ui.js';
 import { useNavigationStore } from '../../stores/navigation.js';
 import { icons } from '../../utils/icons.js';
 
 const router = useRouter();
+const route = useRoute();
 const uiStore = useUIStore();
 const navigationStore = useNavigationStore();
+
+// 确保在角色管理页面
+function ensureCharactersPage() {
+  if (route.path !== '/characters') {
+    router.push('/characters');
+  }
+}
 
 // 状态
 const searchQuery = ref('');
 const filterLocked = ref(null);
 const selectedCharacter = ref(null);
 
-// 角色数据 - 使用灰色系配色
+// 角色数据 - 使用灰色系配色，ID 与 CharactersView 保持一致
 const characters = ref([
-  { id: 'c1', name: '李明', role: '主角', color: '#6a7a72', locked: true },
-  { id: 'c2', name: '王芳', role: '女主角', color: '#7a8a9a', locked: true },
-  { id: 'c3', name: '张伟', role: '配角', color: '#8a9a92', locked: false },
-  { id: 'c4', name: '刘洋', role: '反派', color: '#5a5a5a', locked: false },
-  { id: 'c5', name: '陈静', role: '配角', color: '#9a9a9a', locked: true }
+  { id: '1', name: '李明', role: '主角', color: '#6a7a72', locked: true },
+  { id: '2', name: '王芳', role: '配角', color: '#7a8a9a', locked: true },
+  { id: '3', name: '张威', role: '反派', color: '#5a5a5a', locked: false },
+  { id: '4', name: '老陈', role: '龙套', color: '#9a9a9a', locked: false }
 ]);
 
 // 过滤后的角色列表
@@ -128,29 +135,37 @@ const filteredCharacters = computed(() => {
 
 // 搜索处理
 function handleSearch() {
+  ensureCharactersPage();
   navigationStore.updatePanelContext('characters', { searchQuery: searchQuery.value });
 }
 
 function clearSearch() {
   searchQuery.value = '';
+  ensureCharactersPage();
   navigationStore.updatePanelContext('characters', { searchQuery: '' });
 }
 
 // 设置过滤器
 function setFilter(locked) {
   filterLocked.value = locked;
+  ensureCharactersPage();
   navigationStore.updatePanelContext('characters', { filterLocked: locked });
 }
 
 // 角色点击处理
 function handleCharacterClick(character) {
   selectedCharacter.value = character.id;
+  // 导航到角色详情页面
   router.push(`/characters/${character.id}`);
 }
 
 // 创建角色
 function handleCreateCharacter() {
-  router.push('/characters/new');
+  ensureCharactersPage();
+  navigationStore.updatePanelContext('characters', { 
+    viewType: 'new-character',
+    selectedCharacter: null
+  });
 }
 </script>
 

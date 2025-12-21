@@ -186,13 +186,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useUIStore } from '../stores/ui.js';
+import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 
 const uiStore = useUIStore();
+const navigationStore = useNavigationStore();
 
 // 状态
 const searchQuery = ref('');
@@ -200,6 +202,38 @@ const activeFilter = ref('all');
 const viewMode = ref('grid');
 const selectedAsset = ref(null);
 const previewingAsset = ref(null);
+
+// 监听 panelContext 变化
+watch(
+  () => navigationStore.panelContext.assets,
+  (newVal) => {
+    if (newVal?.category) {
+      activeFilter.value = newVal.category;
+    }
+    if (newVal?.searchQuery !== undefined) {
+      searchQuery.value = newVal.searchQuery;
+    }
+    if (newVal?.selectedAsset) {
+      const asset = assets.value.find(a => a.id === newVal.selectedAsset);
+      if (asset) {
+        selectedAsset.value = asset;
+        previewingAsset.value = asset;
+      }
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+// 初始化时同步 panelContext
+onMounted(() => {
+  const context = navigationStore.panelContext.assets;
+  if (context?.category) {
+    activeFilter.value = context.category;
+  }
+  if (context?.searchQuery) {
+    searchQuery.value = context.searchQuery;
+  }
+});
 
 // 筛选器 - 与 AssetsPanel 保持一致
 const filters = [

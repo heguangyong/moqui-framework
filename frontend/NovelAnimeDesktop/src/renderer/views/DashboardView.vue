@@ -1,113 +1,230 @@
 <template>
   <div class="dashboard-view">
-    <!-- 视图头部 -->
-    <ViewHeader 
-      title="仪表盘" 
-      subtitle="任务概览和快速操作"
-    />
+    <!-- 根据 panelContext 显示不同内容 -->
     
-    <!-- 欢迎引导 - 需求 5.1: 首次打开显示快速开始指南 -->
-    <WelcomeGuide v-if="showWelcomeGuide" />
-    
-    <!-- 快速操作区域 -->
-    <div class="quick-actions-section" v-if="!showWelcomeGuide">
-      <h3 class="section-title">快速操作</h3>
-      <div class="quick-actions">
-        <button class="quick-action-btn" @click="handleImportNovel">
-          <component :is="icons.upload" :size="20" />
-          <span>导入小说</span>
-        </button>
-        <button class="quick-action-btn" @click="handleOpenWorkflow">
-          <component :is="icons.workflow" :size="20" />
-          <span>工作流编辑</span>
-        </button>
-        <button class="quick-action-btn" @click="handleOpenSettings">
-          <component :is="icons.settings" :size="20" />
-          <span>系统设置</span>
-        </button>
+    <!-- 状态视图 - 新建 -->
+    <template v-if="currentViewType === 'status' && statusFilter === 'new'">
+      <div class="view-header">
+        <h2>新建任务</h2>
+        <p>等待处理的新任务</p>
       </div>
-    </div>
+      <div class="content-placeholder">
+        <component :is="icons.circle" :size="48" />
+        <span>新建任务列表</span>
+        <p>这里将显示所有新建的任务</p>
+      </div>
+    </template>
     
-    <!-- 最近活动区域 -->
-    <div class="recent-activity-section" v-if="!showWelcomeGuide">
-      <div class="section-header">
-        <h3 class="section-title">最近活动</h3>
-        <button class="view-all-btn" @click="handleViewAllActivity">
-          查看全部
-          <component :is="icons.arrowRight" :size="14" />
-        </button>
+    <!-- 状态视图 - 处理中 -->
+    <template v-else-if="currentViewType === 'status' && statusFilter === 'running'">
+      <div class="view-header">
+        <h2>处理中</h2>
+        <p>正在处理的任务</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.refresh" :size="48" />
+        <span>处理中任务列表</span>
+        <p>这里将显示正在处理的任务</p>
+      </div>
+    </template>
+    
+    <!-- 状态视图 - 待审核 -->
+    <template v-else-if="currentViewType === 'status' && statusFilter === 'review'">
+      <div class="view-header">
+        <h2>待审核</h2>
+        <p>等待审核的任务</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.users" :size="48" />
+        <span>待审核任务列表</span>
+        <p>这里将显示等待审核的任务</p>
+      </div>
+    </template>
+    
+    <!-- 历史视图 - 最近编辑 -->
+    <template v-else-if="currentViewType === 'history' && historyType === 'recent'">
+      <div class="view-header">
+        <h2>最近编辑</h2>
+        <p>您最近编辑的文件</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.clock" :size="48" />
+        <span>最近编辑列表</span>
+        <p>这里将显示您最近编辑的文件</p>
+      </div>
+    </template>
+    
+    <!-- 历史视图 - 归档 -->
+    <template v-else-if="currentViewType === 'history' && historyType === 'archive'">
+      <div class="view-header">
+        <h2>归档</h2>
+        <p>已归档的项目和文件</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.archive" :size="48" />
+        <span>归档列表</span>
+        <p>这里将显示已归档的项目和文件</p>
+      </div>
+    </template>
+    
+    <!-- 我的项目视图 -->
+    <template v-else-if="currentViewType === 'project' && selectedProject === 'library'">
+      <div class="view-header">
+        <h2>我的项目</h2>
+        <p>管理您创建的所有项目</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.book" :size="48" />
+        <span>我的项目列表</span>
+        <p>这里将显示您创建的所有项目</p>
+      </div>
+    </template>
+    
+    <!-- 共享项目视图 -->
+    <template v-else-if="currentViewType === 'project' && selectedProject === 'shared'">
+      <div class="view-header">
+        <h2>共享项目</h2>
+        <p>与您共享的项目</p>
+      </div>
+      <div class="content-placeholder">
+        <component :is="icons.share" :size="48" />
+        <span>共享项目列表</span>
+        <p>这里将显示与您共享的项目</p>
+      </div>
+    </template>
+    
+    <!-- 默认仪表盘视图 (包括 project-dashboard、无状态、或任何其他情况) -->
+    <template v-else>
+      <div class="dashboard-header">
+        <h1>小说动漫生成器</h1>
+        <p>欢迎使用小说动漫生成器！</p>
       </div>
       
-      <div class="activity-list">
-        <div 
-          v-for="activity in recentActivities" 
-          :key="activity.id"
-          class="activity-item"
-        >
-          <div class="activity-icon" :class="`activity-icon--${activity.type}`">
-            <component :is="getActivityIcon(activity.type)" :size="16" />
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">{{ activity.title }}</div>
-            <div class="activity-description">{{ activity.description }}</div>
-          </div>
-          <div class="activity-time">{{ formatTime(activity.time) }}</div>
-        </div>
-        
-        <div v-if="recentActivities.length === 0" class="activity-empty">
-          <component :is="icons.clock" :size="32" />
-          <span>暂无最近活动</span>
+      <!-- 快速操作区域 -->
+      <div class="quick-actions-section">
+        <h3 class="section-title">快速操作</h3>
+        <div class="quick-actions">
+          <button class="quick-action-btn" @click="handleTestPage">
+            <span>🧪</span>
+            <span>组件测试</span>
+          </button>
+          <button class="quick-action-btn" @click="handleOpenWorkflow">
+            <span>⚡</span>
+            <span>工作流编辑</span>
+          </button>
+          <button class="quick-action-btn" @click="handleOpenSettings">
+            <span>⚙️</span>
+            <span>系统设置</span>
+          </button>
         </div>
       </div>
-    </div>
-    
+      
+      <!-- 最近活动区域 -->
+      <div class="recent-activity-section">
+        <div class="section-header">
+          <h3 class="section-title">最近活动</h3>
+        </div>
+        
+        <div class="activity-list">
+          <div 
+            v-for="activity in recentActivities" 
+            :key="activity.id"
+            class="activity-item"
+          >
+            <div :class="`activity-icon activity-icon--${activity.type}`">
+              <component :is="getActivityIcon(activity.type)" :size="16" />
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-description">{{ activity.description }}</div>
+            </div>
+            <div class="activity-time">{{ formatTime(activity.time) }}</div>
+          </div>
+          
+          <div v-if="recentActivities.length === 0" class="activity-empty">
+            <component :is="icons.clock" :size="32" />
+            <span>暂无最近活动</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 状态信息 -->
+      <div class="status-section">
+        <h3 class="section-title">系统状态</h3>
+        <div class="status-info">
+          <p>✅ 前端应用运行正常</p>
+          <p>✅ 组件库已加载</p>
+          <p>✅ API服务已配置</p>
+          <p>🔧 开发模式已启用</p>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useProjectStore } from '../stores/project.js';
-import { useTaskStore } from '../stores/task.js';
-import { useUIStore } from '../stores/ui.js';
+import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
-import ViewHeader from '../components/ui/ViewHeader.vue';
-import WelcomeGuide from '../components/welcome/WelcomeGuide.vue';
 
 const router = useRouter();
-const projectStore = useProjectStore();
-const taskStore = useTaskStore();
-const uiStore = useUIStore();
+const navigationStore = useNavigationStore();
 
-// 是否显示欢迎引导 - 需求 5.1: 首次打开或无项目时显示
-const showWelcomeGuide = computed(() => {
-  return projectStore.projects.length === 0;
-});
+// 从 panelContext 获取当前视图状态
+const dashboardContext = computed(() => navigationStore.panelContext.dashboard);
+
+const currentViewType = computed(() => dashboardContext.value?.viewType);
+const selectedProject = computed(() => dashboardContext.value?.selectedProject);
+const statusFilter = computed(() => dashboardContext.value?.statusFilter);
+const historyType = computed(() => dashboardContext.value?.historyType);
+
+// 监听 panelContext 变化
+watch(
+  dashboardContext,
+  (newVal, oldVal) => {
+    console.log('👀 Dashboard panelContext changed:', JSON.stringify(newVal));
+    console.log('  viewType:', newVal?.viewType);
+    console.log('  selectedProject:', newVal?.selectedProject);
+    console.log('  statusFilter:', newVal?.statusFilter);
+    console.log('  historyType:', newVal?.historyType);
+  },
+  { deep: true, immediate: true }
+);
 
 // 最近活动
 const recentActivities = ref([]);
 
 onMounted(() => {
-  loadRecentActivities();
+  console.log('📊 DashboardView onMounted started')
+  try {
+    loadRecentActivities();
+    console.log('✅ DashboardView mounted successfully')
+  } catch (error) {
+    console.error('💥 Error in DashboardView onMounted:', error)
+  }
 });
 
 function loadRecentActivities() {
-  // 从任务中生成活动记录
-  const activities = [];
+  // 模拟活动数据
+  const activities = [
+    {
+      id: '1',
+      type: 'parse',
+      title: '小说解析完成',
+      description: '《测试小说》已成功解析为章节',
+      time: new Date(Date.now() - 1000 * 60 * 30) // 30分钟前
+    },
+    {
+      id: '2', 
+      type: 'analyze',
+      title: '角色分析完成',
+      description: '提取到5个主要角色',
+      time: new Date(Date.now() - 1000 * 60 * 60 * 2) // 2小时前
+    }
+  ];
   
-  taskStore.tasks.slice(0, 10).forEach(task => {
-    activities.push({
-      id: task.id,
-      type: task.type,
-      title: task.name,
-      description: `项目任务 - ${getTaskStatusLabel(task.status)}`,
-      time: task.completedAt || task.startedAt || task.createdAt
-    });
-  });
-  
-  // 按时间排序
-  activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-  recentActivities.value = activities.slice(0, 5);
+  recentActivities.value = activities;
 }
 
 function getActivityIcon(type) {
@@ -119,17 +236,6 @@ function getActivityIcon(type) {
     video: icons.video
   };
   return iconMap[type] || icons.zap;
-}
-
-function getTaskStatusLabel(status) {
-  const labels = {
-    pending: '等待中',
-    running: '处理中',
-    review: '待审核',
-    completed: '已完成',
-    failed: '失败'
-  };
-  return labels[status] || status;
 }
 
 function formatTime(time) {
@@ -151,9 +257,8 @@ function formatDate(date) {
 }
 
 // 操作处理
-function handleImportNovel() {
-  // TODO: 打开导入小说对话框
-  router.push('/import');
+function handleTestPage() {
+  router.push('/test');
 }
 
 function handleOpenWorkflow() {
@@ -162,10 +267,6 @@ function handleOpenWorkflow() {
 
 function handleOpenSettings() {
   router.push('/settings');
-}
-
-function handleViewAllActivity() {
-  router.push('/history/recent');
 }
 </script>
 
@@ -307,6 +408,50 @@ function handleViewAllActivity() {
   color: #8a8a8c;
   gap: 8px;
   font-size: 13px;
+}
+
+/* 视图头部 */
+.view-header {
+  margin-bottom: 24px;
+}
+
+.view-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin: 0 0 4px 0;
+}
+
+.view-header p {
+  font-size: 13px;
+  color: #6c6c6e;
+  margin: 0;
+}
+
+/* 内容占位符 */
+.content-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #8a8a8c;
+  gap: 12px;
+  text-align: center;
+}
+
+.content-placeholder span {
+  font-size: 16px;
+  font-weight: 500;
+  color: #5a5a5c;
+}
+
+.content-placeholder p {
+  font-size: 13px;
+  color: #8a8a8c;
+  margin: 0;
 }
 
 /* 响应式布局 */

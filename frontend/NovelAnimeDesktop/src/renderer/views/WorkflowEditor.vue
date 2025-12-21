@@ -2,42 +2,50 @@
   <div class="workflow-editor">
     <!-- 视图头部 -->
     <ViewHeader 
-      title="工作流编辑器" 
-      :subtitle="currentWorkflow ? `当前: ${currentWorkflow.name}` : '设计和执行工作流程'"
+      :title="viewTitle" 
+      :subtitle="viewSubtitle"
     >
       <template #actions>
-        <div class="custom-select" :class="{ open: dropdownOpen }">
-          <div class="select-trigger" @click="toggleDropdown">
-            <span>{{ selectedWorkflowName }}</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="select-dropdown" v-if="dropdownOpen">
-            <div 
-              class="select-option" 
-              :class="{ selected: selectedWorkflowId === '' }"
-              @click="selectWorkflow('')"
-            >
-              选择工作流
+        <template v-if="currentViewType === 'workflow-detail' || currentViewType === 'new' || !currentViewType">
+          <div class="custom-select" :class="{ open: dropdownOpen }">
+            <div class="select-trigger" @click="toggleDropdown">
+              <span>{{ selectedWorkflowName }}</span>
+              <span class="arrow">▼</span>
             </div>
-            <div 
-              v-for="workflow in workflows" 
-              :key="workflow.id"
-              class="select-option"
-              :class="{ selected: selectedWorkflowId === workflow.id }"
-              @click="selectWorkflow(workflow.id)"
-            >
-              {{ workflow.name }}
+            <div class="select-dropdown" v-if="dropdownOpen">
+              <div 
+                class="select-option" 
+                :class="{ selected: selectedWorkflowId === '' }"
+                @click="selectWorkflow('')"
+              >
+                选择工作流
+              </div>
+              <div 
+                v-for="workflow in workflows" 
+                :key="workflow.id"
+                class="select-option"
+                :class="{ selected: selectedWorkflowId === workflow.id }"
+                @click="selectWorkflow(workflow.id)"
+              >
+                {{ workflow.name }}
+              </div>
             </div>
           </div>
-        </div>
-        <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
-        <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
-        <button @click="saveWorkflow" class="btn btn-primary" :disabled="!currentWorkflow">
-          保存工作流
-        </button>
-        <button @click="runWorkflow" class="btn btn-success" :disabled="!currentWorkflow || isExecuting">
-          {{ isExecuting ? '执行中...' : '运行工作流' }}
-        </button>
+          <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
+          <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
+          <button @click="saveWorkflow" class="btn btn-primary" :disabled="!currentWorkflow">
+            保存工作流
+          </button>
+          <button @click="runWorkflow" class="btn btn-success" :disabled="!currentWorkflow || isExecuting">
+            {{ isExecuting ? '执行中...' : '运行工作流' }}
+          </button>
+        </template>
+        <template v-else-if="currentViewType === 'status'">
+          <button class="btn btn-secondary" @click="refreshStatus">刷新状态</button>
+        </template>
+        <template v-else-if="currentViewType === 'template'">
+          <button class="btn btn-primary" @click="useTemplate">使用此模板</button>
+        </template>
       </template>
     </ViewHeader>
 
@@ -74,7 +82,80 @@
     </div>
     
     <div class="editor-content">
-      <div class="node-palette">
+      <!-- 状态视图 -->
+      <template v-if="currentViewType === 'status'">
+        <div class="status-view">
+          <div class="status-list">
+            <div 
+              v-for="workflow in filteredWorkflowsByStatus" 
+              :key="workflow.id"
+              class="status-item"
+              @click="viewWorkflowDetail(workflow)"
+            >
+              <div class="status-icon" :class="`status-icon--${workflow.status}`">
+                <component :is="getStatusIcon(workflow.status)" :size="20" />
+              </div>
+              <div class="status-info">
+                <div class="status-name">{{ workflow.name }}</div>
+                <div class="status-desc">{{ workflow.description || '暂无描述' }}</div>
+              </div>
+              <div class="status-time">{{ formatTime(workflow.updatedAt) }}</div>
+            </div>
+            <div v-if="filteredWorkflowsByStatus.length === 0" class="empty-status">
+              <component :is="icons.inbox" :size="48" />
+              <span>暂无{{ statusTitle }}的工作流</span>
+            </div>
+          </div>
+        </div>
+      </template>
+      
+      <!-- 模板视图 -->
+      <template v-else-if="currentViewType === 'template'">
+        <div class="template-view">
+          <div class="template-content">
+            <div class="template-preview">
+              <component :is="icons.layers" :size="64" />
+            </div>
+            <div class="template-nodes">
+              <h4>包含节点</h4>
+              <div class="node-list">
+                <div class="node-preview" v-for="node in templateNodes" :key="node">
+                  <span class="node-icon">{{ getNodeIcon(node) }}</span>
+                  <span>{{ getNodeTitle(node) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      
+      <!-- 执行记录视图 -->
+      <template v-else-if="currentViewType === 'execution'">
+        <div class="execution-view">
+          <div class="execution-detail">
+            <div class="execution-info">
+              <div class="info-row">
+                <span class="info-label">执行ID</span>
+                <span class="info-value">{{ selectedExecutionId }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">状态</span>
+                <span class="info-value status-badge" :class="`status-badge--${selectedExecutionStatus}`">
+                  {{ selectedExecutionStatus === 'success' ? '成功' : selectedExecutionStatus === 'error' ? '失败' : selectedExecutionStatus }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">执行时间</span>
+                <span class="info-value">{{ selectedExecutionTime }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      
+      <!-- 默认工作流编辑器视图 -->
+      <template v-else>
+        <div class="node-palette">
         <h3>节点库</h3>
         <div class="node-categories">
           <div class="category">
@@ -188,6 +269,7 @@
           </svg>
         </div>
       </div>
+      </template>
     </div>
   </div>
 </template>
@@ -198,6 +280,7 @@ import { useWorkflowStore } from '../stores/workflow.js';
 import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
+import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 
 const workflowStore = useWorkflowStore();
@@ -212,6 +295,179 @@ const currentExecutionId = ref(null);
 const executionResults = ref(null);
 const showResultsPanel = ref(false);
 const dropdownOpen = ref(false);
+
+// 从 panelContext 获取当前视图状态
+const workflowContext = computed(() => navigationStore.panelContext.workflow || {});
+const currentViewType = computed(() => workflowContext.value?.viewType || '');
+const statusFilter = computed(() => workflowContext.value?.statusFilter || '');
+const selectedTemplateId = computed(() => workflowContext.value?.templateId || '');
+const selectedExecutionId = computed(() => workflowContext.value?.executionId || '');
+const selectedExecutionName = computed(() => workflowContext.value?.executionName || '');
+const selectedExecutionStatus = computed(() => workflowContext.value?.executionStatus || 'success');
+const selectedExecutionTime = computed(() => workflowContext.value?.executionTime || '');
+
+// 模板数据
+const templates = ref([
+  { id: 't1', name: '标准转换流程', description: '完整的小说到视频转换流程', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'script-converter', 'video-generator'] },
+  { id: 't2', name: '快速预览流程', description: '快速生成预览视频', nodes: ['novel-parser', 'scene-generator', 'video-generator'] },
+  { id: 't3', name: '高质量输出', description: '高质量视频输出流程', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'script-converter', 'video-generator'] }
+]);
+
+const selectedTemplate = computed(() => {
+  return templates.value.find(t => t.id === selectedTemplateId.value);
+});
+
+const templateNodes = computed(() => {
+  return selectedTemplate.value?.nodes || [];
+});
+
+// 动态标题和副标题
+const viewTitle = computed(() => {
+  switch (currentViewType.value) {
+    case 'status':
+      return statusTitle.value;
+    case 'template':
+      return selectedTemplate.value?.name || '模板详情';
+    case 'execution':
+      return selectedExecutionName.value || '执行记录';
+    case 'new':
+      return '新建工作流';
+    case 'workflow-detail':
+      return currentWorkflow.value?.name || '工作流编辑器';
+    default:
+      return '工作流编辑器';
+  }
+});
+
+const viewSubtitle = computed(() => {
+  switch (currentViewType.value) {
+    case 'status':
+      return statusDescription.value;
+    case 'template':
+      return selectedTemplate.value?.description || '查看模板配置';
+    case 'execution':
+      return selectedExecutionTime.value ? `执行于 ${selectedExecutionTime.value}` : '查看工作流执行历史';
+    case 'new':
+      return '创建新的工作流';
+    case 'workflow-detail':
+      return currentWorkflow.value?.description || '编辑工作流节点和连接';
+    default:
+      return currentWorkflow.value ? `当前: ${currentWorkflow.value.name}` : '设计和执行工作流程';
+  }
+});
+
+// 状态相关
+const statusTitle = computed(() => {
+  const titles = {
+    running: '运行中',
+    completed: '已完成',
+    failed: '失败'
+  };
+  return titles[statusFilter.value] || '工作流状态';
+});
+
+const statusDescription = computed(() => {
+  const descriptions = {
+    running: '正在执行的工作流',
+    completed: '已成功完成的工作流',
+    failed: '执行失败的工作流'
+  };
+  return descriptions[statusFilter.value] || '查看工作流执行状态';
+});
+
+// 按状态筛选工作流
+const filteredWorkflowsByStatus = computed(() => {
+  if (!statusFilter.value) return workflows.value;
+  return workflows.value.filter(w => w.status === statusFilter.value);
+});
+
+// 获取状态图标
+function getStatusIcon(status) {
+  const iconMap = {
+    running: icons.refresh,
+    completed: icons.check,
+    failed: icons.xCircle,
+    idle: icons.circle
+  };
+  return iconMap[status] || icons.circle;
+}
+
+// 格式化时间
+function formatTime(time) {
+  if (!time) return '';
+  const date = new Date(time);
+  const now = new Date();
+  const diff = now - date;
+  
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+  return date.toLocaleDateString('zh-CN');
+}
+
+// 查看工作流详情
+function viewWorkflowDetail(workflow) {
+  selectedWorkflowId.value = workflow.id;
+  workflowStore.setCurrentWorkflow(workflow.id);
+  navigationStore.updatePanelContext('workflow', {
+    selectedWorkflow: workflow.id,
+    viewType: 'workflow-detail',
+    statusFilter: null,
+    templateId: null,
+    executionId: null
+  });
+}
+
+// 刷新状态
+function refreshStatus() {
+  workflowStore.loadAllWorkflows();
+  uiStore.addNotification({
+    type: 'info',
+    title: '刷新成功',
+    message: '工作流状态已更新',
+    timeout: 2000
+  });
+}
+
+// 使用模板
+function useTemplate() {
+  if (selectedTemplate.value) {
+    const workflow = workflowStore.createWorkflow(
+      `${selectedTemplate.value.name} - 副本`,
+      selectedTemplate.value.description
+    );
+    // 添加模板节点
+    let x = 50;
+    selectedTemplate.value.nodes.forEach((nodeType, index) => {
+      workflowStore.addNode(nodeType, getNodeTitle(nodeType), { x, y: 50 + index * 120 });
+      x += 200;
+    });
+    selectedWorkflowId.value = workflow.id;
+    navigationStore.updatePanelContext('workflow', {
+      selectedWorkflow: workflow.id,
+      viewType: 'workflow-detail',
+      templateId: null
+    });
+    uiStore.addNotification({
+      type: 'success',
+      title: '模板应用成功',
+      message: `已基于 "${selectedTemplate.value.name}" 创建新工作流`,
+      timeout: 3000
+    });
+  }
+}
+
+// 获取节点标题
+function getNodeTitle(type) {
+  const titles = {
+    'novel-parser': '小说解析器',
+    'character-analyzer': '角色分析器',
+    'scene-generator': '场景生成器',
+    'script-converter': '脚本转换器',
+    'video-generator': '视频生成器'
+  };
+  return titles[type] || type;
+}
 
 // Computed for selected workflow name
 const selectedWorkflowName = computed(() => {
@@ -257,6 +513,29 @@ watch(() => workflowStore.executionStatus, (newStatus) => {
   }
 });
 
+// 监听 panelContext 变化 - 响应中间面板的点击
+watch(
+  () => navigationStore.panelContext.workflow,
+  (newVal) => {
+    console.log('👀 WorkflowEditor panelContext changed:', newVal);
+    if (newVal?.selectedWorkflow && newVal.selectedWorkflow !== selectedWorkflowId.value) {
+      selectedWorkflowId.value = newVal.selectedWorkflow;
+      // 如果 currentWorkflow 还没设置，尝试设置
+      if (!workflowStore.currentWorkflow || workflowStore.currentWorkflow.id !== newVal.selectedWorkflow) {
+        const success = workflowStore.setCurrentWorkflow(newVal.selectedWorkflow);
+        console.log('📌 WorkflowEditor setCurrentWorkflow result:', success, 'workflow:', workflowStore.currentWorkflow?.name);
+      }
+    }
+    if (newVal?.templateId) {
+      console.log('📋 Template selected:', newVal.templateId);
+    }
+    if (newVal?.executionId) {
+      console.log('📊 Execution selected:', newVal.executionId);
+    }
+  },
+  { deep: true, immediate: true }
+);
+
 // Computed properties
 const workflows = computed(() => workflowStore.workflows);
 const currentWorkflow = computed(() => workflowStore.currentWorkflow);
@@ -299,10 +578,6 @@ const nodeTypes = {
     outputs: []
   }
 };
-
-onMounted(() => {
-  workflowStore.loadAllWorkflows();
-});
 
 // Workflow management
 function createNewWorkflow() {
@@ -1052,5 +1327,223 @@ function getConnectionY2(connection) {
   height: 24px;
   padding: 0 8px;
   font-size: 11px;
+}
+
+/* 状态视图样式 */
+.status-view,
+.template-view,
+.execution-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.view-header {
+  margin-bottom: 24px;
+}
+
+.view-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin: 0 0 4px 0;
+}
+
+.view-header p {
+  font-size: 13px;
+  color: #6c6c6e;
+  margin: 0;
+}
+
+.status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(4px);
+}
+
+.status-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.status-icon--running {
+  background: #3498db;
+  animation: pulse 1.5s infinite;
+}
+
+.status-icon--completed {
+  background: #27ae60;
+}
+
+.status-icon--failed {
+  background: #e74c3c;
+}
+
+.status-icon--idle {
+  background: #95a5a6;
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.status-desc {
+  font-size: 12px;
+  color: #6c6c6e;
+}
+
+.status-time {
+  font-size: 11px;
+  color: #8a8a8c;
+}
+
+.empty-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #8a8a8c;
+  gap: 12px;
+}
+
+/* 模板视图样式 */
+.template-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.template-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.template-preview h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+  color: #2c2c2e;
+}
+
+.template-preview p {
+  margin: 0;
+  font-size: 13px;
+  color: #6c6c6e;
+}
+
+.template-nodes h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin: 0 0 12px 0;
+}
+
+.node-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.node-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4a4a4c;
+}
+
+.node-preview .node-icon {
+  font-size: 16px;
+}
+
+/* 执行记录视图样式 */
+.execution-detail {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.execution-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #6c6c6e;
+}
+
+.info-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-badge--success {
+  background: rgba(39, 174, 96, 0.15);
+  color: #27ae60;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 </style>

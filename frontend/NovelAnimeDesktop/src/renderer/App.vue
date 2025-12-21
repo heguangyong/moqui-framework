@@ -1,101 +1,109 @@
 <template>
   <div class="app-container">
-    <div class="app-layout">
-      <!-- 左侧极窄侧边栏 -->
-      <aside class="narrow-sidebar">
-        <!-- 上半部分：导航区域（占 3/4 空间） -->
-        <div class="sidebar-section sidebar-section--nav">
-          <!-- 黑色图标区域 -->
-          <div class="sidebar-icons">
-            <!-- 软件 Logo/Icon（顶部，不是按钮） -->
-            <div class="sidebar-logo">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <!-- 分割线（只有这一条） -->
-            <div class="sidebar-divider"></div>
-            <!-- 导航按钮（数据驱动） -->
-            <button 
-              v-for="nav in navItems"
-              :key="nav.id"
-              class="sidebar-icon-btn"
-              :class="{ 'sidebar-icon-btn--active': activeNavId === nav.id }"
-              @click="handleNavClick(nav)"
-              @mouseenter="showTooltip({ label: nav.label }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="nav.icon" :size="24" />
-            </button>
-          </div>
-          <!-- 分割线 -->
-          <div class="sidebar-section-divider"></div>
-          <!-- 竖向文字标签（雕刻风格） -->
-          <div class="sidebar-label">NOVEL ANIME</div>
-        </div>
-        
-        <!-- 下半部分：设置区域（占 1/4 空间，即上方的 1/3） -->
-        <div class="sidebar-section sidebar-section--settings">
-          <!-- 竖向文字标签（雕刻风格，在上方） -->
-          <div class="sidebar-label sidebar-label--top">SETTINGS</div>
-          <!-- 分割线 -->
-          <div class="sidebar-section-divider"></div>
-          <!-- 黑色正方形设置按钮（在下方） -->
-          <div class="sidebar-icons sidebar-icons--bottom">
-            <button 
-              class="sidebar-icon-btn sidebar-icon-btn--settings" 
-              @click="handleSidebarClick({ route: 'settings', label: 'Settings' })"
-              @mouseenter="showTooltip({ label: 'Settings' }, $event)"
-              @mouseleave="hideTooltip"
-            >
-              <component :is="icons.settings" :size="24" />
-            </button>
-          </div>
-        </div>
-        
-        <!-- 工具提示 -->
-        <div 
-          v-if="tooltip.visible" 
-          class="sidebar-tooltip"
-          :style="{ top: tooltip.top + 'px', left: tooltip.left + 'px' }"
-        >
-          {{ tooltip.text }}
-        </div>
-      </aside>
-      
-      <!-- 中间内容面板 - 需求 2.1-2.5: 使用 ContextPanel 动态渲染 -->
-      <div class="middle-panel">
-        <!-- 左侧菜单区域 - 使用 ContextPanel 组件 -->
-        <div class="menu-column">
-          <ContextPanel 
-            user-name="John Doe"
-            user-email="customerpop@gmail.com"
-          />
-        </div>
-        
-        <!-- 右侧主工作区 - 需求 3.1: 各视图自行管理头部 -->
-        <main class="main-area">
-          <div class="workspace-content">
-            <!-- 内容区域 - 需求 6.4: 视图切换动画 -->
-            <div class="content-area">
-              <div v-if="uiStore.loading.global" class="loading-overlay">
-                <div class="loading-spinner">
-                  <component :is="icons.refresh" :size="24" class="spin" />
-                </div>
-                <p>Loading...</p>
+    <!-- 登录页面独立显示，不显示侧边栏 -->
+    <template v-if="isAuthPage">
+      <router-view />
+    </template>
+    
+    <!-- 主应用布局 -->
+    <template v-else>
+      <div class="app-layout">
+        <!-- 左侧极窄侧边栏 -->
+        <aside class="narrow-sidebar">
+          <!-- 上半部分：导航区域（占 3/4 空间） -->
+          <div class="sidebar-section sidebar-section--nav">
+            <!-- 黑色图标区域 -->
+            <div class="sidebar-icons">
+              <!-- 软件 Logo/Icon（顶部，不是按钮） -->
+              <div class="sidebar-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </div>
-              <router-view v-else v-slot="{ Component }">
-                <transition name="view-fade" mode="out-in">
-                  <component :is="Component" />
-                </transition>
-              </router-view>
+              <!-- 分割线（只有这一条） -->
+              <div class="sidebar-divider"></div>
+              <!-- 导航按钮（数据驱动） -->
+              <button 
+                v-for="nav in navItems"
+                :key="nav.id"
+                class="sidebar-icon-btn"
+                :class="{ 'sidebar-icon-btn--active': activeNavId === nav.id }"
+                @click="handleNavClick(nav)"
+                @mouseenter="showTooltip({ label: nav.label }, $event)"
+                @mouseleave="hideTooltip"
+              >
+                <component :is="nav.icon" :size="24" />
+              </button>
+            </div>
+            <!-- 分割线 -->
+            <div class="sidebar-section-divider"></div>
+            <!-- 竖向文字标签（雕刻风格） -->
+            <div class="sidebar-label">NOVEL ANIME</div>
+          </div>
+          
+          <!-- 下半部分：设置区域（占 1/4 空间，即上方的 1/3） -->
+          <div class="sidebar-section sidebar-section--settings">
+            <!-- 竖向文字标签（雕刻风格，在上方） -->
+            <div class="sidebar-label sidebar-label--top">SETTINGS</div>
+            <!-- 分割线 -->
+            <div class="sidebar-section-divider"></div>
+            <!-- 黑色正方形设置按钮（在下方） -->
+            <div class="sidebar-icons sidebar-icons--bottom">
+              <button 
+                class="sidebar-icon-btn sidebar-icon-btn--settings" 
+                @click="handleSidebarClick({ route: 'settings', label: 'Settings' })"
+                @mouseenter="showTooltip({ label: 'Settings' }, $event)"
+                @mouseleave="hideTooltip"
+              >
+                <component :is="icons.settings" :size="24" />
+              </button>
             </div>
           </div>
-        </main>
+          
+          <!-- 工具提示 -->
+          <div 
+            v-if="tooltip.visible" 
+            class="sidebar-tooltip"
+            :style="{ top: tooltip.top + 'px', left: tooltip.left + 'px' }"
+          >
+            {{ tooltip.text }}
+          </div>
+        </aside>
+        
+        <!-- 中间内容面板 - 需求 2.1-2.5: 使用 ContextPanel 动态渲染 -->
+        <div class="middle-panel">
+          <!-- 左侧菜单区域 - 使用 ContextPanel 组件 -->
+          <div class="menu-column">
+            <ContextPanel 
+              user-name="John Doe"
+              user-email="customerpop@gmail.com"
+            />
+          </div>
+          
+          <!-- 右侧主工作区 - 需求 3.1: 各视图自行管理头部 -->
+          <main class="main-area">
+            <div class="workspace-content">
+              <!-- 内容区域 - 需求 6.4: 视图切换动画 -->
+              <div class="content-area">
+                <div v-if="uiStore.loading.global" class="loading-overlay">
+                  <div class="loading-spinner">
+                    <component :is="icons.refresh" :size="24" class="spin" />
+                  </div>
+                  <p>Loading...</p>
+                </div>
+                <router-view v-else v-slot="{ Component }">
+                  <transition name="view-fade" mode="out-in">
+                    <component :is="Component" />
+                  </transition>
+                </router-view>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </template>
     
     <!-- 通知容器 -->
     <div class="notification-container">
@@ -127,26 +135,41 @@
 </template>
 
 <script setup>
+console.log('📱 App.vue script setup started');
+
 import { onMounted, computed, reactive, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useProjectStore } from './stores/project.js';
+import { icons } from './utils/icons.js';
+
+// 导入真正的 Pinia stores
 import { useUIStore } from './stores/ui.js';
+import { useNavigationStore } from './stores/navigation.js';
+import { useProjectStore } from './stores/project.js';
 import { useTaskStore } from './stores/task.js';
 import { useFileStore } from './stores/file.js';
-import { useNavigationStore } from './stores/navigation.js';
-import { icons } from './utils/icons.js';
-import DocumentTree from './components/explorer/DocumentTree.vue';
+
+// 导入组件
 import ContextPanel from './components/panels/ContextPanel.vue';
 
+console.log('⚙️ Setting up router and stores...');
 const router = useRouter();
 const route = useRoute();
-const projectStore = useProjectStore();
+
+// 使用真正的 Pinia stores
 const uiStore = useUIStore();
+const navigationStore = useNavigationStore();
+const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 const fileStore = useFileStore();
-const navigationStore = useNavigationStore();
+
+console.log('✅ App.vue setup completed');
 
 const currentProject = computed(() => projectStore.currentProject);
+
+// 判断是否是认证页面（登录/注册）
+const isAuthPage = computed(() => {
+  return route.meta.guest === true || route.name === 'login';
+});
 
 // 状态视图 - 已移至 DashboardPanel
 // const activeStatusView = ref('');
@@ -381,48 +404,74 @@ function getNotificationIcon(type) {
 }
 
 onMounted(() => {
-  // 初始化UI状态
-  uiStore.initializeFromStorage();
+  console.log('🚀 App.vue onMounted started')
   
-  // 初始化导航状态 - 需求 1.4
-  navigationStore.initializeFromStorage();
-  
-  // 加载任务数据
-  taskStore.loadTasks();
-  
-  // 加载文件树数据
-  fileStore.loadFromStorage();
-  
-  // 强制侧边栏展开
-  uiStore.layout.sidebarCollapsed = false;
-  
-  // 根据当前路由设置激活的导航项
-  const currentPath = route.path;
-  const matchedNav = navItems.find(nav => currentPath.startsWith(nav.route));
-  if (matchedNav) {
-    navigationStore.setActiveNav(matchedNav.id);
-  }
-  
-  console.log('App mounted, UI store initialized');
-  
-  // 监听菜单事件
-  if (window.electronAPI) {
-    window.electronAPI.onMenuAction((action) => {
-      switch (action) {
-        case 'new-project':
-          createProject();
-          break;
-        case 'open-project':
-          openProject();
-          break;
-        case 'workflow-editor':
-          router.push('/workflow');
-          break;
-        case 'generate-animation':
-          generateAnimation();
-          break;
-      }
-    });
+  try {
+    // 初始化UI状态
+    console.log('📊 Initializing UI store...')
+    uiStore.initializeFromStorage();
+    console.log('✅ UI store initialized')
+    
+    // 初始化导航状态 - 需求 1.4
+    console.log('🧭 Initializing navigation store...')
+    navigationStore.initializeFromStorage();
+    console.log('✅ Navigation store initialized')
+    
+    // 加载任务数据
+    console.log('📋 Loading tasks...')
+    taskStore.loadTasks();
+    console.log('✅ Tasks loaded')
+    
+    // 加载文件树数据
+    console.log('📁 Loading file store...')
+    fileStore.loadFromStorage();
+    console.log('✅ File store loaded')
+    
+    // 强制侧边栏展开
+    uiStore.layout.sidebarCollapsed = false;
+    console.log('📐 Sidebar expanded')
+    
+    // 根据当前路由设置激活的导航项
+    const currentPath = route.path;
+    console.log('🛣️ Current path:', currentPath)
+    
+    const matchedNav = navItems.find(nav => currentPath.startsWith(nav.route));
+    if (matchedNav) {
+      console.log('🎯 Matched nav:', matchedNav.id)
+      navigationStore.setActiveNav(matchedNav.id);
+    } else {
+      console.log('❓ No matching nav found for path:', currentPath)
+    }
+    
+    console.log('✅ App mounted, UI store initialized');
+    
+    // 监听菜单事件
+    if (window.electronAPI) {
+      console.log('🖥️ Setting up Electron API listeners')
+      window.electronAPI.onMenuAction((action) => {
+        console.log('📱 Menu action received:', action)
+        switch (action) {
+          case 'new-project':
+            createProject();
+            break;
+          case 'open-project':
+            openProject();
+            break;
+          case 'workflow-editor':
+            router.push('/workflow');
+            break;
+          case 'generate-animation':
+            generateAnimation();
+            break;
+        }
+      });
+    } else {
+      console.log('🌐 Running in web mode (no Electron API)')
+    }
+    
+    console.log('🎉 App.vue onMounted completed successfully')
+  } catch (error) {
+    console.error('💥 Error in App.vue onMounted:', error)
   }
 });
 

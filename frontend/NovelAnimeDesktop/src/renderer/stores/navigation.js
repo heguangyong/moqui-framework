@@ -49,22 +49,33 @@ export const useNavigationStore = defineStore('navigation', {
     panelContext: {
       dashboard: {
         selectedProject: null,
-        statusFilter: null
+        statusFilter: null,
+        viewType: null,
+        historyType: null
       },
       workflow: {
         selectedWorkflow: null,
-        executionFilter: null
+        executionFilter: null,
+        viewType: null,
+        statusFilter: null,
+        templateId: null,
+        executionId: null
       },
       assets: {
         category: null,
-        searchQuery: ''
+        searchQuery: '',
+        viewType: null,
+        selectedAsset: null,
+        filters: []
       },
       characters: {
         searchQuery: '',
-        filterLocked: null
+        filterLocked: null,
+        selectedCharacter: null,
+        viewType: null
       },
       settings: {
-        activeCategory: 'ai'
+        activeCategory: 'profile'
       }
     },
     
@@ -136,10 +147,21 @@ export const useNavigationStore = defineStore('navigation', {
     },
     
     // 更新面板上下文 - 需求 2.1-2.5
+    // 注意: 使用完全替换而非合并，避免旧值残留导致视图显示错误
     updatePanelContext(navId, context) {
       if (this.panelContext[navId]) {
+        // 获取默认上下文结构
+        const defaultContexts = {
+          dashboard: { selectedProject: null, statusFilter: null, viewType: null, historyType: null },
+          workflow: { selectedWorkflow: null, executionFilter: null, viewType: null, statusFilter: null, templateId: null, executionId: null },
+          assets: { category: null, searchQuery: '', viewType: null, selectedAsset: null, filters: [] },
+          characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null },
+          settings: { activeCategory: 'profile' }
+        };
+        
+        // 先重置为默认值，再应用新的上下文
         this.panelContext[navId] = {
-          ...this.panelContext[navId],
+          ...defaultContexts[navId],
           ...context
         };
         this.persistNavigationState();
@@ -149,11 +171,11 @@ export const useNavigationStore = defineStore('navigation', {
     // 重置面板上下文
     resetPanelContext(navId) {
       const defaultContexts = {
-        dashboard: { selectedProject: null, statusFilter: null },
-        workflow: { selectedWorkflow: null, executionFilter: null },
-        assets: { category: null, searchQuery: '' },
-        characters: { searchQuery: '', filterLocked: null },
-        settings: { activeCategory: 'ai' }
+        dashboard: { selectedProject: null, statusFilter: null, viewType: null, historyType: null },
+        workflow: { selectedWorkflow: null, executionFilter: null, viewType: null, statusFilter: null, templateId: null, executionId: null },
+        assets: { category: null, searchQuery: '', viewType: null, selectedAsset: null, filters: [] },
+        characters: { searchQuery: '', filterLocked: null, selectedCharacter: null, viewType: null },
+        settings: { activeCategory: 'profile' }
       };
       
       if (defaultContexts[navId]) {

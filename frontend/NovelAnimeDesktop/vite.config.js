@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [vue()],
   root: 'src/renderer',
   base: './',
+  define: {
+    // 为渲染进程定义环境变量
+    __DEV__: JSON.stringify(process.env.NODE_ENV === 'development')
+  },
   build: {
     outDir: '../../dist-renderer',
     emptyOutDir: true,

@@ -65,7 +65,9 @@ class MoquiContextListener implements ServletContextListener {
 
             logger.info("Loading Webapp '${moquiWebappName}' (${sc.getServletContextName()}) on ${webappId}, located at: ${webappRealPath}")
 
+            System.out.println("DEBUG MoquiContextListener: Before Moqui.dynamicInit")
             ecfi = Moqui.dynamicInit(ExecutionContextFactoryImpl.class, sc)
+            System.out.println("DEBUG MoquiContextListener: After Moqui.dynamicInit")
 
             // logger.warn("ServletContext (" + (sc != null ? sc.getClass().getName() : "") + ":" + (sc != null && sc.getClass().getClassLoader() != null ? sc.getClass().getClassLoader().getClass().getName() : "") + ")" + " value: " + sc)
 

@@ -56,10 +56,13 @@ public class Moqui {
     }
     public static <K extends ExecutionContextFactory> K dynamicInit(Class<K> ecfClass, ServletContext sc)
             throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        System.out.println("DEBUG Moqui.dynamicInit: Starting...");
         if (activeExecutionContextFactory != null && !activeExecutionContextFactory.isDestroyed())
             throw new IllegalStateException("Active ExecutionContextFactory already in place, cannot set one dynamically.");
 
+        System.out.println("DEBUG Moqui.dynamicInit: Creating new instance of " + ecfClass.getName());
         K newEcf = ecfClass.getDeclaredConstructor().newInstance();
+        System.out.println("DEBUG Moqui.dynamicInit: Instance created successfully");
         activeExecutionContextFactory = newEcf;
         // check for an empty DB
         if (newEcf.checkEmptyDb()) {

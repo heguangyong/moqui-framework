@@ -48,7 +48,7 @@
         v-else
         icon="folder"
         title="暂无项目"
-        description="点击上方"新建项目"按钮创建您的第一个项目"
+        description="点击上方「新建项目」按钮创建您的第一个项目"
       />
     </div>
   </div>

@@ -45,6 +45,7 @@ const appVersion = ref('1.0.0');
 
 // 设置分类
 const categories = ref([
+  { id: 'profile', name: '个人资料', icon: icons.user },
   { id: 'ai', name: 'AI服务', icon: icons.zap },
   { id: 'generation', name: '生成参数', icon: icons.settings },
   { id: 'interface', name: '界面设置', icon: icons.eye },
@@ -54,7 +55,7 @@ const categories = ref([
 
 // 当前激活的分类 - 从 navigationStore 获取
 const activeCategory = computed(() => {
-  return navigationStore.panelContext.settings?.activeCategory || 'ai';
+  return navigationStore.panelContext.settings?.activeCategory || 'profile';
 });
 
 // 分类点击处理
@@ -68,10 +69,10 @@ const validCategoryIds = categories.value.map(c => c.id);
 
 // 初始化
 onMounted(() => {
-  // 如果没有设置过或是无效值，默认选中第一个
+  // 如果没有设置过或是无效值，默认选中个人资料
   const currentCategory = navigationStore.panelContext.settings?.activeCategory;
   if (!currentCategory || !validCategoryIds.includes(currentCategory)) {
-    navigationStore.updatePanelContext('settings', { activeCategory: 'ai' });
+    navigationStore.updatePanelContext('settings', { activeCategory: 'profile' });
   }
 });
 </script>
