@@ -363,10 +363,17 @@ function handleStepAction(step) {
   }
 }
 
+// 隐藏的文件输入引用
+const fileInputRef = ref(null);
+
 // 导入小说
 async function importNovel() {
-  if (window.electronAPI) {
+  console.log('📂 importNovel called, electronAPI:', !!window.electronAPI);
+  
+  if (window.electronAPI && window.electronAPI.openFile) {
+    // Electron 模式：使用原生对话框
     try {
+      console.log('🖥️ Using Electron file dialog');
       const filePath = await window.electronAPI.openFile({
         filters: [
           { name: '小说文件', extensions: ['txt', 'docx', 'pdf', 'epub', 'md'] }
@@ -374,24 +381,60 @@ async function importNovel() {
       });
       
       if (filePath) {
-        // 更新步骤状态
-        workflowSteps.value[0].completed = true;
-        workflowSteps.value[1].enabled = true;
-        currentStep.value = 1;
-        
-        // 存储文件路径，准备解析
-        navigationStore.startImport(filePath);
-        
-        // 自动开始解析
-        startParsing();
+        console.log('📄 File selected:', filePath);
+        handleFileSelected(filePath);
       }
     } catch (error) {
-      console.error('Import failed:', error);
+      console.error('Electron file dialog failed:', error);
+      // 回退到 HTML input
+      triggerFileInput();
     }
   } else {
-    // Web 模式：跳转到导入页面
-    router.push('/test'); // 暂时跳转到测试页面，那里有 NovelImporter 组件
+    // Web 模式：使用 HTML input 元素
+    console.log('🌐 Using HTML file input');
+    triggerFileInput();
   }
+}
+
+// 触发文件选择
+function triggerFileInput() {
+  // 创建一个临时的 input 元素
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.txt,.docx,.pdf,.epub,.md';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log('📄 File selected via input:', file.name);
+      handleFileSelected(file.name, file);
+    }
+  };
+  input.click();
+}
+
+// 处理文件选择
+function handleFileSelected(filePath, file = null) {
+  // 更新步骤状态
+  workflowSteps.value[0].completed = true;
+  workflowSteps.value[1].enabled = true;
+  currentStep.value = 1;
+  
+  // 存储文件路径，准备解析
+  navigationStore.startImport(filePath);
+  
+  // 如果有文件对象，可以读取内容
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      console.log('📖 File content loaded, length:', content.length);
+      // 可以将内容存储到 store 中
+    };
+    reader.readAsText(file);
+  }
+  
+  // 跳转到测试页面（那里有 NovelImporter 组件可以继续处理）
+  router.push('/test');
 }
 
 // 开始解析

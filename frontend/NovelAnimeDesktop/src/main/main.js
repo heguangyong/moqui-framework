@@ -93,6 +93,18 @@ class NovelAnimeApp {
       return result.filePaths[0];
     });
 
+    // 打开文件对话框
+    ipcMain.handle('open-file', async (_, options) => {
+      const result = await dialog.showOpenDialog(this.mainWindow, {
+        properties: ['openFile'],
+        filters: options?.filters || [
+          { name: '小说文件', extensions: ['txt', 'docx', 'pdf', 'epub', 'md'] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      });
+      return result.filePaths[0] || null;
+    });
+
     // 文件操作
     ipcMain.handle('read-file', async (_, filePath) => {
       const fs = require('fs').promises;

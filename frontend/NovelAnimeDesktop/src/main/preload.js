@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File operations
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content),
+  openFile: (options) => ipcRenderer.invoke('open-file', options),
   
   // Menu actions
   onMenuAction: (callback) => ipcRenderer.on('menu-action', (event, action) => callback(action)),
