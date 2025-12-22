@@ -87,6 +87,18 @@
         <div class="result-summary">
           <p>已处理 {{ executionResults.nodeResults?.size || 0 }} 个节点</p>
         </div>
+        <!-- 后续操作按钮 -->
+        <div v-if="executionResults.status === 'completed'" class="result-actions">
+          <button class="btn btn-primary" @click="viewGeneratedContent">
+            查看生成内容
+          </button>
+          <button class="btn btn-secondary" @click="exportResults">
+            导出结果
+          </button>
+          <button class="btn btn-secondary" @click="backToDashboard">
+            返回项目概览
+          </button>
+        </div>
       </div>
     </div>
     
@@ -288,6 +300,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useWorkflowStore } from '../stores/workflow.js';
 import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
@@ -295,6 +308,7 @@ import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 
+const router = useRouter();
 const workflowStore = useWorkflowStore();
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
@@ -449,16 +463,12 @@ function useTemplate() {
   console.log('templates:', templates.value);
   
   if (selectedTemplate.value) {
-    // 让用户输入工作流名称
-    const defaultName = `${selectedTemplate.value.name} - 副本`;
-    console.log('About to show prompt with defaultName:', defaultName);
-    const name = prompt('请输入工作流名称:', defaultName);
-    
-    // 用户取消则不创建
-    if (!name) return;
+    // 直接使用模板名称创建工作流，不再弹出 prompt
+    const defaultName = `${selectedTemplate.value.name}`;
+    console.log('Creating workflow with name:', defaultName);
     
     const workflow = workflowStore.createWorkflow(
-      name.trim() || defaultName,
+      defaultName,
       selectedTemplate.value.description
     );
     
@@ -492,7 +502,15 @@ function useTemplate() {
     uiStore.addNotification({
       type: 'success',
       title: '模板应用成功',
-      message: `已创建工作流 "${name}"`,
+      message: `已创建工作流 "${defaultName}"`,
+      timeout: 3000
+    });
+  } else {
+    console.log('No template selected!');
+    uiStore.addNotification({
+      type: 'warning',
+      title: '请选择模板',
+      message: '请先从左侧面板选择一个模板',
       timeout: 3000
     });
   }
@@ -782,6 +800,11 @@ function handleExecutionComplete() {
     
     // 更新导航状态 - 需求 5.5: 执行完成后显示结果预览
     navigationStore.setExecutionResult(results);
+    
+    // 更新项目状态为已完成
+    if (projectStore.currentProject) {
+      projectStore.currentProject.status = 'completed';
+    }
   }
   
   uiStore.addNotification({
@@ -789,6 +812,47 @@ function handleExecutionComplete() {
     title: '执行完成',
     message: `工作流执行成功完成`,
     timeout: 3000
+  });
+}
+
+// 查看生成内容
+function viewGeneratedContent() {
+  // TODO: 跳转到生成内容预览页面
+  // 目前先显示一个提示
+  uiStore.addNotification({
+    type: 'info',
+    title: '功能开发中',
+    message: '生成内容预览功能正在开发中，敬请期待',
+    timeout: 3000
+  });
+}
+
+// 导出结果
+function exportResults() {
+  // TODO: 实现导出功能
+  uiStore.addNotification({
+    type: 'info',
+    title: '功能开发中',
+    message: '导出功能正在开发中，敬请期待',
+    timeout: 3000
+  });
+}
+
+// 返回项目概览
+function backToDashboard() {
+  showResultsPanel.value = false;
+  
+  // 重置工作流状态，准备下一次使用
+  navigationStore.resetWorkflowState();
+  
+  // 跳转到仪表盘
+  router.push('/dashboard');
+  
+  uiStore.addNotification({
+    type: 'success',
+    title: '项目已完成',
+    message: '恭喜！您的小说已成功转换为动漫',
+    timeout: 5000
   });
 }
 
@@ -1101,6 +1165,18 @@ function getConnectionY2(connection) {
 
 .result-summary p {
   margin: 0;
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.result-actions .btn {
+  flex: 1;
 }
 
 .progress-header {

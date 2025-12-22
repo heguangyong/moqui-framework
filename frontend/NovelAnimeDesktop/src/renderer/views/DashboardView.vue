@@ -553,6 +553,14 @@ function handleStepAction(step) {
       viewCharacters();
       break;
     case 'generate':
+      // 跳转到工作流页面，并设置为模板选择视图
+      navigationStore.updatePanelContext('workflow', {
+        viewType: 'template',
+        templateId: 't1', // 默认选择"标准转换流程"模板
+        selectedWorkflow: null,
+        statusFilter: null,
+        executionId: null
+      });
       router.push('/workflow');
       break;
   }
