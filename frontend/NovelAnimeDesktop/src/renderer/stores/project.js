@@ -230,6 +230,10 @@ export const useProjectStore = defineStore('project', {
       this.updateRecentProjects();
     },
 
+    clearCurrentProject() {
+      this.currentProject = null;
+    },
+
     clearError() {
       this.error = null;
     }

@@ -222,14 +222,33 @@ function goBack() {
   router.push('/workflow');
 }
 
-function finishProject() {
-  // 更新项目状态
+async function finishProject() {
+  // 更新项目状态到后端
   if (projectStore.currentProject) {
+    const projectId = projectStore.currentProject.id || projectStore.currentProject.projectId;
+    try {
+      // 尝试调用后端 API 更新项目状态
+      const { apiService } = await import('../services/index.ts');
+      await apiService.axiosInstance.put(`/projects/${projectId}/status`, {
+        status: 'completed'
+      });
+    } catch (error) {
+      console.warn('Failed to update project status on backend:', error);
+    }
+    
+    // 更新前端状态
     projectStore.currentProject.status = 'completed';
   }
   
   // 重置工作流状态
   navigationStore.resetWorkflowState();
+  
+  // 清除当前项目，准备开始新项目
+  projectStore.clearCurrentProject();
+  
+  // 清除 localStorage 中的相关数据
+  localStorage.removeItem('novel_anime_current_novel_id');
+  localStorage.removeItem('novel_anime_current_novel_title');
   
   // 跳转到仪表盘
   router.push('/dashboard');

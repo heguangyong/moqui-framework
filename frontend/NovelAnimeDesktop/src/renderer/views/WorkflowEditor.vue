@@ -838,8 +838,20 @@ function backToDashboard() {
   console.log('backToDashboard called');
   showResultsPanel.value = false;
   
+  // 更新项目状态
+  if (projectStore.currentProject) {
+    projectStore.currentProject.status = 'completed';
+  }
+  
   // 重置工作流状态，准备下一次使用
   navigationStore.resetWorkflowState();
+  
+  // 清除当前项目
+  projectStore.clearCurrentProject();
+  
+  // 清除 localStorage 中的相关数据
+  localStorage.removeItem('novel_anime_current_novel_id');
+  localStorage.removeItem('novel_anime_current_novel_title');
   
   // 跳转到仪表盘
   router.push('/dashboard');
