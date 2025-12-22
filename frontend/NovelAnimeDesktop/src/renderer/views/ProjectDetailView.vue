@@ -442,202 +442,214 @@ onMounted(async () => {
 
 <style scoped>
 .project-detail-view {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .project-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
 }
 
 .project-info h1 {
   margin: 0 0 8px 0;
-  color: #2c3e50;
-  font-size: 28px;
+  color: #2c2c2e;
+  font-size: 24px;
   font-weight: 600;
 }
 
 .project-description {
-  margin: 0 0 16px 0;
-  color: #7f8c8d;
-  font-size: 16px;
+  margin: 0 0 12px 0;
+  color: #6c6c6e;
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .project-meta {
   display: flex;
-  gap: 24px;
-  font-size: 14px;
-  color: #7f8c8d;
+  gap: 20px;
+  font-size: 13px;
+  color: #7a7a7c;
 }
 
 .meta-item strong {
-  color: #2c3e50;
+  color: #4a4a4c;
 }
 
 .project-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .action-btn {
-  padding: 10px 20px;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .import-btn {
-  background: #3498db;
-  color: white;
+  background: rgba(100, 140, 120, 0.2);
+  border-color: rgba(100, 140, 120, 0.3);
+  color: #3a5a42;
 }
 
 .import-btn:hover {
-  background: #2980b9;
+  background: rgba(100, 140, 120, 0.3);
 }
 
 .settings-btn {
-  background: #ecf0f1;
-  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5a5a5c;
 }
 
 .settings-btn:hover {
-  background: #d5dbdb;
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.18);
 }
 
 .project-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
   overflow: hidden;
+  flex: 1;
 }
 
 .content-tabs {
   display: flex;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .tab-button {
   flex: 1;
-  padding: 16px 20px;
+  padding: 14px 16px;
   border: none;
   background: none;
-  color: #7f8c8d;
-  font-size: 14px;
+  color: #7a7a7c;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   border-bottom: 2px solid transparent;
 }
 
 .tab-button:hover:not(:disabled) {
-  color: #3498db;
-  background: rgba(52, 152, 219, 0.05);
+  color: #5a6a5e;
+  background: rgba(100, 140, 120, 0.05);
 }
 
 .tab-button.active {
-  color: #3498db;
-  border-bottom-color: #3498db;
-  background: rgba(52, 152, 219, 0.05);
+  color: #4a6a52;
+  border-bottom-color: #6a9a7a;
+  background: rgba(100, 140, 120, 0.08);
 }
 
 .tab-button:disabled {
-  color: #bdc3c7;
+  color: #b0b0b2;
   cursor: not-allowed;
 }
 
 .tab-content {
-  padding: 24px;
-  min-height: 500px;
+  padding: 20px;
+  min-height: 400px;
 }
 
 .novels-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .novels-header h3 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 20px;
+  color: #2c2c2e;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .add-novel-btn {
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
   border: none;
   border-radius: 6px;
-  background: #27ae60;
-  color: white;
+  background: rgba(100, 140, 120, 0.2);
+  color: #3a5a42;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
 .add-novel-btn:hover {
-  background: #229954;
+  background: rgba(100, 140, 120, 0.3);
 }
 
 .loading-state,
 .empty-state {
   text-align: center;
   padding: 48px 24px;
+  color: #8a8a8c;
 }
 
 .loading-spinner,
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 .loading-state p,
 .empty-state p {
-  margin: 0 0 24px 0;
-  color: #7f8c8d;
-  font-size: 16px;
+  margin: 0 0 20px 0;
+  color: #7a7a7c;
+  font-size: 14px;
 }
 
 .novels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
 }
 
 .novel-card {
-  border: 1px solid #ecf0f1;
-  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
   padding: 16px;
-  background: white;
+  background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
+  transition: all 0.15s ease;
 }
 
 .novel-card:hover {
-  border-color: #3498db;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(100, 140, 120, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .novel-card.selected {
-  border-color: #3498db;
-  background: #f0f8ff;
+  border-color: rgba(100, 140, 120, 0.4);
+  background: rgba(100, 160, 130, 0.1);
 }
 
 .novel-info {
@@ -645,15 +657,15 @@ onMounted(async () => {
 }
 
 .novel-title {
-  margin: 0 0 8px 0;
-  color: #2c3e50;
-  font-size: 16px;
+  margin: 0 0 6px 0;
+  color: #2c2c2e;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .novel-author {
   margin: 0 0 8px 0;
-  color: #7f8c8d;
+  color: #7a7a7c;
   font-size: 12px;
 }
 
@@ -661,56 +673,55 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .word-count {
   font-size: 12px;
-  color: #7f8c8d;
+  color: #8a8a8c;
 }
 
 .status-badge {
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 3px 10px;
+  border-radius: 10px;
   font-size: 10px;
   font-weight: 500;
-  text-transform: uppercase;
 }
 
 .status-importing {
-  background: #fff3cd;
-  color: #856404;
+  background: rgba(200, 160, 80, 0.15);
+  color: #8a6a30;
 }
 
 .status-analyzing {
-  background: #cce5ff;
-  color: #0066cc;
+  background: rgba(100, 140, 180, 0.15);
+  color: #4a6a8a;
 }
 
 .status-analyzed {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(100, 160, 130, 0.15);
+  color: #4a7a5a;
 }
 
 .status-processing {
-  background: #fff3cd;
-  color: #856404;
+  background: rgba(200, 160, 80, 0.15);
+  color: #8a6a30;
 }
 
 .status-completed {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(100, 160, 130, 0.2);
+  color: #3a6a4a;
 }
 
 .status-failed {
-  background: #f8d7da;
-  color: #721c24;
+  background: rgba(200, 100, 100, 0.15);
+  color: #8a4a4a;
 }
 
 .novel-date {
   margin: 0;
   font-size: 11px;
-  color: #bdc3c7;
+  color: #a0a0a2;
 }
 
 .novel-actions {
@@ -720,39 +731,27 @@ onMounted(async () => {
 }
 
 .novel-actions .action-btn {
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-size: 12px;
-  background: #ecf0f1;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+}
+
+.novel-actions .action-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .view-btn:hover {
-  background: #3498db;
+  border-color: rgba(100, 140, 180, 0.3);
 }
 
 .edit-btn:hover {
-  background: #f39c12;
+  border-color: rgba(200, 160, 80, 0.3);
 }
 
 .delete-btn:hover {
-  background: #e74c3c;
-}
-
-.tab-placeholder {
-  text-align: center;
-  padding: 48px 24px;
-}
-
-.tab-placeholder h3 {
-  margin: 0 0 16px 0;
-  color: #2c3e50;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.tab-placeholder p {
-  margin: 0;
-  color: #7f8c8d;
-  font-size: 16px;
+  border-color: rgba(200, 100, 100, 0.3);
 }
 
 /* Modal Styles */
@@ -762,7 +761,7 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -770,12 +769,12 @@ onMounted(async () => {
 }
 
 .import-modal {
-  background: white;
+  background: #f5f5f0;
   border-radius: 12px;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 /* Message Styles */
@@ -795,21 +794,21 @@ onMounted(async () => {
 }
 
 .success-message {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
+  background: rgba(100, 160, 130, 0.15);
+  border: 1px solid rgba(100, 160, 130, 0.3);
+  color: #3a6a4a;
 }
 
 .error-message {
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
+  background: rgba(200, 100, 100, 0.15);
+  border: 1px solid rgba(200, 100, 100, 0.3);
+  color: #8a4a4a;
 }
 
 .success-message p,
 .error-message p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .close-message {
@@ -817,7 +816,12 @@ onMounted(async () => {
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   color: inherit;
+  opacity: 0.7;
+}
+
+.close-message:hover {
+  opacity: 1;
 }
 </style>

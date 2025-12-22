@@ -70,6 +70,21 @@ export const useWorkflowStore = defineStore('workflow', {
       return success;
     },
 
+    renameWorkflow(workflowId, newName) {
+      const workflow = this.workflows.find(w => w.id === workflowId);
+      if (workflow) {
+        workflow.name = newName;
+        // 同步更新 workflowEditor 中的数据
+        this.workflowEditor.renameWorkflow(workflowId, newName);
+        // 如果是当前工作流，也更新 currentWorkflow
+        if (this.currentWorkflow && this.currentWorkflow.id === workflowId) {
+          this.currentWorkflow.name = newName;
+        }
+        return true;
+      }
+      return false;
+    },
+
     // Node management
     addNode(type, name, position, configuration = {}) {
       const node = this.workflowEditor.addNode(type, name, position, configuration);

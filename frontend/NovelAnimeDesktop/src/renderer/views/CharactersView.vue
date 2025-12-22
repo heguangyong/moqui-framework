@@ -8,7 +8,7 @@
       <template #actions>
         <!-- 确认所有角色按钮 - 需求 5.3, 5.4 -->
         <button 
-          v-if="showConfirmAllButton"
+          v-if="characters.length > 0"
           class="confirm-btn"
           @click="confirmAllCharacters"
           :disabled="allCharactersConfirmed"
@@ -223,14 +223,16 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
 import { useProjectStore } from '../stores/project.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { CharacterSystem } from '../services/CharacterSystem.ts';
-import { characterApi } from '../services/index.ts';
+import { characterApi, apiService } from '../services/index.ts';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 
+const router = useRouter();
 const uiStore = useUIStore();
 const projectStore = useProjectStore();
 const navigationStore = useNavigationStore();
@@ -420,9 +422,22 @@ const filteredCharacters = computed(() => {
 
 // 是否显示确认所有角色按钮 - 需求 5.3
 const showConfirmAllButton = computed(() => {
-  // 当处于角色审核阶段时显示
-  return navigationStore.workflowState.stage === 'character-review' ||
-         (characters.value.length > 0 && !navigationStore.workflowState.charactersConfirmed);
+  // 当有角色且未确认时显示
+  const hasCharacters = characters.value.length > 0;
+  const notConfirmed = !navigationStore.workflowState.charactersConfirmed;
+  const inReviewStage = navigationStore.workflowState.stage === 'character-review';
+  
+  console.log('👥 showConfirmAllButton check:', {
+    hasCharacters,
+    notConfirmed,
+    inReviewStage,
+    stage: navigationStore.workflowState.stage,
+    charactersConfirmed: navigationStore.workflowState.charactersConfirmed,
+    charactersCount: characters.value.length
+  });
+  
+  // 只要有角色且未确认就显示按钮
+  return hasCharacters && notConfirmed;
 });
 
 // 是否所有角色都已确认 - 需求 5.4
@@ -611,11 +626,13 @@ function confirmCharacter(character) {
 }
 
 // 确认所有角色 - 需求 5.3, 5.4
-function confirmAllCharacters() {
+async function confirmAllCharacters() {
+  console.log('👥 confirmAllCharacters called');
+  
   // 标记所有角色为已确认
-  characters.value.forEach(character => {
+  characters.value.forEach((character) => {
     character.confirmed = true;
-    
+
     // 自动锁定主要角色
     if (character.role === 'protagonist' || character.role === 'antagonist') {
       if (!character.isLocked) {
@@ -623,16 +640,40 @@ function confirmAllCharacters() {
       }
     }
   });
-  
+
+  // 更新后端项目状态
+  try {
+    const projectId =
+      projectStore.currentProject?.id || projectStore.currentProject?.projectId;
+    console.log('👥 Updating project status, projectId:', projectId);
+    if (projectId) {
+      const response = await apiService.axiosInstance.put('/projects', {
+        projectId: projectId,
+        status: 'characters_confirmed',
+      });
+      console.log('👥 Project status update response:', response.data);
+    }
+  } catch (error) {
+    console.warn('Failed to update project status:', error);
+  }
+
   // 更新导航状态 - 需求 5.4: 角色确认后启用工作流执行
+  console.log('👥 Calling navigationStore.confirmCharacters()');
   navigationStore.confirmCharacters();
-  
+  console.log('👥 After confirmCharacters, workflowState:', navigationStore.workflowState);
+
   uiStore.addNotification({
     type: 'success',
     title: '角色确认完成',
-    message: '所有角色已确认，现在可以执行工作流了',
-    timeout: 3000
+    message: '所有角色已确认，即将进入动漫生成步骤',
+    timeout: 2000,
   });
+
+  // 延迟后返回仪表盘
+  setTimeout(() => {
+    console.log('👥 Navigating to dashboard, workflowState:', navigationStore.workflowState);
+    router.push('/');
+  }, 1500);
 }
 
 function addTag() {

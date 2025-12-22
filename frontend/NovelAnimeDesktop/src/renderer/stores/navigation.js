@@ -199,7 +199,8 @@ export const useNavigationStore = defineStore('navigation', {
     persistNavigationState() {
       const state = {
         activeNavId: this.activeNavId,
-        panelContext: this.panelContext
+        panelContext: this.panelContext,
+        workflowState: this.workflowState
       };
       localStorage.setItem('navigation-state', JSON.stringify(state));
     },
@@ -224,6 +225,13 @@ export const useNavigationStore = defineStore('navigation', {
               }
             });
           }
+          // 恢复工作流状态
+          if (state.workflowState) {
+            this.workflowState = {
+              ...this.workflowState,
+              ...state.workflowState
+            };
+          }
         } catch (error) {
           console.warn('Failed to restore navigation state:', error);
         }
@@ -234,29 +242,34 @@ export const useNavigationStore = defineStore('navigation', {
     startImport(filePath) {
       this.workflowState.stage = 'importing';
       this.workflowState.importedFile = filePath;
+      this.persistNavigationState();
     },
     
     // 解析完成 - 需求 5.2, 5.3
     setParseResult(result) {
       this.workflowState.stage = 'character-review';
       this.workflowState.parseResult = result;
+      this.persistNavigationState();
     },
     
     // 确认角色 - 需求 5.4
     confirmCharacters() {
       this.workflowState.charactersConfirmed = true;
       this.workflowState.stage = 'workflow-ready';
+      this.persistNavigationState();
     },
     
     // 开始执行工作流 - 需求 5.4
     startExecution() {
       this.workflowState.stage = 'executing';
+      this.persistNavigationState();
     },
     
     // 执行完成 - 需求 5.5
     setExecutionResult(result) {
       this.workflowState.stage = 'completed';
       this.workflowState.executionResult = result;
+      this.persistNavigationState();
     },
     
     // 重置工作流状态
@@ -268,6 +281,7 @@ export const useNavigationStore = defineStore('navigation', {
         charactersConfirmed: false,
         executionResult: null
       };
+      this.persistNavigationState();
     },
     
     // 检查是否可以执行工作流 - 需求 5.4

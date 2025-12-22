@@ -137,6 +137,30 @@ class ApiService {
       }
     }
     
+    // 小说列表 - 必须在 import-text 之后检查，因为 /novels 是更通用的路径
+    if (url.match(/\/novels\/?$/) && method === 'get') {
+      // 从 localStorage 获取之前导入的小说信息
+      const storedNovelId = localStorage.getItem('novel_anime_current_novel_id')
+      const storedNovelTitle = localStorage.getItem('novel_anime_current_novel_title')
+      
+      if (storedNovelId) {
+        mockData = {
+          success: true,
+          novels: [
+            {
+              novelId: storedNovelId,
+              title: storedNovelTitle || '测试小说',
+              wordCount: 10000,
+              status: 'imported',
+              createdDate: new Date().toISOString()
+            }
+          ]
+        }
+      } else {
+        mockData = { success: true, novels: [] }
+      }
+    }
+    
     // 结构分析
     if (url.includes('/novels/analyze-structure')) {
       mockData = {
@@ -382,14 +406,40 @@ class ApiService {
   /**
    * Get projects list
    */
-  async getProjects(userId?: string): Promise<Array<any>> {
+  async getProjects(userId?: string): Promise<{
+    success: boolean
+    projects: Array<any>
+    message?: string
+  }> {
     try {
-      const params = userId ? { userId } : {}
-      const response = await this.axiosInstance.get('/projects', { params })
-      return response.data.projects || []
-    } catch (error) {
+      // 确保有 userId
+      let effectiveUserId = userId || localStorage.getItem('novel_anime_user_id')
+      if (!effectiveUserId) {
+        effectiveUserId = await this.getOrCreateDefaultUser()
+      }
+      
+      const response = await this.axiosInstance.get('/projects', { 
+        params: { userId: effectiveUserId } 
+      })
+      
+      return {
+        success: true,
+        projects: response.data.projects || response.data || []
+      }
+    } catch (error: any) {
       console.error('Failed to get projects:', error)
-      return []
+      // 如果有 mock 响应数据
+      if (error.response?.data) {
+        return {
+          success: error.response.data.success !== false,
+          projects: error.response.data.projects || []
+        }
+      }
+      return {
+        success: false,
+        projects: [],
+        message: error.message
+      }
     }
   }
 

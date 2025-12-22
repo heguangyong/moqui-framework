@@ -102,14 +102,32 @@ export const useProjectStore = defineStore('project', {
       }
     },
 
-    setCurrentProject(projectId) {
-      const project = this.projects.find(p => p.id === projectId);
-      if (project) {
-        this.currentProject = project;
+    setCurrentProject(projectOrId) {
+      // 支持传入项目对象或项目ID
+      if (typeof projectOrId === 'object' && projectOrId !== null) {
+        // 传入的是项目对象
+        const project = projectOrId;
+        const projectId = project.id || project.projectId;
+        this.currentProject = { ...project, id: projectId };
+        
+        // 如果项目不在列表中，添加它
+        if (!this.projects.find(p => (p.id || p.projectId) === projectId)) {
+          this.projects.push(this.currentProject);
+        }
+        
         this.projectManager.setCurrentProject(projectId);
         return true;
+      } else {
+        // 传入的是项目ID
+        const projectId = projectOrId;
+        const project = this.projects.find(p => (p.id || p.projectId) === projectId);
+        if (project) {
+          this.currentProject = project;
+          this.projectManager.setCurrentProject(projectId);
+          return true;
+        }
+        return false;
       }
-      return false;
     },
 
     async deleteProject(projectId) {

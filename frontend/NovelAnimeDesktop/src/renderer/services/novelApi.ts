@@ -195,13 +195,23 @@ export class NovelApiService {
     message?: string
   }> {
     try {
+      // 先尝试按 projectId 查询
       const response = await apiService.axiosInstance.get('/novels', {
         params: { projectId }
       })
       
+      let novels = response.data.novels || response.data || []
+      
+      // 如果按 projectId 查询不到，尝试查询所有小说
+      if (novels.length === 0) {
+        console.log('📚 No novels found for project, trying to get all novels')
+        const allResponse = await apiService.axiosInstance.get('/novels')
+        novels = allResponse.data.novels || allResponse.data || []
+      }
+      
       return {
         success: true,
-        novels: response.data.novels || response.data
+        novels: novels
       }
     } catch (error: any) {
       console.error('Failed to list novels:', error)

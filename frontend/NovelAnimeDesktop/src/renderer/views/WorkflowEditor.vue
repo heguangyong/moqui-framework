@@ -23,11 +23,20 @@
               <div 
                 v-for="workflow in workflows" 
                 :key="workflow.id"
-                class="select-option"
+                class="select-option-row"
                 :class="{ selected: selectedWorkflowId === workflow.id }"
-                @click="selectWorkflow(workflow.id)"
               >
-                {{ workflow.name }}
+                <span class="option-name" @click="selectWorkflow(workflow.id)">{{ workflow.name }}</span>
+                <button 
+                  class="option-edit" 
+                  @click.stop="renameWorkflow(workflow.id)"
+                  title="重命名"
+                >✎</button>
+                <button 
+                  class="option-delete" 
+                  @click.stop="deleteWorkflow(workflow.id)"
+                  title="删除工作流"
+                >×</button>
               </div>
             </div>
           </div>
@@ -124,6 +133,9 @@
                   <span>{{ getNodeTitle(node) }}</span>
                 </div>
               </div>
+            </div>
+            <div class="template-actions" style="margin-top: 20px;">
+              <button class="btn btn-primary" @click="useTemplate">使用此模板</button>
             </div>
           </div>
         </div>
@@ -431,18 +443,47 @@ function refreshStatus() {
 
 // 使用模板
 function useTemplate() {
+  console.log('useTemplate called');
+  console.log('selectedTemplateId:', selectedTemplateId.value);
+  console.log('selectedTemplate:', selectedTemplate.value);
+  console.log('templates:', templates.value);
+  
   if (selectedTemplate.value) {
+    // 让用户输入工作流名称
+    const defaultName = `${selectedTemplate.value.name} - 副本`;
+    console.log('About to show prompt with defaultName:', defaultName);
+    const name = prompt('请输入工作流名称:', defaultName);
+    
+    // 用户取消则不创建
+    if (!name) return;
+    
     const workflow = workflowStore.createWorkflow(
-      `${selectedTemplate.value.name} - 副本`,
+      name.trim() || defaultName,
       selectedTemplate.value.description
     );
-    // 添加模板节点
-    let x = 50;
-    selectedTemplate.value.nodes.forEach((nodeType, index) => {
-      workflowStore.addNode(nodeType, getNodeTitle(nodeType), { x, y: 50 + index * 120 });
-      x += 200;
-    });
+    
+    // 先设置为当前工作流，这样 addNode 才能正确添加节点
+    workflowStore.setCurrentWorkflow(workflow.id);
     selectedWorkflowId.value = workflow.id;
+    
+    // 添加模板节点并自动连接
+    const nodeIds = [];
+    selectedTemplate.value.nodes.forEach((nodeType, index) => {
+      const node = workflowStore.addNode(
+        nodeType, 
+        getNodeTitle(nodeType), 
+        { x: 100 + index * 220, y: 100 }
+      );
+      if (node) {
+        nodeIds.push(node.id);
+      }
+    });
+    
+    // 自动连接相邻节点
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      workflowStore.addConnection(nodeIds[i], nodeIds[i + 1]);
+    }
+    
     navigationStore.updatePanelContext('workflow', {
       selectedWorkflow: workflow.id,
       viewType: 'workflow-detail',
@@ -451,7 +492,7 @@ function useTemplate() {
     uiStore.addNotification({
       type: 'success',
       title: '模板应用成功',
-      message: `已基于 "${selectedTemplate.value.name}" 创建新工作流`,
+      message: `已创建工作流 "${name}"`,
       timeout: 3000
     });
   }
@@ -592,6 +633,59 @@ function createNewWorkflow() {
 function createDefaultWorkflow() {
   const workflow = workflowStore.createDefaultWorkflow();
   selectedWorkflowId.value = workflow.id;
+}
+
+function deleteWorkflow(workflowId) {
+  const workflow = workflows.value.find(w => w.id === workflowId);
+  if (!workflow) return;
+  
+  // 先关闭下拉菜单
+  dropdownOpen.value = false;
+  
+  setTimeout(() => {
+    if (confirm(`确定要删除工作流 "${workflow.name}" 吗？`)) {
+      workflowStore.deleteWorkflow(workflowId);
+      
+      // 如果删除的是当前选中的工作流，清空选择
+      if (selectedWorkflowId.value === workflowId) {
+        selectedWorkflowId.value = '';
+      }
+      
+      uiStore.addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: `工作流 "${workflow.name}" 已删除`,
+        timeout: 2000
+      });
+    }
+  }, 100);
+}
+
+function renameWorkflow(workflowId) {
+  console.log('renameWorkflow called with id:', workflowId);
+  const workflow = workflows.value.find(w => w.id === workflowId);
+  if (!workflow) {
+    console.log('Workflow not found');
+    return;
+  }
+  
+  // 先关闭下拉菜单
+  dropdownOpen.value = false;
+  
+  // 使用 setTimeout 确保下拉菜单关闭后再弹出 prompt
+  setTimeout(() => {
+    const newName = prompt('请输入新的工作流名称:', workflow.name);
+    if (newName && newName.trim() && newName.trim() !== workflow.name) {
+      workflowStore.renameWorkflow(workflowId, newName.trim());
+      
+      uiStore.addNotification({
+        type: 'success',
+        title: '重命名成功',
+        message: `工作流已重命名为 "${newName.trim()}"`,
+        timeout: 2000
+      });
+    }
+  }, 100);
 }
 
 function switchWorkflow() {
@@ -888,6 +982,64 @@ function getConnectionY2(connection) {
 .select-option.selected {
   background: rgba(120, 140, 130, 0.2);
   color: #3a4a42;
+}
+
+.select-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 12px;
+  color: #4a4a4c;
+  font-size: 12px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.select-option-row:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.select-option-row.selected {
+  background: rgba(120, 140, 130, 0.2);
+  color: #3a4a42;
+}
+
+.select-option-row .option-name {
+  flex: 1;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.select-option-row .option-edit,
+.select-option-row .option-delete {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.select-option-row:hover .option-edit,
+.select-option-row:hover .option-delete {
+  opacity: 1;
+}
+
+.select-option-row .option-edit:hover {
+  background: rgba(100, 150, 200, 0.2);
+  color: #48c;
+}
+
+.select-option-row .option-delete:hover {
+  background: rgba(200, 100, 100, 0.2);
+  color: #c44;
 }
 
 .execution-progress {

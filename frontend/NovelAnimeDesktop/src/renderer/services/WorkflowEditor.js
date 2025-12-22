@@ -175,6 +175,18 @@ export class WorkflowEditor {
   }
 
   /**
+   * Rename workflow
+   */
+  renameWorkflow(workflowId, newName) {
+    const workflow = this.workflows.get(workflowId);
+    if (workflow) {
+      workflow.name = newName;
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Create default workflow
    */
   createDefaultWorkflow() {

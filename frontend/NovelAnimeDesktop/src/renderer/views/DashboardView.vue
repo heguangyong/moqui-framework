@@ -330,45 +330,207 @@ async function checkSystemStatus() {
 
 // 加载当前进行中的项目
 async function loadActiveProject() {
-  // 从 store 或 API 获取当前项目
-  const current = projectStore.currentProject;
-  if (current && current.status !== 'completed') {
+  // 从 store 获取当前项目
+  let current = projectStore.currentProject;
+
+  // 如果 store 中没有，尝试从 API 获取用户的项目列表
+  if (!current) {
+    try {
+      const result = await apiService.getProjects();
+      if (result.success && result.projects && result.projects.length > 0) {
+        // 找到第一个未完成的项目
+        current =
+          result.projects.find((p) => p.status !== 'completed') ||
+          result.projects[0];
+        if (current) {
+          projectStore.setCurrentProject(current);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load projects from API:', error);
+    }
+  }
+
+  if (current) {
+    const projectId = current.id || current.projectId;
     activeProject.value = {
       ...current,
-      progress: calculateProgress(current)
+      id: projectId,
+      progress: calculateProgress(current),
     };
+
+    // 尝试加载项目的小说列表，获取 novelId
+    if (projectId) {
+      try {
+        console.log('📚 Loading novels for project:', projectId);
+        const result = await novelApi.listNovels(projectId);
+        console.log('📚 Novels result:', result);
+
+        if (result.success && result.novels && result.novels.length > 0) {
+          // 使用第一个小说的 ID
+          currentNovelId.value = result.novels[0].novelId;
+          console.log('📚 Loaded novelId from project:', currentNovelId.value);
+
+          // 根据小说状态更新项目状态（如果项目状态不明确）
+          const novelStatus = result.novels[0].status;
+          if (novelStatus) {
+            // 小说状态优先级高于项目状态
+            activeProject.value.status = novelStatus;
+            // 重新计算进度
+            activeProject.value.progress = calculateProgress(activeProject.value);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load novels for project:', error);
+      }
+    }
+
+    // 如果还是没有 novelId，尝试从 localStorage 恢复
+    if (!currentNovelId.value) {
+      const storedNovelId = localStorage.getItem('novel_anime_current_novel_id');
+      if (storedNovelId) {
+        currentNovelId.value = storedNovelId;
+        console.log('📚 Restored novelId from localStorage:', currentNovelId.value);
+        // 如果有存储的 novelId，说明之前导入过，状态应该是 imported
+        if (!activeProject.value.status || activeProject.value.status === 'active') {
+          activeProject.value.status = 'imported';
+          // 重新计算进度
+          activeProject.value.progress = calculateProgress(activeProject.value);
+        }
+      }
+    }
+
+    // 优先检查 workflowState.charactersConfirmed
+    // 如果角色已确认，强制更新项目状态
+    if (navigationStore.workflowState.charactersConfirmed) {
+      console.log('📊 Characters already confirmed in workflowState, forcing status to characters_confirmed');
+      activeProject.value.status = 'characters_confirmed';
+      activeProject.value.progress = 75;
+    }
+    
     // 根据项目状态更新步骤
-    updateStepsFromProject(current);
+    updateStepsFromProject(activeProject.value);
+    
+    // 根据项目状态同步工作流状态
+    syncWorkflowStateFromProject(activeProject.value);
   }
+
+  console.log(
+    '📊 Active project loaded:',
+    activeProject.value,
+    'novelId:',
+    currentNovelId.value,
+    'workflowState:',
+    navigationStore.workflowState
+  );
 }
 
 // 计算项目进度
 function calculateProgress(project) {
   if (!project) return 0;
-  const stages = ['imported', 'parsed', 'characters_confirmed', 'completed'];
-  const currentIndex = stages.indexOf(project.status);
-  return Math.round((currentIndex + 1) / stages.length * 100);
+
+  // 状态到进度百分比的映射
+  const progressMap = {
+    active: 25, // 活跃状态（已导入）
+    importing: 10,
+    imported: 25,
+    analyzing: 35, // 分析中
+    analyzed: 50, // 已分析（等同于 parsed）
+    parsing: 35,
+    parsed: 50,
+    characters_confirmed: 75,
+    generating: 85,
+    completed: 100,
+  };
+
+  return progressMap[project.status] || 0;
 }
 
 // 根据项目状态更新步骤
 function updateStepsFromProject(project) {
   if (!project) return;
-  
+
+  // 优先检查 navigationStore.workflowState.charactersConfirmed
+  if (navigationStore.workflowState.charactersConfirmed) {
+    console.log('📊 Characters confirmed in workflowState, setting step to 3');
+    workflowSteps.value.forEach((step, index) => {
+      step.completed = index < 3;
+      step.enabled = index <= 3;
+    });
+    currentStep.value = 3;
+    // 同时更新项目进度显示
+    if (activeProject.value) {
+      activeProject.value.progress = 75;
+      activeProject.value.status = 'characters_confirmed';
+    }
+    return;
+  }
+
+  // 状态到当前步骤的映射
   const statusMap = {
-    'imported': 0,
-    'parsed': 1,
-    'characters_confirmed': 2,
-    'completed': 3
+    active: 1, // 活跃状态（已导入）-> 步骤1（解析）
+    importing: 0, // 导入中 -> 步骤0
+    imported: 1, // 已导入 -> 步骤1（解析）
+    analyzing: 1, // 分析中 -> 步骤1
+    analyzed: 2, // 已分析 -> 步骤2（角色确认）
+    parsing: 1, // 解析中 -> 步骤1
+    parsed: 2, // 已解析 -> 步骤2（角色确认）
+    characters_confirmed: 3, // 角色已确认 -> 步骤3（生成）
+    generating: 3, // 生成中 -> 步骤3
+    completed: 4, // 已完成 -> 全部完成
   };
-  
-  const completedIndex = statusMap[project.status] || 0;
+
+  const currentStepIndex = statusMap[project.status] ?? 0;
   
   workflowSteps.value.forEach((step, index) => {
-    step.completed = index < completedIndex;
-    step.enabled = index <= completedIndex;
+    step.completed = index < currentStepIndex;
+    step.enabled = index <= currentStepIndex;
   });
   
-  currentStep.value = completedIndex;
+  // 设置当前步骤（不超过最大步骤索引）
+  currentStep.value = Math.min(currentStepIndex, workflowSteps.value.length - 1);
+}
+
+// 根据项目状态同步工作流状态
+function syncWorkflowStateFromProject(project) {
+  if (!project) return;
+  
+  const status = project.status;
+  console.log('🔄 Syncing workflow state from project status:', status);
+  
+  // 根据项目状态设置工作流阶段
+  if (status === 'analyzed' || status === 'parsed') {
+    // 解析完成，进入角色审核阶段
+    if (navigationStore.workflowState.stage !== 'character-review' && 
+        navigationStore.workflowState.stage !== 'workflow-ready' &&
+        navigationStore.workflowState.stage !== 'executing' &&
+        navigationStore.workflowState.stage !== 'completed') {
+      navigationStore.setParseResult({
+        chaptersCreated: 0,
+        scenesCreated: 0,
+        charactersExtracted: 0
+      });
+      console.log('🔄 Set workflow stage to character-review');
+    }
+  } else if (status === 'characters_confirmed') {
+    // 角色已确认，进入工作流就绪阶段
+    if (!navigationStore.workflowState.charactersConfirmed) {
+      navigationStore.confirmCharacters();
+      console.log('🔄 Set workflow stage to workflow-ready');
+    }
+  } else if (status === 'generating') {
+    // 生成中
+    if (navigationStore.workflowState.stage !== 'executing') {
+      navigationStore.startExecution();
+      console.log('🔄 Set workflow stage to executing');
+    }
+  } else if (status === 'completed') {
+    // 已完成
+    if (navigationStore.workflowState.stage !== 'completed') {
+      navigationStore.setExecutionResult({});
+      console.log('🔄 Set workflow stage to completed');
+    }
+  }
 }
 
 // 步骤点击处理
@@ -501,7 +663,8 @@ function readFileContent(file) {
 async function uploadNovelToBackend(title, content, fileName) {
   try {
     // 确保有项目ID，如果没有则创建一个默认项目
-    let projectId = projectStore.currentProject?.id;
+    let projectId = projectStore.currentProject?.id || projectStore.currentProject?.projectId;
+    let projectData = projectStore.currentProject;
     
     if (!projectId) {
       importMessage.value = '正在创建项目...';
@@ -512,17 +675,18 @@ async function uploadNovelToBackend(title, content, fileName) {
       
       if (projectResult.success && projectResult.project) {
         projectId = projectResult.project.projectId || projectResult.project.id;
+        projectData = {
+          id: projectId,
+          name: title,
+          status: 'imported',
+          ...projectResult.project
+        };
         // 将项目添加到 store 并设置为当前项目
-        if (!projectStore.projects.find(p => p.id === projectId)) {
-          projectStore.projects.push({
-            id: projectId,
-            ...projectResult.project
-          });
-        }
-        projectStore.setCurrentProject(projectId);
+        projectStore.setCurrentProject(projectData);
       } else {
         // 使用默认项目ID
         projectId = 'default-project';
+        projectData = { id: projectId, name: title, status: 'imported' };
       }
     }
     
@@ -538,25 +702,37 @@ async function uploadNovelToBackend(title, content, fileName) {
     
     if (result.success && result.novel) {
       currentNovelId.value = result.novel.novelId;
-      
+
+      // 存储到 localStorage，供 mock 响应使用
+      localStorage.setItem('novel_anime_current_novel_id', result.novel.novelId);
+      localStorage.setItem('novel_anime_current_novel_title', title);
+
       importProgress.value = 100;
       importMessage.value = '导入成功！';
-      
-      // 更新步骤状态
+
+      // 更新步骤状态 - 导入完成，进入解析步骤
       workflowSteps.value[0].completed = true;
       workflowSteps.value[1].enabled = true;
       currentStep.value = 1;
-      
+
+      // 更新当前活动项目
+      activeProject.value = {
+        ...projectData,
+        id: projectId,
+        name: title,
+        status: 'imported',
+        progress: 25,
+      };
+
       // 存储到 navigation store
       navigationStore.startImport(fileName);
-      
+
       // 短暂延迟后重置导入状态
       setTimeout(() => {
         isImporting.value = false;
         importProgress.value = 0;
         importMessage.value = '';
       }, 1500);
-      
     } else {
       throw new Error(result.message || '导入失败');
     }
@@ -569,11 +745,28 @@ async function uploadNovelToBackend(title, content, fileName) {
 
 // 开始解析
 async function startParsing() {
+  // 如果没有 novelId，尝试从当前项目加载
+  if (!currentNovelId.value && activeProject.value) {
+    try {
+      const projectId = activeProject.value.id || activeProject.value.projectId;
+      console.log('📚 startParsing: Loading novels for project:', projectId);
+      if (projectId) {
+        const result = await novelApi.listNovels(projectId);
+        if (result.success && result.novels && result.novels.length > 0) {
+          currentNovelId.value = result.novels[0].novelId;
+          console.log('📚 startParsing: Loaded novelId:', currentNovelId.value);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load novelId in startParsing:', error);
+    }
+  }
+
   if (!currentNovelId.value) {
     importError.value = '请先导入小说';
     return;
   }
-  
+
   isImporting.value = true;
   importProgress.value = 10;
   importMessage.value = '正在分析章节结构...';
@@ -598,10 +791,17 @@ async function startParsing() {
     importProgress.value = 100;
     importMessage.value = '解析完成！';
     
-    // 更新步骤状态
+    // 更新步骤状态 - 解析完成，进入角色确认步骤
+    workflowSteps.value[0].completed = true;
     workflowSteps.value[1].completed = true;
     workflowSteps.value[2].enabled = true;
     currentStep.value = 2;
+    
+    // 更新当前活动项目状态
+    if (activeProject.value) {
+      activeProject.value.status = 'parsed';
+      activeProject.value.progress = 50;
+    }
     
     // 存储解析结果
     navigationStore.setParseResult({
@@ -624,27 +824,160 @@ async function startParsing() {
 }
 
 // 查看角色
-function viewCharacters() {
+async function viewCharacters() {
+  console.log('👥 viewCharacters called, currentNovelId:', currentNovelId.value);
+  
+  // 如果没有 currentNovelId，尝试从当前项目加载
+  if (!currentNovelId.value && projectStore.currentProject) {
+    try {
+      const projectId = projectStore.currentProject.id || projectStore.currentProject.projectId;
+      console.log('📚 Trying to load novelId for project:', projectId);
+      if (projectId) {
+        const result = await novelApi.listNovels(projectId);
+        console.log('📚 listNovels result:', result);
+        if (result.success && result.novels && result.novels.length > 0) {
+          currentNovelId.value = result.novels[0].novelId;
+          console.log('📚 Loaded novelId for characters:', currentNovelId.value);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load novelId:', error);
+    }
+  }
+  
+  // 如果还是没有 novelId，尝试从 localStorage 恢复
+  if (!currentNovelId.value) {
+    const storedNovelId = localStorage.getItem('novel_anime_current_novel_id');
+    if (storedNovelId) {
+      currentNovelId.value = storedNovelId;
+      console.log('📚 Restored novelId from localStorage for characters:', currentNovelId.value);
+    }
+  }
+  
   if (currentNovelId.value) {
     // 将 novelId 传递给角色页面
     navigationStore.updatePanelContext('characters', {
       novelId: currentNovelId.value
     });
+    console.log('👥 Navigating to characters with novelId:', currentNovelId.value);
+  } else {
+    console.warn('⚠️ No novelId available for characters page');
   }
+  
   router.push('/characters');
 }
 
-// 继续处理项目
-function continueProject() {
-  if (activeProject.value) {
-    router.push(`/project/${activeProject.value.id}/detail`);
+// 继续处理项目 - 根据项目状态跳转到对应的向导步骤
+async function continueProject() {
+  console.log('🔄 continueProject called, activeProject:', activeProject.value);
+  console.log('🔄 workflowState:', navigationStore.workflowState);
+  
+  if (!activeProject.value) {
+    console.warn('No active project found');
+    return;
   }
+  
+  // 确保有 novelId
+  if (!currentNovelId.value) {
+    try {
+      const projectId = activeProject.value.id || activeProject.value.projectId;
+      console.log('📚 Loading novels for project:', projectId);
+      if (projectId) {
+        const result = await novelApi.listNovels(projectId);
+        if (result.success && result.novels && result.novels.length > 0) {
+          currentNovelId.value = result.novels[0].novelId;
+          console.log('📚 Loaded novelId:', currentNovelId.value);
+          
+          // 同时更新项目状态（从小说状态推断）
+          const novelStatus = result.novels[0].status;
+          if (novelStatus) {
+            activeProject.value.status = novelStatus;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load novelId:', error);
+    }
+  }
+  
+  // 优先检查 navigationStore.workflowState
+  // 如果角色已确认，直接跳转到步骤 3
+  if (navigationStore.workflowState.charactersConfirmed) {
+    console.log('🎯 Characters confirmed, going to step 3 (generate)');
+    currentStep.value = 3;
+    workflowSteps.value.forEach((step, index) => {
+      step.completed = index < 3;
+      step.enabled = index <= 3;
+    });
+    router.push('/workflow');
+    return;
+  }
+  
+  // 根据项目状态确定当前步骤
+  // 状态映射：状态 -> 当前应该在哪个步骤
+  const status = activeProject.value.status || 'imported';
+  console.log('📊 Project status:', status);
+
+  // 状态到步骤的映射（步骤索引从0开始）
+  // imported: 导入完成 -> 当前在步骤1（智能解析）
+  // parsed: 解析完成 -> 当前在步骤2（角色确认）
+  // characters_confirmed: 角色确认完成 -> 当前在步骤3（生成动漫）
+  const statusToStep = {
+    active: 1, // 活跃状态（已导入）-> 进入步骤1（解析）
+    importing: 0, // 导入中 -> 还在步骤0
+    imported: 1, // 已导入 -> 进入步骤1（解析）
+    analyzing: 1, // 分析中 -> 还在步骤1
+    analyzed: 2, // 已分析 -> 进入步骤2（角色确认）
+    parsing: 1, // 解析中 -> 还在步骤1
+    parsed: 2, // 已解析 -> 进入步骤2（角色确认）
+    characters_confirmed: 3, // 角色已确认 -> 进入步骤3（生成）
+    generating: 3, // 生成中 -> 还在步骤3
+    completed: 3, // 已完成 -> 步骤3
+  };
+
+  const targetStep = statusToStep[status] ?? 1;
+  console.log('🎯 Target step:', targetStep);
+  
+  currentStep.value = targetStep;
+  
+  // 更新步骤状态：targetStep 之前的步骤都已完成，targetStep 及之前的步骤都启用
+  workflowSteps.value.forEach((step, index) => {
+    step.completed = index < targetStep;
+    step.enabled = index <= targetStep;
+  });
+  
+  // 滚动到向导区域
+  const guideElement = document.querySelector('.workflow-guide');
+  if (guideElement) {
+    guideElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  
+  // 根据目标步骤执行相应操作
+  if (targetStep === 2 && currentNovelId.value) {
+    // 角色确认步骤，跳转到角色页面
+    await viewCharacters();
+  } else if (targetStep === 3) {
+    // 生成动漫步骤，跳转到工作流页面
+    router.push('/workflow');
+  }
+  // 步骤0和1留在当前页面，用户点击按钮操作
 }
 
-// 打开项目
+// 打开项目 - 从最近项目列表点击
 function openProject(project) {
   projectStore.setCurrentProject(project);
-  router.push(`/project/${project.id}/detail`);
+  // 设置为当前活动项目并更新步骤
+  activeProject.value = {
+    ...project,
+    progress: calculateProgress(project)
+  };
+  updateStepsFromProject(project);
+  
+  // 滚动到向导区域
+  const guideElement = document.querySelector('.workflow-guide');
+  if (guideElement) {
+    guideElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // 格式化日期

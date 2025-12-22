@@ -12,6 +12,7 @@ import CharactersView from '../views/CharactersView.vue';
 import CharacterDetailView from '../views/CharacterDetailView.vue';
 import ProfileView from '../views/ProfileView.vue';
 import NovelsView from '../views/NovelsView.vue';
+import ProjectDetailView from '../views/ProjectDetailView.vue';
 
 console.log('🛣️ Router configuration loading...');
 
@@ -40,6 +41,13 @@ const routes = [
     path: '/projects',
     name: 'projects',
     component: MyProjectsView,
+    meta: { requiresAuth: true }
+  },
+  // 项目详情
+  {
+    path: '/project/:id/detail',
+    name: 'project-detail',
+    component: ProjectDetailView,
     meta: { requiresAuth: true }
   },
   // 工作流编辑器
