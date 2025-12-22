@@ -13,6 +13,7 @@ import CharacterDetailView from '../views/CharacterDetailView.vue';
 import ProfileView from '../views/ProfileView.vue';
 import NovelsView from '../views/NovelsView.vue';
 import ProjectDetailView from '../views/ProjectDetailView.vue';
+import GeneratedContentView from '../views/GeneratedContentView.vue';
 
 console.log('🛣️ Router configuration loading...');
 
@@ -55,6 +56,13 @@ const routes = [
     path: '/workflow',
     name: 'workflow',
     component: WorkflowEditor,
+    meta: { requiresAuth: true }
+  },
+  // 生成结果预览
+  {
+    path: '/generated',
+    name: 'generated',
+    component: GeneratedContentView,
     meta: { requiresAuth: true }
   },
   // 资源库

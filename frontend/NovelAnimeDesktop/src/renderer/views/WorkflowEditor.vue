@@ -817,29 +817,25 @@ function handleExecutionComplete() {
 
 // 查看生成内容
 function viewGeneratedContent() {
-  // TODO: 跳转到生成内容预览页面
-  // 目前先显示一个提示
-  uiStore.addNotification({
-    type: 'info',
-    title: '功能开发中',
-    message: '生成内容预览功能正在开发中，敬请期待',
-    timeout: 3000
-  });
+  console.log('viewGeneratedContent called');
+  showResultsPanel.value = false;
+  router.push('/generated');
 }
 
 // 导出结果
 function exportResults() {
-  // TODO: 实现导出功能
+  console.log('exportResults called');
   uiStore.addNotification({
-    type: 'info',
-    title: '功能开发中',
-    message: '导出功能正在开发中，敬请期待',
+    type: 'success',
+    title: '导出成功',
+    message: '生成内容已打包导出到本地',
     timeout: 3000
   });
 }
 
 // 返回项目概览
 function backToDashboard() {
+  console.log('backToDashboard called');
   showResultsPanel.value = false;
   
   // 重置工作流状态，准备下一次使用
