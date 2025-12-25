@@ -229,6 +229,37 @@ export const useProjectStore = defineStore('project', {
       this.projects = this.projectManager.getAllProjects();
       this.updateRecentProjects();
     },
+    
+    // 从后端 API 加载项目列表
+    async fetchProjects() {
+      this.isLoading = true;
+      this.error = null;
+      
+      try {
+        // 动态导入 apiService 避免循环依赖
+        const { apiService } = await import('../services/index.ts');
+        const result = await apiService.getProjects();
+        
+        if (result.success && result.projects) {
+          // 规范化项目数据
+          this.projects = result.projects.map(p => ({
+            ...p,
+            id: p.projectId || p.id,
+            name: p.name || p.projectName || '未命名项目',
+            status: p.status || 'draft',
+            shared: p.shared || false
+          }));
+          this.updateRecentProjects();
+        }
+        return result;
+      } catch (error) {
+        this.error = error.message;
+        console.error('Failed to fetch projects:', error);
+        return { success: false, projects: [] };
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
     clearCurrentProject() {
       this.currentProject = null;

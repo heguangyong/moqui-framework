@@ -28,12 +28,12 @@
         <!-- Login Form -->
         <form v-if="activeTab === 'login'" @submit.prevent="handleLogin" class="auth-form">
           <div class="form-group">
-            <label for="login-email">邮箱</label>
+            <label for="login-username">用户名 / 邮箱</label>
             <input
-              id="login-email"
-              v-model="loginForm.email"
-              type="email"
-              placeholder="请输入邮箱"
+              id="login-username"
+              v-model="loginForm.username"
+              type="text"
+              placeholder="请输入用户名或邮箱"
               required
             />
           </div>
@@ -54,12 +54,12 @@
             </div>
           </div>
 
-          <div v-if="authStore.error" class="error-message">
-            {{ authStore.error }}
+          <div v-if="userStore.error || authStore.error" class="error-message">
+            {{ userStore.error || authStore.error }}
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="authStore.isLoading">
-            {{ authStore.isLoading ? '登录中...' : '登录' }}
+          <button type="submit" class="submit-btn" :disabled="userStore.isLoading || authStore.isLoading">
+            {{ (userStore.isLoading || authStore.isLoading) ? '登录中...' : '登录' }}
           </button>
         </form>
 
@@ -216,11 +216,13 @@
 import { ref, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/user'
 import { useUIStore } from '../stores/ui'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const uiStore = useUIStore()
 
 // Tab state
@@ -228,7 +230,7 @@ const activeTab = ref('login')
 
 // Form states
 const loginForm = ref({
-  email: '',
+  username: '',
   password: ''
 })
 
@@ -291,35 +293,45 @@ const wechatStatusText = computed(() => {
 // Handle login
 const handleLogin = async () => {
   authStore.clearError()
+  userStore.clearError()
   
   // Validate form
-  if (!loginForm.value.email || !loginForm.value.password) {
+  if (!loginForm.value.username || !loginForm.value.password) {
     uiStore.addNotification({
       type: 'warning',
       title: '表单验证',
-      message: '请填写邮箱和密码'
+      message: '请填写用户名/邮箱和密码'
     })
     return
   }
   
-  const result = await authStore.login({
-    email: loginForm.value.email,
-    password: loginForm.value.password
-  })
+  // Use userStore for login (Requirements: 4.1, 4.2)
+  // 支持用户名或邮箱登录
+  const result = await userStore.login(
+    loginForm.value.username,
+    loginForm.value.password
+  )
 
   if (result.success) {
+    // 重置导航状态，确保显示默认仪表盘
+    const { useNavigationStore } = await import('../stores/navigation.js')
+    const navigationStore = useNavigationStore()
+    navigationStore.setActiveNav('dashboard')
+    navigationStore.resetPanelContext('dashboard')
+    
     uiStore.addNotification({
       type: 'success',
       title: '登录成功',
-      message: `欢迎回来，${authStore.displayName}！`
+      message: `欢迎回来，${userStore.displayName}！`
     })
-    const redirectPath = route.query.redirect as string || '/'
+    // Navigate to dashboard on success
+    const redirectPath = route.query.redirect as string || '/dashboard'
     router.push(redirectPath)
   } else {
     uiStore.addNotification({
       type: 'error',
       title: '登录失败',
-      message: result.error || '请检查邮箱和密码'
+      message: result.error || '请检查用户名/邮箱和密码'
     })
   }
 }

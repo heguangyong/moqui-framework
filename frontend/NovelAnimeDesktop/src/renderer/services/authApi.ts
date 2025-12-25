@@ -19,7 +19,7 @@ export interface RegisterRequest {
 }
 
 export interface LoginRequest {
-  email: string
+  username: string  // 支持用户名或邮箱
   password: string
 }
 
@@ -36,8 +36,8 @@ const DEV_MOCK_USER = {
   lastLoginDate: new Date().toISOString()
 }
 
-// 检查是否为开发模式
-const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development'
+// 检查是否为开发模式 - 禁用 mock，始终使用真实后端
+const isDevelopment = false
 
 class AuthApiService {
   private api: AxiosInstance
@@ -110,18 +110,23 @@ class AuthApiService {
    * 开发模式模拟登录
    */
   private mockLogin(data: LoginRequest): ApiResponse {
-    console.log('🔧 Dev mode: Mock login for', data.email)
+    console.log('🔧 Dev mode: Mock login for', data.username)
     
-    // 模拟登录验证 - 开发模式下接受任何邮箱
+    // 模拟登录验证 - 开发模式下接受任何用户名
     const mockToken = `dev-token-${Date.now()}`
     const mockRefreshToken = `dev-refresh-${Date.now()}`
+    
+    // 判断是邮箱还是用户名
+    const isEmail = data.username.includes('@')
+    const mockUsername = isEmail ? data.username.split('@')[0] : data.username
+    const mockEmail = isEmail ? data.username : `${data.username}@example.com`
     
     // 保存到 localStorage 以便路由守卫检查
     localStorage.setItem('auth_token', mockToken)
     localStorage.setItem('auth_user', JSON.stringify({
       ...DEV_MOCK_USER,
-      email: data.email,
-      username: data.email.split('@')[0]
+      email: mockEmail,
+      username: mockUsername
     }))
     
     return {
@@ -132,8 +137,8 @@ class AuthApiService {
         refreshToken: mockRefreshToken,
         user: {
           ...DEV_MOCK_USER,
-          email: data.email,
-          username: data.email.split('@')[0]
+          email: mockEmail,
+          username: mockUsername
         }
       }
     }
@@ -341,6 +346,151 @@ class AuthApiService {
     } catch (error: any) {
       return { success: false, error: error.message || '检查微信状态失败' }
     }
+  }
+
+  /**
+   * Update user profile (fullName, avatarUrl)
+   * Requirements: 6.1, 6.2, 6.3
+   */
+  async updateProfile(data: { fullName?: string; avatarUrl?: string }): Promise<ApiResponse> {
+    // 开发模式下模拟更新
+    if (isDevelopment) {
+      const userStr = localStorage.getItem('auth_user')
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          const updatedUser = {
+            ...user,
+            ...(data.fullName && { userFullName: data.fullName, fullName: data.fullName }),
+            ...(data.avatarUrl && { avatarUrl: data.avatarUrl })
+          }
+          localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+          return { 
+            success: true, 
+            data: { 
+              success: true, 
+              user: updatedUser,
+              message: 'Profile updated successfully.'
+            } 
+          }
+        } catch {
+          return { success: false, error: 'Failed to update profile' }
+        }
+      }
+      return { success: false, error: 'User not found' }
+    }
+    
+    try {
+      const response = await this.api.put('/rest/s1/novel-anime/auth/profile', data)
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || '更新资料失败'
+      }
+    }
+  }
+
+  /**
+   * Change user password
+   * Requirements: 7.1, 7.2, 7.3, 7.4
+   */
+  async changePassword(data: { currentPassword: string; newPassword: string }): Promise<ApiResponse> {
+    // 开发模式下模拟密码修改
+    if (isDevelopment) {
+      // 简单验证：开发模式下当前密码必须是 "password" 或 "moqui"
+      if (data.currentPassword !== 'password' && data.currentPassword !== 'moqui') {
+        return { success: false, error: 'Current password is incorrect.' }
+      }
+      if (data.newPassword.length < 8) {
+        return { success: false, error: 'New password must be at least 8 characters long.' }
+      }
+      return { 
+        success: true, 
+        data: { 
+          success: true, 
+          message: 'Password changed successfully.' 
+        } 
+      }
+    }
+    
+    try {
+      const response = await this.api.post('/rest/s1/novel-anime/auth/change-password', data)
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || '修改密码失败'
+      }
+    }
+  }
+
+  /**
+   * Upload user avatar image
+   * Accepts a File object, converts to base64, and uploads to server
+   */
+  async uploadAvatar(file: File): Promise<ApiResponse> {
+    // 开发模式下模拟上传
+    if (isDevelopment) {
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64 = reader.result as string
+          const userStr = localStorage.getItem('auth_user')
+          if (userStr) {
+            try {
+              const user = JSON.parse(userStr)
+              const updatedUser = { ...user, avatarUrl: base64 }
+              localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+              resolve({ 
+                success: true, 
+                data: { 
+                  success: true, 
+                  avatarUrl: base64,
+                  message: 'Avatar uploaded successfully.'
+                } 
+              })
+            } catch {
+              resolve({ success: false, error: 'Failed to upload avatar' })
+            }
+          } else {
+            resolve({ success: false, error: 'User not found' })
+          }
+        }
+        reader.onerror = () => {
+          resolve({ success: false, error: 'Failed to read file' })
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+    
+    try {
+      // Convert file to base64
+      const base64 = await this.fileToBase64(file)
+      
+      const response = await this.api.post('/rest/s1/novel-anime/auth/avatar', {
+        imageData: base64,
+        filename: file.name
+      })
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || '上传头像失败'
+      }
+    }
+  }
+
+  /**
+   * Convert File to base64 string
+   */
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 }
 

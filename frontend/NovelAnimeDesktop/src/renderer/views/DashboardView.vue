@@ -1005,7 +1005,84 @@ function formatDate(date) {
 
 // 占位组件
 const ProcessingTaskList = { template: '<div class="content-placeholder"><span>处理中的任务列表</span></div>' };
-const ProjectList = { template: '<div class="content-placeholder"><span>项目列表</span></div>' };
+
+// 项目列表组件 - 显示用户的所有项目
+const ProjectList = {
+  template: `
+    <div class="project-list-container">
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="projects.length > 0" class="projects-grid">
+        <div 
+          v-for="project in projects" 
+          :key="project.id"
+          class="project-card"
+          @click="openProject(project)"
+        >
+          <div class="project-header">
+            <div class="project-icon">📚</div>
+            <div class="project-status" :class="'project-status--' + project.status">
+              {{ getStatusLabel(project.status) }}
+            </div>
+          </div>
+          <div class="project-name">{{ project.name }}</div>
+          <div class="project-description">{{ project.description || '暂无描述' }}</div>
+          <div class="project-meta">
+            <span class="project-date">{{ formatDate(project.updatedAt || project.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty-state">
+        <div class="empty-icon">📁</div>
+        <div class="empty-title">暂无项目</div>
+        <div class="empty-description">返回仪表盘创建您的第一个项目</div>
+      </div>
+    </div>
+  `,
+  setup() {
+    const projectStore = useProjectStore();
+    const router = useRouter();
+    
+    const projects = computed(() => projectStore.projects);
+    const isLoading = computed(() => projectStore.isLoading);
+    
+    // 组件挂载时从 API 加载项目
+    onMounted(async () => {
+      console.log('📋 ProjectList mounted, fetching projects...');
+      await projectStore.fetchProjects();
+      console.log('📋 Projects loaded:', projectStore.projects.length);
+    });
+    
+    function getStatusLabel(status) {
+      const labels = { 
+        draft: '草稿', 
+        processing: '处理中', 
+        completed: '已完成',
+        active: '进行中',
+        imported: '已导入',
+        parsed: '已解析',
+        analyzing: '分析中',
+        generating: '生成中'
+      };
+      return labels[status] || status || '草稿';
+    }
+    
+    function formatDate(date) {
+      if (!date) return '';
+      const d = new Date(date);
+      return d.toLocaleDateString('zh-CN');
+    }
+    
+    function openProject(project) {
+      projectStore.setCurrentProject(project);
+      router.push('/dashboard');
+    }
+    
+    return { projects, isLoading, getStatusLabel, formatDate, openProject };
+  }
+};
 </script>
 
 <style scoped>
@@ -1487,5 +1564,143 @@ const ProjectList = { template: '<div class="content-placeholder"><span>项目�
   font-size: 16px;
   font-weight: 500;
   color: #5a5a5c;
+}
+
+/* 项目列表组件样式 */
+.project-list-container {
+  padding: 0;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.project-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.project-card:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-card .project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.project-card .project-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(120, 140, 130, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.project-status {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.project-status--draft { background: #e2e8f0; color: #64748b; }
+.project-status--processing { background: #fef3c7; color: #d97706; }
+.project-status--completed { background: #d1fae5; color: #059669; }
+
+.project-card .project-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-description {
+  font-size: 12px;
+  color: #6c6c6e;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project-card .project-date {
+  font-size: 11px;
+  color: #8a8a8c;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: #6c6c6e;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(100, 140, 120, 0.2);
+  border-top-color: rgba(100, 140, 120, 0.8);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #5a5a5c;
+  margin-bottom: 8px;
+}
+
+.empty-description {
+  font-size: 13px;
+  color: #8a8a8c;
 }
 </style>

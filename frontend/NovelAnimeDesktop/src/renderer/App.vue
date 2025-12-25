@@ -77,8 +77,10 @@
           <!-- 左侧菜单区域 - 使用 ContextPanel 组件 -->
           <div class="menu-column">
             <ContextPanel 
-              user-name="John Doe"
-              user-email="customerpop@gmail.com"
+              :user-name="userStore.displayName"
+              :user-email="userStore.email"
+              :user-credits="userStore.credits"
+              :user-avatar-url="userStore.avatarUrl"
             />
           </div>
           
@@ -147,6 +149,7 @@ import { useNavigationStore } from './stores/navigation.js';
 import { useProjectStore } from './stores/project.js';
 import { useTaskStore } from './stores/task.js';
 import { useFileStore } from './stores/file.js';
+import { useUserStore } from './stores/user';
 
 // 导入组件
 import ContextPanel from './components/panels/ContextPanel.vue';
@@ -161,6 +164,7 @@ const navigationStore = useNavigationStore();
 const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 const fileStore = useFileStore();
+const userStore = useUserStore();
 
 console.log('✅ App.vue setup completed');
 
@@ -416,6 +420,22 @@ onMounted(() => {
     console.log('🧭 Initializing navigation store...')
     navigationStore.initializeFromStorage();
     console.log('✅ Navigation store initialized')
+    
+    // 初始化用户状态并获取用户信息 - 需求 4.1
+    console.log('👤 Initializing user store...')
+    userStore.initializeFromStorage();
+    // 如果已登录，获取最新的用户信息
+    if (userStore.isLoggedIn) {
+      console.log('🔄 Fetching user profile...')
+      userStore.fetchProfile().then(result => {
+        if (result.success) {
+          console.log('✅ User profile fetched successfully')
+        } else {
+          console.warn('⚠️ Failed to fetch user profile:', result.error)
+        }
+      })
+    }
+    console.log('✅ User store initialized')
     
     // 加载任务数据
     console.log('📋 Loading tasks...')

@@ -157,19 +157,20 @@ router.beforeEach(async (to, from, next) => {
 // 检查认证状态
 function checkAuthStatus() {
   try {
-    // 检查 localStorage 中的 token
-    const token = localStorage.getItem('auth_token');
-    const user = localStorage.getItem('auth_user');
+    // 检查 localStorage 中的 token - 使用统一的 key
+    const token = localStorage.getItem('novel_anime_access_token');
+    const userData = localStorage.getItem('novel_anime_user_data');
     
-    if (token && user) {
+    if (token && userData) {
       console.log('🔐 Found auth token in localStorage');
       return true;
     }
     
-    // 开发模式：如果没有 token，检查是否启用了开发模式跳过认证
-    const devMode = localStorage.getItem('dev_skip_auth');
-    if (devMode === 'true') {
-      console.log('🔧 Dev mode: skipping auth');
+    // 兼容旧的 key
+    const oldToken = localStorage.getItem('auth_token');
+    const oldUser = localStorage.getItem('auth_user');
+    if (oldToken && oldUser) {
+      console.log('🔐 Found old auth token in localStorage');
       return true;
     }
     

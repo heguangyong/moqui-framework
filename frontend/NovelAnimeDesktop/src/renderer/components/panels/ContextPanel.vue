@@ -4,9 +4,8 @@
     <div class="user-section" @click="toggleUserMenu">
       <div class="user-avatar">
         <div class="avatar-circle">
-          <!-- 暂时注释掉头像显示 -->
-          <!-- <img v-if="authStore.user?.avatarUrl" :src="authStore.user.avatarUrl" alt="avatar" class="avatar-img" /> -->
-          <component :is="icons.user" :size="18" />
+          <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="avatar" class="avatar-img" />
+          <span v-else class="avatar-initials">{{ userInitials }}</span>
         </div>
       </div>
       <div class="user-info">
@@ -16,20 +15,24 @@
       <!-- 积分显示 - 简洁样式 -->
       <div class="credits-display" @click.stop="showCreditsHistory">
         <component :is="icons.star" :size="14" />
-        <span>0</span>
+        <span>{{ userCredits }}</span>
       </div>
     </div>
     
     <!-- 用户下拉菜单 - 系统风格 -->
     <div v-if="userMenuVisible" class="user-menu">
-      <div class="user-menu-item" @click.stop="handleUserAction('profile')">
-        <component :is="icons.user" :size="16" />
-        <span>个人资料</span>
+      <div class="user-menu-item" @click.stop="openProfileEdit">
+        <component :is="icons.edit" :size="16" />
+        <span>编辑资料</span>
+      </div>
+      <div class="user-menu-item" @click.stop="openChangePassword">
+        <component :is="icons.lock" :size="16" />
+        <span>修改密码</span>
       </div>
       <div class="user-menu-item" @click.stop="showCreditsHistory">
         <component :is="icons.star" :size="16" />
         <span>积分记录</span>
-        <span class="menu-credits">0</span>
+        <span class="menu-credits">{{ userCredits }}</span>
       </div>
       <div class="user-menu-divider"></div>
       <div class="user-menu-item user-menu-item--danger" @click.stop="handleLogout">
@@ -48,6 +51,18 @@
     <CreditsHistoryDialog 
       v-model="creditsHistoryVisible"
     />
+    
+    <!-- 编辑资料对话框 -->
+    <ProfileEditDialog 
+      v-model="profileEditVisible"
+      @saved="onProfileSaved"
+    />
+    
+    <!-- 修改密码对话框 -->
+    <ChangePasswordDialog 
+      v-model="changePasswordVisible"
+      @changed="onPasswordChanged"
+    />
   </div>
 </template>
 
@@ -55,12 +70,12 @@
 import { computed, defineAsyncComponent, ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNavigationStore } from '../../stores/navigation.js';
-// 暂时注释掉 auth store 导入以避免启动错误
-// import { useAuthStore } from '../../stores/auth';
-// import { useCreditsStore } from '../../stores/credits';
+import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
 import { icons } from '../../utils/icons.js';
 import CreditsHistoryDialog from '../dialogs/CreditsHistoryDialog.vue';
+import ProfileEditDialog from '../dialogs/ProfileEditDialog.vue';
+import ChangePasswordDialog from '../dialogs/ChangePasswordDialog.vue';
 
 // 异步加载面板组件
 const DashboardPanel = defineAsyncComponent(() => import('./DashboardPanel.vue'));
@@ -69,33 +84,45 @@ const AssetsPanel = defineAsyncComponent(() => import('./AssetsPanel.vue'));
 const CharactersPanel = defineAsyncComponent(() => import('./CharactersPanel.vue'));
 const SettingsPanel = defineAsyncComponent(() => import('./SettingsPanel.vue'));
 
-// Props
+// Props - 接收来自 App.vue 的用户数据
 const props = defineProps({
   userName: {
     type: String,
-    default: 'John Doe'
+    default: ''
   },
   userEmail: {
     type: String,
-    default: 'user@example.com'
+    default: ''
+  },
+  userCredits: {
+    type: Number,
+    default: 0
+  },
+  userAvatarUrl: {
+    type: String,
+    default: null
   }
 });
 
 const router = useRouter();
 const navigationStore = useNavigationStore();
-// 暂时注释掉 auth 和 credits store 的使用
-// const authStore = useAuthStore();
-// const creditsStore = useCreditsStore();
+const userStore = useUserStore();
 const uiStore = useUIStore();
 
 // 用户菜单状态
 const userMenuVisible = ref(false);
 const creditsHistoryVisible = ref(false);
+const profileEditVisible = ref(false);
+const changePasswordVisible = ref(false);
 
-// 显示名称 - 暂时使用 props
+// 显示名称 - 使用 props（来自 userStore）
 const displayName = computed(() => {
-  // return authStore.user?.username || authStore.user?.email?.split('@')[0] || props.userName;
-  return props.userName;
+  return props.userName || 'User';
+});
+
+// 用户首字母（用于头像占位）
+const userInitials = computed(() => {
+  return userStore.initials || 'U';
 });
 
 // 面板组件映射
@@ -156,6 +183,36 @@ function showCreditsHistory() {
   creditsHistoryVisible.value = true;
 }
 
+// 打开编辑资料对话框 - Requirement 8.1
+function openProfileEdit() {
+  userMenuVisible.value = false;
+  profileEditVisible.value = true;
+}
+
+// 打开修改密码对话框 - Requirement 8.1
+function openChangePassword() {
+  userMenuVisible.value = false;
+  changePasswordVisible.value = true;
+}
+
+// 资料保存成功回调
+function onProfileSaved() {
+  uiStore.addNotification({
+    type: 'success',
+    title: '保存成功',
+    message: '个人资料已更新'
+  });
+}
+
+// 密码修改成功回调
+function onPasswordChanged() {
+  uiStore.addNotification({
+    type: 'success',
+    title: '修改成功',
+    message: '密码已更新，请使用新密码登录'
+  });
+}
+
 // 用户操作
 function handleUserAction(action) {
   // 先关闭菜单
@@ -186,23 +243,30 @@ function handleUserAction(action) {
 
 // 退出登录
 async function handleLogout() {
+  console.log('🚪 Logout initiated...');
   userMenuVisible.value = false;
-  // 暂时注释掉登出逻辑
-  // await authStore.logout();
+  
+  // 使用 userStore 进行登出
+  await userStore.logout();
+  console.log('🧹 User store logout completed');
+  
+  // 验证 localStorage 已清除
+  const tokenAfterLogout = localStorage.getItem('novel_anime_access_token');
+  console.log('🔍 Token after logout:', tokenAfterLogout ? 'STILL EXISTS!' : 'cleared');
+  
   uiStore.addNotification({
     type: 'success',
     title: '已退出',
     message: '您已成功退出登录'
   });
-  router.push('/login');
+  
+  console.log('🔄 Redirecting to /login...');
+  await router.push('/login');
+  console.log('✅ Router push completed');
 }
 
-// 初始化时加载积分
+// 初始化
 onMounted(async () => {
-  // 暂时注释掉积分加载
-  // if (authStore.isAuthenticated) {
-  //   await creditsStore.fetchBalance();
-  // }
   document.addEventListener('click', handleClickOutside);
 });
 
@@ -251,6 +315,14 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 600;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.avatar-initials {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
 }
 
 .user-info {

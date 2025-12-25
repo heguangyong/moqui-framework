@@ -13,6 +13,7 @@ This directory contains Pinia stores for state management.
 - `workflow.ts` - Workflow and pipeline state
 - `ui.ts` - UI state (panels, notifications, etc.)
 - `auth.ts` - Authentication state
+- `user.ts` - User profile state (combines UserAccount and NovelAnimeUser data)
 
 ## Store Pattern
 
