@@ -121,9 +121,10 @@ class AuthApiService {
     const mockUsername = isEmail ? data.username.split('@')[0] : data.username
     const mockEmail = isEmail ? data.username : `${data.username}@example.com`
     
-    // 保存到 localStorage 以便路由守卫检查
-    localStorage.setItem('auth_token', mockToken)
-    localStorage.setItem('auth_user', JSON.stringify({
+    // 保存到 localStorage
+    localStorage.setItem('novel_anime_access_token', mockToken)
+    localStorage.setItem('novel_anime_refresh_token', mockRefreshToken)
+    localStorage.setItem('novel_anime_user_data', JSON.stringify({
       ...DEV_MOCK_USER,
       email: mockEmail,
       username: mockUsername
@@ -153,8 +154,9 @@ class AuthApiService {
     const mockToken = `dev-token-${Date.now()}`
     const mockRefreshToken = `dev-refresh-${Date.now()}`
     
-    localStorage.setItem('auth_token', mockToken)
-    localStorage.setItem('auth_user', JSON.stringify({
+    localStorage.setItem('novel_anime_access_token', mockToken)
+    localStorage.setItem('novel_anime_refresh_token', mockRefreshToken)
+    localStorage.setItem('novel_anime_user_data', JSON.stringify({
       ...DEV_MOCK_USER,
       email: data.email,
       username: data.username || data.email.split('@')[0]
@@ -213,8 +215,8 @@ class AuthApiService {
   async validateToken(): Promise<ApiResponse> {
     // 开发模式下检查本地存储
     if (isDevelopment) {
-      const token = localStorage.getItem('auth_token')
-      const userStr = localStorage.getItem('auth_user')
+      const token = localStorage.getItem('novel_anime_access_token')
+      const userStr = localStorage.getItem('novel_anime_user_data')
       if (token && userStr) {
         try {
           const user = JSON.parse(userStr)
@@ -240,8 +242,9 @@ class AuthApiService {
   async logout(): Promise<ApiResponse> {
     // 开发模式下清除本地存储
     if (isDevelopment) {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
+      localStorage.removeItem('novel_anime_access_token')
+      localStorage.removeItem('novel_anime_refresh_token')
+      localStorage.removeItem('novel_anime_user_data')
       return { success: true, data: { success: true } }
     }
     
@@ -355,7 +358,7 @@ class AuthApiService {
   async updateProfile(data: { fullName?: string; avatarUrl?: string }): Promise<ApiResponse> {
     // 开发模式下模拟更新
     if (isDevelopment) {
-      const userStr = localStorage.getItem('auth_user')
+      const userStr = localStorage.getItem('novel_anime_user_data')
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
@@ -364,7 +367,7 @@ class AuthApiService {
             ...(data.fullName && { userFullName: data.fullName, fullName: data.fullName }),
             ...(data.avatarUrl && { avatarUrl: data.avatarUrl })
           }
-          localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+          localStorage.setItem('novel_anime_user_data', JSON.stringify(updatedUser))
           return { 
             success: true, 
             data: { 
@@ -436,12 +439,12 @@ class AuthApiService {
         const reader = new FileReader()
         reader.onload = () => {
           const base64 = reader.result as string
-          const userStr = localStorage.getItem('auth_user')
+          const userStr = localStorage.getItem('novel_anime_user_data')
           if (userStr) {
             try {
               const user = JSON.parse(userStr)
               const updatedUser = { ...user, avatarUrl: base64 }
-              localStorage.setItem('auth_user', JSON.stringify(updatedUser))
+              localStorage.setItem('novel_anime_user_data', JSON.stringify(updatedUser))
               resolve({ 
                 success: true, 
                 data: { 

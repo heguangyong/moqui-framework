@@ -179,8 +179,7 @@ export const useUserStore = defineStore('user', {
       // Clear old tokens before login
       localStorage.removeItem('novel_anime_access_token')
       localStorage.removeItem('novel_anime_refresh_token')
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
+      localStorage.removeItem('novel_anime_user_id')
 
       try {
         const response = await authApi.login({ username: usernameOrEmail, password })
@@ -197,6 +196,12 @@ export const useUserStore = defineStore('user', {
           }
           
           const user = response.data.user
+          // Save userId for API calls
+          if (user.userId) {
+            localStorage.setItem('novel_anime_user_id', user.userId)
+            console.log('👤 Saved userId:', user.userId)
+          }
+          
           this.setUserData({
             userId: user.userId,
             username: user.username || '',
@@ -279,9 +284,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem(STORAGE_KEYS.USER_DATA)
       localStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN)
       localStorage.removeItem('novel_anime_refresh_token')
-      // Also clear old keys for compatibility
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
+      localStorage.removeItem('novel_anime_user_id')
       
       console.log('🧹 All user data and tokens cleared from localStorage')
     },

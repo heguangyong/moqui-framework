@@ -47,7 +47,7 @@ class ApiService {
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
         // Add auth token if available
-        const token = localStorage.getItem('auth_token')
+        const token = localStorage.getItem('novel_anime_access_token')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
@@ -64,8 +64,8 @@ class ApiService {
         
         // Handle authentication errors
         if (error.response?.status === 401) {
-          localStorage.removeItem('auth_token')
-          // Redirect to login if needed
+          localStorage.removeItem('novel_anime_access_token')
+          localStorage.removeItem('novel_anime_refresh_token')
         }
         
         return Promise.reject(error)
@@ -78,11 +78,9 @@ class ApiService {
    */
   async testConnection(): Promise<boolean> {
     try {
-      // 尝试调用一个简单的 API 来检测连接
-      // 使用 projects 端点因为它不需要认证
-      const response = await this.axiosInstance.get('/projects', {
-        params: { userId: 'test-user-001' },
-        timeout: 3000 // 短超时用于快速检测
+      // 使用 auth/status 端点检测连接，不需要 userId
+      const response = await this.axiosInstance.get('/auth/status', {
+        timeout: 3000
       })
       console.log('✅ Backend connection test:', response.status === 200 ? 'OK' : 'Failed')
       return response.status === 200
@@ -146,9 +144,9 @@ class ApiService {
       })
 
       if (response.data.success) {
-        const token = response.data.token
+        const token = response.data.token || response.data.accessToken
         if (token) {
-          localStorage.setItem('auth_token', token)
+          localStorage.setItem('novel_anime_access_token', token)
         }
         
         return {
@@ -188,9 +186,9 @@ class ApiService {
       })
 
       if (response.data.success) {
-        const token = response.data.token
+        const token = response.data.token || response.data.accessToken
         if (token) {
-          localStorage.setItem('auth_token', token)
+          localStorage.setItem('novel_anime_access_token', token)
         }
         
         return {
@@ -219,11 +217,13 @@ class ApiService {
   async logout(): Promise<boolean> {
     try {
       await this.axiosInstance.post('/auth/logout')
-      localStorage.removeItem('auth_token')
+      localStorage.removeItem('novel_anime_access_token')
+      localStorage.removeItem('novel_anime_refresh_token')
       return true
     } catch (error) {
       console.error('Logout failed:', error)
-      localStorage.removeItem('auth_token') // Remove token anyway
+      localStorage.removeItem('novel_anime_access_token')
+      localStorage.removeItem('novel_anime_refresh_token')
       return false
     }
   }
@@ -292,35 +292,29 @@ class ApiService {
    * Returns userId that can be used for API calls
    */
   async getOrCreateDefaultUser(): Promise<string> {
+    // 优先使用登录用户的 userId
+    const userData = localStorage.getItem('novel_anime_user_data')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        if (user.userId) {
+          localStorage.setItem('novel_anime_user_id', user.userId)
+          return user.userId
+        }
+      } catch (e) {
+        console.warn('Failed to parse user data:', e)
+      }
+    }
+    
     // Check if we have a stored userId
     const storedUserId = localStorage.getItem('novel_anime_user_id')
-    if (storedUserId) {
+    if (storedUserId && storedUserId !== 'test-user-001') {
       return storedUserId
     }
     
-    // Try to register a default test user
-    try {
-      const testEmail = `test_${Date.now()}@novelanime.local`
-      const response = await this.axiosInstance.post('/auth/register', {
-        email: testEmail,
-        password: 'test123456',
-        username: '测试用户'
-      })
-      
-      if (response.data.success && response.data.user?.userId) {
-        const newUserId: string = response.data.user.userId
-        localStorage.setItem('novel_anime_user_id', newUserId)
-        console.log('✅ Created default user:', newUserId)
-        return newUserId
-      }
-    } catch (error) {
-      console.warn('Failed to create default user:', error)
-    }
-    
-    // Fallback: use a hardcoded test userId (for development only)
-    const fallbackUserId = 'test-user-001'
-    localStorage.setItem('novel_anime_user_id', fallbackUserId)
-    return fallbackUserId
+    // 如果没有登录用户，返回空字符串让后端处理
+    console.warn('No valid userId found, user should login first')
+    return ''
   }
 
   /**
