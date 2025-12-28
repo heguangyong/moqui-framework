@@ -173,18 +173,14 @@ export class CharacterApiService {
    * Merge characters
    */
   async mergeCharacters(data: {
-    fromCharacterId: string
-    toCharacterId: string
-    keepName?: string
-    keepDescription?: string
-    keepAppearance?: string
-    keepPersonality?: string
+    primaryCharacterId: string
+    duplicateCharacterId: string
   }): Promise<{
     success: boolean
     message?: string
   }> {
     try {
-      const response = await apiService.axiosInstance.post('/characters/merge', data)
+      const response = await apiService.axiosInstance.post('/characters-merge', data)
       
       return {
         success: response.data.success || true,

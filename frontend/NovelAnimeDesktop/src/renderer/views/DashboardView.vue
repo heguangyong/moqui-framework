@@ -917,6 +917,18 @@ async function continueProject() {
       step.completed = index < 3;
       step.enabled = index <= 3;
     });
+    // 设置 panelContext，让 WorkflowEditor 自动选择模板视图
+    navigationStore.updatePanelContext('workflow', {
+      viewType: 'template',
+      templateId: 't1', // 默认选择"标准转换流程"模板
+      selectedWorkflow: null,
+      statusFilter: null,
+      executionId: null,
+      // 传递项目信息
+      projectId: activeProject.value.id || activeProject.value.projectId,
+      novelId: currentNovelId.value,
+      projectName: activeProject.value.name
+    });
     router.push('/workflow');
     return;
   }
@@ -965,7 +977,18 @@ async function continueProject() {
     // 角色确认步骤，跳转到角色页面
     await viewCharacters();
   } else if (targetStep === 3) {
-    // 生成动漫步骤，跳转到工作流页面
+    // 生成动漫步骤，跳转到工作流页面，并设置模板视图
+    navigationStore.updatePanelContext('workflow', {
+      viewType: 'template',
+      templateId: 't1', // 默认选择"标准转换流程"模板
+      selectedWorkflow: null,
+      statusFilter: null,
+      executionId: null,
+      // 传递项目信息
+      projectId: activeProject.value.id || activeProject.value.projectId,
+      novelId: currentNovelId.value,
+      projectName: activeProject.value.name
+    });
     router.push('/workflow');
   }
   // 步骤0和1留在当前页面，用户点击按钮操作

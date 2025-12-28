@@ -295,6 +295,16 @@
       </div>
       </template>
     </div>
+    
+    <!-- 输入对话框 -->
+    <InputDialog
+      v-model:visible="inputDialogVisible"
+      :title="inputDialogTitle"
+      :message="inputDialogMessage"
+      :placeholder="inputDialogPlaceholder"
+      :default-value="inputDialogDefaultValue"
+      @confirm="handleInputDialogConfirm"
+    />
   </div>
 </template>
 
@@ -307,6 +317,7 @@ import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import InputDialog from '../components/dialogs/InputDialog.vue';
 
 const router = useRouter();
 const workflowStore = useWorkflowStore();
@@ -321,6 +332,14 @@ const currentExecutionId = ref(null);
 const executionResults = ref(null);
 const showResultsPanel = ref(false);
 const dropdownOpen = ref(false);
+
+// 输入对话框状态
+const inputDialogVisible = ref(false);
+const inputDialogTitle = ref('');
+const inputDialogMessage = ref('');
+const inputDialogPlaceholder = ref('');
+const inputDialogDefaultValue = ref('');
+const inputDialogCallback = ref(null);
 
 // 从 panelContext 获取当前视图状态
 const workflowContext = computed(() => navigationStore.panelContext.workflow || {});
@@ -557,7 +576,71 @@ function handleClickOutside(event) {
 onMounted(() => {
   workflowStore.loadAllWorkflows();
   document.addEventListener('click', handleClickOutside);
+  
+  // 检查是否需要自动应用模板（从 Dashboard 跳转过来）
+  const context = navigationStore.panelContext.workflow;
+  if (context?.viewType === 'template' && context?.templateId && context?.projectName) {
+    console.log('🚀 Auto-applying template on mount:', context.templateId, 'for project:', context.projectName);
+    // 延迟执行，确保组件完全挂载
+    setTimeout(() => {
+      autoApplyTemplate(context);
+    }, 100);
+  }
 });
+
+// 自动应用模板（从 Dashboard 继续处理跳转过来时）
+function autoApplyTemplate(context) {
+  const template = templates.value.find(t => t.id === context.templateId);
+  if (!template) {
+    console.warn('Template not found:', context.templateId);
+    return;
+  }
+  
+  // 使用项目名称创建工作流
+  const workflowName = context.projectName ? `${context.projectName} - ${template.name}` : template.name;
+  console.log('📋 Creating workflow from template:', workflowName);
+  
+  const workflow = workflowStore.createWorkflow(workflowName, template.description);
+  
+  // 设置为当前工作流
+  workflowStore.setCurrentWorkflow(workflow.id);
+  selectedWorkflowId.value = workflow.id;
+  
+  // 添加模板节点并自动连接
+  const nodeIds = [];
+  template.nodes.forEach((nodeType, index) => {
+    const node = workflowStore.addNode(
+      nodeType, 
+      getNodeTitle(nodeType), 
+      { x: 100 + index * 220, y: 100 }
+    );
+    if (node) {
+      nodeIds.push(node.id);
+    }
+  });
+  
+  // 自动连接相邻节点
+  for (let i = 0; i < nodeIds.length - 1; i++) {
+    workflowStore.addConnection(nodeIds[i], nodeIds[i + 1]);
+  }
+  
+  // 更新 panelContext 为工作流详情视图
+  navigationStore.updatePanelContext('workflow', {
+    selectedWorkflow: workflow.id,
+    viewType: 'workflow-detail',
+    templateId: null,
+    projectId: context.projectId,
+    novelId: context.novelId,
+    projectName: context.projectName
+  });
+  
+  uiStore.addNotification({
+    type: 'success',
+    title: '工作流已创建',
+    message: `已为项目 "${context.projectName}" 创建工作流，点击"运行工作流"开始生成`,
+    timeout: 5000
+  });
+}
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
@@ -640,11 +723,30 @@ const nodeTypes = {
 
 // Workflow management
 function createNewWorkflow() {
-  const name = prompt('请输入工作流名称:');
-  if (name) {
-    const workflow = workflowStore.createWorkflow(name, '新建的工作流');
-    selectedWorkflowId.value = workflow.id;
-    workflowStore.setCurrentWorkflow(workflow.id);
+  inputDialogTitle.value = '新建工作流';
+  inputDialogMessage.value = '';
+  inputDialogPlaceholder.value = '请输入工作流名称';
+  inputDialogDefaultValue.value = '';
+  inputDialogCallback.value = (name) => {
+    if (name) {
+      const workflow = workflowStore.createWorkflow(name, '新建的工作流');
+      selectedWorkflowId.value = workflow.id;
+      workflowStore.setCurrentWorkflow(workflow.id);
+      uiStore.addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: `工作流 "${name}" 已创建`,
+        timeout: 2000
+      });
+    }
+  };
+  inputDialogVisible.value = true;
+}
+
+// 处理输入对话框确认
+function handleInputDialogConfirm(value) {
+  if (inputDialogCallback.value) {
+    inputDialogCallback.value(value);
   }
 }
 
@@ -690,19 +792,24 @@ function renameWorkflow(workflowId) {
   // 先关闭下拉菜单
   dropdownOpen.value = false;
   
-  // 使用 setTimeout 确保下拉菜单关闭后再弹出 prompt
+  // 使用自定义对话框
   setTimeout(() => {
-    const newName = prompt('请输入新的工作流名称:', workflow.name);
-    if (newName && newName.trim() && newName.trim() !== workflow.name) {
-      workflowStore.renameWorkflow(workflowId, newName.trim());
-      
-      uiStore.addNotification({
-        type: 'success',
-        title: '重命名成功',
-        message: `工作流已重命名为 "${newName.trim()}"`,
-        timeout: 2000
-      });
-    }
+    inputDialogTitle.value = '重命名工作流';
+    inputDialogMessage.value = '';
+    inputDialogPlaceholder.value = '请输入新的工作流名称';
+    inputDialogDefaultValue.value = workflow.name;
+    inputDialogCallback.value = (newName) => {
+      if (newName && newName !== workflow.name) {
+        workflowStore.renameWorkflow(workflowId, newName);
+        uiStore.addNotification({
+          type: 'success',
+          title: '重命名成功',
+          message: `工作流已重命名为 "${newName}"`,
+          timeout: 2000
+        });
+      }
+    };
+    inputDialogVisible.value = true;
   }, 100);
 }
 

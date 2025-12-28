@@ -116,21 +116,13 @@ function ensureWorkflowPage() {
 // 统一的激活状态 - 同一时间只有一个按钮被高亮
 const activeView = ref('');
 
-// 从 workflowStore 获取工作流数据，如果为空则显示默认数据
+// 从 workflowStore 获取工作流数据
 const workflows = computed(() => {
   const storeWorkflows = workflowStore.workflows;
-  if (storeWorkflows.length > 0) {
-    return storeWorkflows.map(w => ({
-      ...w,
-      count: w.nodes?.length || 0
-    }));
-  }
-  // 返回默认显示数据（仅用于 UI 显示）
-  return [
-    { id: 'default-1', name: '小说转视频', status: 'idle', count: 4 },
-    { id: 'default-2', name: '角色分析流程', status: 'idle', count: 2 },
-    { id: 'default-3', name: '分镜生成', status: 'idle', count: 3 }
-  ];
+  return storeWorkflows.map(w => ({
+    ...w,
+    count: w.nodes?.length || 0
+  }));
 });
 
 // 工作流统计 - 默认为0
@@ -147,38 +139,27 @@ const workflowCounts = computed(() => {
 // 初始化时加载工作流
 onMounted(async () => {
   workflowStore.loadAllWorkflows();
-  // 如果没有工作流，创建默认工作流
-  if (workflowStore.workflows.length === 0) {
-    initializeDefaultWorkflows();
-  }
   console.log('📋 WorkflowContextPanel mounted, workflows:', workflowStore.workflows);
 });
 
-// 初始化默认工作流
-function initializeDefaultWorkflows() {
-  // 创建小说转视频工作流
-  const workflow1 = workflowStore.createWorkflow('小说转视频', '完整的小说到视频转换流程');
-  workflowStore.setCurrentWorkflow(workflow1.id);
-  workflowStore.addNode('novel-parser', '小说解析器', { x: 50, y: 50 });
-  workflowStore.addNode('character-analyzer', '角色分析器', { x: 250, y: 50 });
-  workflowStore.addNode('scene-generator', '场景生成器', { x: 450, y: 50 });
-  workflowStore.addNode('video-generator', '视频生成器', { x: 650, y: 50 });
+// 工作流点击处理
+function handleWorkflowClick(workflow) {
+  console.log('🖱️ Workflow clicked:', workflow.id, workflow.name);
+  activeView.value = `workflow-${workflow.id}`;
+  ensureWorkflowPage();
   
-  // 创建角色分析流程
-  const workflow2 = workflowStore.createWorkflow('角色分析流程', '专注于角色识别和分析');
-  workflowStore.setCurrentWorkflow(workflow2.id);
-  workflowStore.addNode('novel-parser', '小说解析器', { x: 50, y: 50 });
-  workflowStore.addNode('character-analyzer', '角色分析器', { x: 250, y: 50 });
+  // 设置当前工作流
+  const success = workflowStore.setCurrentWorkflow(workflow.id);
+  console.log('📌 setCurrentWorkflow result:', success);
   
-  // 创建分镜生成工作流
-  const workflow3 = workflowStore.createWorkflow('分镜生成', '生成动画分镜脚本');
-  workflowStore.setCurrentWorkflow(workflow3.id);
-  workflowStore.addNode('novel-parser', '小说解析器', { x: 50, y: 50 });
-  workflowStore.addNode('scene-generator', '场景生成器', { x: 250, y: 50 });
-  workflowStore.addNode('script-converter', '脚本转换器', { x: 450, y: 50 });
-  
-  // 清除当前选中
-  workflowStore.currentWorkflow = null;
+  // 更新 panelContext
+  navigationStore.updatePanelContext('workflow', { 
+    selectedWorkflow: workflow.id,
+    viewType: 'workflow-detail',
+    statusFilter: null,
+    templateId: null,
+    executionId: null
+  });
 }
 
 const templates = ref([
@@ -202,45 +183,6 @@ function getExecutionIcon(status) {
     pending: icons.clock
   };
   return iconMap[status] || icons.circle;
-}
-
-// 工作流点击处理
-function handleWorkflowClick(workflow) {
-  console.log('🖱️ Workflow clicked:', workflow.id, workflow.name);
-  activeView.value = `workflow-${workflow.id}`;
-  ensureWorkflowPage();
-  
-  // 如果是默认数据，先创建真实工作流
-  if (workflow.id.startsWith('default-')) {
-    initializeDefaultWorkflows();
-    // 重新获取对应的工作流
-    const realWorkflow = workflowStore.workflows.find(w => w.name === workflow.name);
-    if (realWorkflow) {
-      const success = workflowStore.setCurrentWorkflow(realWorkflow.id);
-      console.log('📌 setCurrentWorkflow result:', success);
-      navigationStore.updatePanelContext('workflow', { 
-        selectedWorkflow: realWorkflow.id,
-        viewType: 'workflow-detail',
-        statusFilter: null,
-        templateId: null,
-        executionId: null
-      });
-      return;
-    }
-  }
-  
-  // 设置当前工作流
-  const success = workflowStore.setCurrentWorkflow(workflow.id);
-  console.log('📌 setCurrentWorkflow result:', success);
-  
-  // 更新 panelContext
-  navigationStore.updatePanelContext('workflow', { 
-    selectedWorkflow: workflow.id,
-    viewType: 'workflow-detail',
-    statusFilter: null,
-    templateId: null,
-    executionId: null
-  });
 }
 
 // 模板点击处理
