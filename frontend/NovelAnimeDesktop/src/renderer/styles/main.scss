@@ -2,13 +2,13 @@
 // 电子书风格UI的样式系统
 
 // 导入设计系统
-@import './design-system.scss';
+@use './design-system.scss' as *;
 
 // 导入组件样式
-@import './components.scss';
+@use './components.scss';
 
 // 注释掉布局样式导入，避免与App.vue中的样式冲突
-// @import './layout.scss';
+// @use './layout.scss';
 
 // ===== 全局样式重置和基础样式 =====
 html, body {

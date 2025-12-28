@@ -110,6 +110,34 @@ export class WorkflowEditor {
   }
 
   /**
+   * Update node name
+   */
+  updateNodeName(nodeId, newName) {
+    const workflow = this.getActiveWorkflow();
+    if (!workflow) return false;
+
+    const node = workflow.nodes.find(n => n.id === nodeId);
+    if (!node) return false;
+
+    node.name = newName;
+    return true;
+  }
+
+  /**
+   * Update node configuration
+   */
+  updateNodeConfig(nodeId, config) {
+    const workflow = this.getActiveWorkflow();
+    if (!workflow) return false;
+
+    const node = workflow.nodes.find(n => n.id === nodeId);
+    if (!node) return false;
+
+    node.configuration = { ...node.configuration, ...config };
+    return true;
+  }
+
+  /**
    * Add connection between nodes
    */
   addConnection(fromNodeId, toNodeId) {

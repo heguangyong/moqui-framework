@@ -116,6 +116,30 @@ export const useWorkflowStore = defineStore('workflow', {
       return success;
     },
 
+    updateNodeName(nodeId, newName) {
+      if (this.currentWorkflow) {
+        const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+        if (node) {
+          node.name = newName;
+          // 同步更新 workflowEditor 中的数据
+          this.workflowEditor.updateNodeName(nodeId, newName);
+          return true;
+        }
+      }
+      return false;
+    },
+
+    updateNodeConfig(nodeId, config) {
+      if (this.currentWorkflow) {
+        const node = this.currentWorkflow.nodes.find(n => n.id === nodeId);
+        if (node) {
+          node.config = { ...node.config, ...config };
+          return true;
+        }
+      }
+      return false;
+    },
+
     // Connection management
     addConnection(fromNodeId, toNodeId) {
       const connection = this.workflowEditor.addConnection(fromNodeId, toNodeId);

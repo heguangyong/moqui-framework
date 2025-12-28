@@ -3,6 +3,23 @@
 
 @use 'sass:map';
 
+// ===== 响应式断点 =====
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+  2xl: 1536px
+) !default;
+
+@mixin respond-to($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    @media (min-width: map.get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  }
+}
+
 // ===== 颜色系统 =====
 :root {
   // === 灰色玻璃态主色调 ===
@@ -167,23 +184,6 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
-}
-
-// ===== 响应式断点 =====
-$breakpoints: (
-  sm: 640px,
-  md: 768px,
-  lg: 1024px,
-  xl: 1280px,
-  2xl: 1536px
-);
-
-@mixin respond-to($breakpoint) {
-  @if map.has-key($breakpoints, $breakpoint) {
-    @media (min-width: map.get($breakpoints, $breakpoint)) {
-      @content;
-    }
-  }
 }
 
 // ===== 基础重置样式 =====

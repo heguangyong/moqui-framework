@@ -255,14 +255,21 @@
             v-for="node in currentWorkflowNodes" 
             :key="node.id"
             class="workflow-node"
-            :class="{ 'node-running': node.status === 'running', 'node-completed': node.status === 'completed' }"
+            :class="{ 
+              'node-running': node.status === 'running', 
+              'node-completed': node.status === 'completed',
+              'node-selected': selectedNodeId === node.id
+            }"
             :style="{ left: node.position.x + 'px', top: node.position.y + 'px' }"
             @mousedown="startDragNode($event, node)"
+            @click.stop="selectNode(node)"
+            @dblclick.stop="editNode(node)"
           >
             <div class="node-header">
               <span class="node-icon">{{ getNodeIcon(node.type) }}</span>
               <span class="node-title">{{ node.name }}</span>
-              <button @click="removeNode(node.id)" class="node-remove">×</button>
+              <button @click.stop="editNode(node)" class="node-edit" title="编辑节点">✎</button>
+              <button @click.stop="removeNode(node.id)" class="node-remove" title="删除节点">×</button>
             </div>
             <div class="node-content">
               <div class="node-inputs">
@@ -274,6 +281,12 @@
                 <div v-for="output in getNodeOutputs(node.type)" :key="output" class="output-port">
                   {{ output }} ●
                 </div>
+              </div>
+            </div>
+            <!-- 节点配置预览 -->
+            <div v-if="node.config && Object.keys(node.config).length > 0" class="node-config-preview">
+              <div v-for="(value, key) in node.config" :key="key" class="config-item">
+                {{ key }}: {{ value }}
               </div>
             </div>
           </div>
@@ -291,6 +304,76 @@
               stroke-width="2"
             />
           </svg>
+        </div>
+      </div>
+      
+      <!-- 节点属性面板 -->
+      <div v-if="selectedNode && currentWorkflow" class="node-properties-panel">
+        <div class="properties-header">
+          <h4>节点属性</h4>
+          <button class="close-btn" @click="selectedNodeId = ''" title="关闭">×</button>
+        </div>
+        <div class="properties-content">
+          <div class="property-group">
+            <label>节点名称</label>
+            <input 
+              type="text" 
+              :value="selectedNode.name" 
+              @change="updateSelectedNodeName($event.target.value)"
+              class="property-input"
+            />
+          </div>
+          <div class="property-group">
+            <label>节点类型</label>
+            <div class="property-value">{{ getNodeTitle(selectedNode.type) }}</div>
+          </div>
+          <div class="property-group">
+            <label>位置</label>
+            <div class="property-row">
+              <span>X: {{ Math.round(selectedNode.position.x) }}</span>
+              <span>Y: {{ Math.round(selectedNode.position.y) }}</span>
+            </div>
+          </div>
+          <div class="property-group">
+            <label>状态</label>
+            <div class="property-value status-tag" :class="`status-${selectedNode.status || 'idle'}`">
+              {{ selectedNode.status || 'idle' }}
+            </div>
+          </div>
+          
+          <!-- 节点特定配置 -->
+          <div class="property-group" v-if="selectedNode.type === 'novel-parser'">
+            <label>解析模式</label>
+            <select class="property-input" @change="updateNodeConfig('parseMode', $event.target.value)">
+              <option value="auto">自动检测</option>
+              <option value="chapter">按章节</option>
+              <option value="paragraph">按段落</option>
+            </select>
+          </div>
+          
+          <div class="property-group" v-if="selectedNode.type === 'character-analyzer'">
+            <label>分析深度</label>
+            <select class="property-input" @change="updateNodeConfig('depth', $event.target.value)">
+              <option value="basic">基础</option>
+              <option value="detailed">详细</option>
+              <option value="comprehensive">全面</option>
+            </select>
+          </div>
+          
+          <div class="property-group" v-if="selectedNode.type === 'scene-generator'">
+            <label>场景风格</label>
+            <select class="property-input" @change="updateNodeConfig('style', $event.target.value)">
+              <option value="anime">动漫风格</option>
+              <option value="realistic">写实风格</option>
+              <option value="cartoon">卡通风格</option>
+            </select>
+          </div>
+          
+          <div class="property-actions">
+            <button class="btn btn-small btn-danger" @click="removeNode(selectedNode.id)">
+              删除节点
+            </button>
+          </div>
         </div>
       </div>
       </template>
@@ -327,11 +410,14 @@ const navigationStore = useNavigationStore();
 
 // Reactive data
 const selectedWorkflowId = ref('');
+const selectedNodeId = ref('');
 const validationResult = ref(null);
 const currentExecutionId = ref(null);
 const executionResults = ref(null);
 const showResultsPanel = ref(false);
 const dropdownOpen = ref(false);
+const showNodeEditor = ref(false);
+const editingNode = ref(null);
 
 // 输入对话框状态
 const inputDialogVisible = ref(false);
@@ -687,6 +773,26 @@ const isExecuting = computed(() => workflowStore.isExecuting);
 const executionProgress = computed(() => workflowStore.executionProgress);
 const executionMessage = computed(() => workflowStore.executionMessage);
 
+// 选中的节点
+const selectedNode = computed(() => {
+  if (!selectedNodeId.value || !currentWorkflowNodes.value) return null;
+  return currentWorkflowNodes.value.find(n => n.id === selectedNodeId.value);
+});
+
+// 更新选中节点名称
+function updateSelectedNodeName(newName) {
+  if (selectedNodeId.value && newName) {
+    workflowStore.updateNodeName(selectedNodeId.value, newName);
+  }
+}
+
+// 更新节点配置
+function updateNodeConfig(key, value) {
+  if (selectedNodeId.value) {
+    workflowStore.updateNodeConfig(selectedNodeId.value, { [key]: value });
+  }
+}
+
 // Node types configuration
 const nodeTypes = {
   'novel-parser': {
@@ -1015,7 +1121,39 @@ function dropNode(event) {
 function removeNode(nodeId) {
   if (confirm('确定要删除这个节点吗？')) {
     workflowStore.removeNode(nodeId);
+    if (selectedNodeId.value === nodeId) {
+      selectedNodeId.value = '';
+    }
   }
+}
+
+// 选择节点
+function selectNode(node) {
+  selectedNodeId.value = node.id;
+}
+
+// 编辑节点
+function editNode(node) {
+  selectedNodeId.value = node.id;
+  editingNode.value = node;
+  
+  // 使用输入对话框编辑节点名称
+  inputDialogTitle.value = '编辑节点';
+  inputDialogMessage.value = `节点类型: ${getNodeTitle(node.type)}`;
+  inputDialogPlaceholder.value = '请输入节点名称';
+  inputDialogDefaultValue.value = node.name;
+  inputDialogCallback.value = (newName) => {
+    if (newName && newName !== node.name) {
+      workflowStore.updateNodeName(node.id, newName);
+      uiStore.addNotification({
+        type: 'success',
+        title: '节点已更新',
+        message: `节点名称已改为 "${newName}"`,
+        timeout: 2000
+      });
+    }
+  };
+  inputDialogVisible.value = true;
 }
 
 function startDragNode(event, node) {
@@ -1507,12 +1645,17 @@ function getConnectionY2(connection) {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   position: relative;
-  overflow: hidden;
+  overflow: auto; /* 改为auto支持滚动 */
 }
 
 .canvas-grid {
-  width: 100%;
-  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  width: max-content; /* 根据内容自动扩展 */
+  height: max-content;
+  padding: 20px;
+  padding-right: 100px; /* 右侧留白 */
+  padding-bottom: 100px; /* 底部留白 */
   position: relative;
   background-image: 
     radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
@@ -1527,6 +1670,16 @@ function getConnectionY2(connection) {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: move;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.workflow-node:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.workflow-node.node-selected {
+  border-color: rgba(100, 160, 200, 0.6);
+  box-shadow: 0 0 0 2px rgba(100, 160, 200, 0.3);
 }
 
 .node-header {
@@ -1535,16 +1688,41 @@ function getConnectionY2(connection) {
   padding: 0.5rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px 8px 0 0;
+  gap: 4px;
 }
 
 .node-icon {
-  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .node-title {
   flex: 1;
   font-size: 0.75rem;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-edit {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
+  opacity: 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.workflow-node:hover .node-edit {
+  opacity: 0.7;
+}
+
+.node-edit:hover {
+  opacity: 1 !important;
+  background: rgba(100, 160, 200, 0.3);
 }
 
 .node-remove {
@@ -1553,12 +1731,33 @@ function getConnectionY2(connection) {
   color: white;
   cursor: pointer;
   font-size: 1rem;
+  opacity: 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.workflow-node:hover .node-remove {
   opacity: 0.7;
 }
 
 .node-remove:hover {
-  opacity: 1;
-  color: #ff4444;
+  opacity: 1 !important;
+  background: rgba(200, 100, 100, 0.3);
+  color: #ff6666;
+}
+
+.node-config-preview {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.config-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .node-content {
@@ -1888,5 +2087,132 @@ function getConnectionY2(connection) {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* 节点属性面板 */
+.node-properties-panel {
+  width: 220px;
+  min-width: 220px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.properties-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.properties-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a4a4c;
+}
+
+.properties-header .close-btn {
+  background: none;
+  border: none;
+  color: #8a8a8a;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.properties-header .close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #4a4a4a;
+}
+
+.properties-content {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.property-group {
+  margin-bottom: 14px;
+}
+
+.property-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.property-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2c2e;
+  box-sizing: border-box;
+}
+
+.property-input:focus {
+  outline: none;
+  border-color: rgba(100, 160, 200, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.property-value {
+  font-size: 12px;
+  color: #4a4a4c;
+  padding: 6px 0;
+}
+
+.property-row {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #4a4a4c;
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-tag.status-idle {
+  background: rgba(150, 150, 150, 0.2);
+  color: #6a6a6a;
+}
+
+.status-tag.status-running {
+  background: rgba(52, 152, 219, 0.2);
+  color: #2980b9;
+}
+
+.status-tag.status-completed {
+  background: rgba(39, 174, 96, 0.2);
+  color: #27ae60;
+}
+
+.status-tag.status-error {
+  background: rgba(231, 76, 60, 0.2);
+  color: #c0392b;
+}
+
+.property-actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 </style>

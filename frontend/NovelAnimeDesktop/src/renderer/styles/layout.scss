@@ -1,7 +1,7 @@
 // 布局样式
 // 三栏式布局的核心样式
 
-@import './design-system.scss';
+@use './design-system.scss' as *;
 
 // ===== 主布局容器 =====
 .app-layout {
