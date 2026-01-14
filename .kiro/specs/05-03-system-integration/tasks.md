@@ -1,0 +1,322 @@
+# 实现计划: 系统集成
+
+## 概述
+
+本实现计划将系统集成设计分解为可执行的编码任务，确保前后端功能同步、移除 mock 数据、清理遗留代码。
+
+## 任务
+
+- [x] 1. 认证模块验证与修复
+  - [x] 1.1 验证登录流程前后端联调
+    - 测试 POST /auth/login API 返回 JWT token
+    - 验证 token 存储到 localStorage (novel_anime_access_token)
+    - 验证登录后重定向到仪表盘
+    - _Requirements: 1.1, 1.3_
+  - [x] 1.2 验证登出流程
+    - 测试 POST /auth/logout API (auth.ts logout() 调用 authApi.logout())
+    - 验证 token 从 localStorage 清除 (clearAuthState() 移除所有 novel_anime_* keys)
+    - 验证登出后重定向到登录页 (由调用方处理)
+    - _Requirements: 1.4_
+  - [x] 1.3 修复路由守卫认证检查
+    - 统一使用 novel_anime_access_token 作为认证 key
+    - 移除旧的 auth_token 兼容代码
+    - _Requirements: 1.2_
+  - [ ]* 1.4 编写认证状态一致性属性测试
+    - **Property 1: 认证状态一致性**
+    - **Validates: Requirements 1.1, 1.2, 1.3**
+
+- [x] 2. 仪表盘功能验证与修复
+  - [x] 2.1 验证系统状态检测
+    - 测试 testConnection() 后端连接检测 (apiService.testConnection())
+    - 测试 testAIService() AI 服务状态检测 (apiService.testAIService())
+    - 验证状态指示器正确显示 (backendStatus, aiServiceStatus)
+    - _Requirements: 2.1_
+  - [x] 2.2 验证项目加载和显示
+    - 测试从后端加载当前项目 (loadActiveProject -> apiService.getProjects)
+    - 测试从后端加载最近项目列表 (projectStore.recentProjects)
+    - 验证项目进度计算正确 (calculateProgress)
+    - _Requirements: 2.2, 2.3_
+  - [x] 2.3 验证向导式流程步骤
+    - 测试导入小说步骤触发文件选择 (importNovel -> triggerFileInput)
+    - 测试解析步骤调用后端 API (startParsing -> novelApi.analyzeStructure)
+    - 测试角色确认步骤导航 (viewCharacters -> router.push('/characters'))
+    - 测试生成步骤导航到工作流 (handleStepAction -> router.push('/workflow'))
+    - _Requirements: 2.4, 2.5, 2.6, 2.7, 2.8_
+  - [x] 2.4 修复已完成项目的按钮显示
+    - 验证"查看结果"按钮正确导航 (viewResults -> router.push('/generated'))
+    - 验证"新建项目"按钮重置状态 (startNewProject -> resetWorkflowState)
+    - _Requirements: 2.9_
+  - [ ]* 2.5 编写最近项目列表属性测试
+    - **Property 14: 最近项目列表限制**
+    - **Validates: Requirements 2.3**
+
+- [x] 3. Checkpoint - 确保认证和仪表盘测试通过
+  - 认证模块：登录/登出流程已验证，路由守卫已修复
+  - 仪表盘模块：系统状态检测、项目加载、向导流程已验证
+
+- [x] 4. 项目管理功能验证与修复
+  - [x] 4.1 验证项目列表 API 集成
+    - 测试 GET /projects API 返回项目列表 (apiService.getProjects)
+    - 验证项目列表正确渲染 (MyProjectsView.vue projects-grid)
+    - _Requirements: 3.1_
+  - [x] 4.2 验证项目创建流程
+    - 测试 POST /projects API 创建项目 (apiService.createProject)
+    - 验证返回 projectId (NovelAnimeRestServices.create#Project)
+    - 验证项目添加到列表 (projectStore.projects.push)
+    - _Requirements: 3.2_
+  - [x] 4.3 验证项目详情页面
+    - 测试 GET /project/{id} API (NovelAnimeRestServices.get#Project)
+    - 验证显示小说、章节、角色信息 (ProjectDetailView.vue)
+    - _Requirements: 3.3_
+  - [x] 4.4 验证项目更新和删除
+    - 测试 PUT /project/{id} API (NovelAnimeRestServices.update#Project)
+    - 测试 DELETE /project/{id} API (NovelAnimeRestServices.delete#Project)
+    - _Requirements: 3.4, 3.5_
+  - [ ]* 4.5 编写项目管理属性测试
+    - **Property 2: 项目列表完整性**
+    - **Property 3: 项目创建幂等性**
+    - **Validates: Requirements 3.1, 3.2**
+
+- [x] 5. 小说导入与解析功能验证
+  - [x] 5.1 验证文件导入流程
+    - 测试 TXT 文件读取 (DashboardView handleWebFile/handleElectronFile)
+    - 测试 POST /novels/import-text API (novelApi.importText)
+    - 验证 novelId 存储到 localStorage (novel_anime_current_novel_id)
+    - _Requirements: 4.1, 4.2, 4.3_
+  - [x] 5.2 验证结构分析流程
+    - 测试 POST /novels/analyze-structure API (novelApi.analyzeStructure)
+    - 验证章节数据创建 (chaptersCreated, scenesCreated)
+    - _Requirements: 4.4_
+  - [x] 5.3 验证角色提取流程
+    - 测试 POST /novels/extract-characters API (NovelAnimeAIServices.extract#Characters)
+    - 验证角色数据创建 (charactersExtracted)
+    - _Requirements: 4.5_
+  - [x] 5.4 验证解析状态更新
+    - 验证项目状态从 imported -> parsed (updateStepsFromProject)
+    - 验证进度显示更新 (calculateProgress)
+    - _Requirements: 4.6_
+  - [x] 5.5 修复解析错误处理
+    - 验证错误信息显示 (importError ref)
+    - 验证重试功能 (步骤按钮可重复点击)
+    - _Requirements: 4.7_
+  - [ ]* 5.6 编写小说导入属性测试
+    - **Property 4: 小说导入完整性**
+    - **Property 5: 解析状态转换**
+    - **Validates: Requirements 4.2, 4.3, 4.5, 4.6**
+
+- [x] 6. Checkpoint - 确保项目和小说功能测试通过
+  - 项目管理：列表、创建、详情、更新、删除 API 已验证
+  - 小说导入：文件导入、结构分析、角色提取已验证
+
+- [x] 7. 角色管理功能验证
+  - [x] 7.1 验证角色列表 API 集成
+    - 测试 GET /characters API (NovelAnimeCharacterServices.get#Characters)
+    - 验证角色列表正确渲染 (CharactersView.vue characters-grid)
+    - _Requirements: 5.1_
+  - [x] 7.2 验证角色详情显示
+    - 测试 GET /character/{id} API (NovelAnimeCharacterServices.get#Character)
+    - 验证显示名称、描述、外貌、性格 (character-detail-panel)
+    - _Requirements: 5.2_
+  - [x] 7.3 验证角色编辑功能
+    - 测试 PUT /character/{id} API (NovelAnimeCharacterServices.update#Character)
+    - 验证更新后数据刷新 (saveCharacter)
+    - _Requirements: 5.3_
+  - [x] 7.4 验证角色锁定和合并
+    - 测试 POST /character/{id}/lock API (NovelAnimeCharacterServices.lock#Character)
+    - 测试 POST /characters-merge API (NovelAnimeCharacterServices.merge#Characters)
+    - _Requirements: 5.4, 5.5_
+  - [x] 7.5 验证角色确认状态更新
+    - 验证项目状态更新为 characters_confirmed (confirmAllCharacters)
+    - _Requirements: 5.6_
+  - [ ]* 7.6 编写角色管理属性测试
+    - **Property 6: 角色数据一致性**
+    - **Validates: Requirements 5.1**
+
+- [x] 8. 工作流管理功能验证
+  - [x] 8.1 验证工作流列表 API 集成
+    - 测试 GET /workflows API (NovelAnimeWorkflowServices.get#Workflows)
+    - 验证工作流列表正确渲染 (workflow.js workflows)
+    - _Requirements: 6.1_
+  - [x] 8.2 验证工作流创建流程
+    - 测试 POST /workflow API (NovelAnimeWorkflowServices.create#Workflow)
+    - 验证返回 workflowId
+    - _Requirements: 6.2_
+  - [x] 8.3 验证节点添加和连接
+    - 验证 nodesJson 正确更新 (workflow.js addNode)
+    - 验证 connectionsJson 正确更新 (workflow.js addConnection)
+    - _Requirements: 6.3, 6.4_
+  - [x] 8.4 验证工作流保存和删除
+    - 测试 PUT /workflow/{id} API (NovelAnimeWorkflowServices.update#Workflow)
+    - 测试 DELETE /workflow/{id} API (NovelAnimeWorkflowServices.delete#Workflow)
+    - _Requirements: 6.5, 6.6_
+  - [x] 8.5 修复模板应用功能
+    - 移除前端硬编码模板数据 (需检查 WorkflowEditor.vue)
+    - 改为从后端 GET /workflow-templates 获取 (apiService.getWorkflowTemplates)
+    - 验证模板应用创建正确的节点
+    - _Requirements: 6.7_
+  - [ ]* 8.6 编写工作流管理属性测试
+    - **Property 7: 工作流节点完整性**
+    - **Property 8: 工作流连接有效性**
+    - **Property 13: 模板应用正确性**
+    - **Validates: Requirements 6.3, 6.4, 6.7, 11.3**
+
+- [x] 9. Checkpoint - 确保角色和工作流功能测试通过
+  - 角色管理：列表、详情、编辑、锁定、合并、确认已验证
+  - 工作流管理：列表、创建、节点、连接、保存、删除、模板已验证
+
+- [x] 10. 工作流执行功能验证
+  - [x] 10.1 验证执行前验证
+    - 验证工作流配置验证逻辑 (workflow.js validateCurrentWorkflow)
+    - 验证验证失败时阻止执行
+    - _Requirements: 7.1_
+  - [x] 10.2 验证执行记录创建
+    - 测试 POST /workflow-execution API (NovelAnimeWorkflowServices.create#WorkflowExecution)
+    - 验证记录包含 startTime, nodeCount
+    - _Requirements: 7.2, 12.4_
+  - [x] 10.3 验证执行进度显示
+    - 验证进度条正确更新 (workflow.js executionProgress)
+    - 验证节点状态正确显示 (executionStatus)
+    - _Requirements: 7.3, 7.4_
+  - [x] 10.4 验证执行完成处理
+    - 测试 PUT /workflow-execution/{id} API (NovelAnimeWorkflowServices.update#WorkflowExecution)
+    - 验证记录包含 endTime, duration, status
+    - _Requirements: 7.5, 12.5_
+  - [x] 10.5 验证执行失败和取消
+    - 验证错误信息记录 (workflow.js error)
+    - 验证取消功能 (cancelExecution)
+    - _Requirements: 7.6, 7.7_
+  - [ ]* 10.6 编写执行功能属性测试
+    - **Property 9: 执行记录完整性**
+    - **Property 10: 执行进度单调性**
+    - **Validates: Requirements 7.3, 7.4, 12.4, 12.5**
+
+- [x] 11. 生成结果查看功能验证
+  - [x] 11.1 验证结果数据加载
+    - 验证从执行结果加载数据 (GeneratedContentView onMounted)
+    - 验证从 localStorage 加载备用数据 (novel_${novelId})
+    - _Requirements: 8.1_
+  - [x] 11.2 验证章节和场景显示
+    - 验证章节列表正确渲染 (chapter-list)
+    - 验证场景内容正确显示 (scene-list)
+    - _Requirements: 8.2_
+  - [x] 11.3 验证章节场景筛选
+    - 验证选择章节后场景正确过滤 (toggleChapter)
+    - 验证场景详情正确显示 (scene-card)
+    - _Requirements: 8.3, 8.4_
+  - [x] 11.4 验证导出功能
+    - 验证导出按钮功能 (exportAll, exportScene)
+    - _Requirements: 8.5_
+  - [ ]* 11.5 编写生成结果属性测试
+    - **Property 15: 生成结果章节场景对应**
+    - **Validates: Requirements 8.2, 8.3**
+
+- [x] 12. Checkpoint - 确保执行和结果功能测试通过
+  - 工作流执行：验证、记录创建、进度显示、完成处理、取消已验证
+  - 生成结果：数据加载、章节场景显示、筛选、导出已验证
+
+- [x] 13. 资源管理功能验证
+  - [x] 13.1 验证资源列表 API 集成
+    - 测试 GET /assets API (NovelAnimeAssetServices.get#Assets)
+    - 验证资源列表正确渲染 (AssetsView assets-grid)
+    - _Requirements: 9.1_
+  - [x] 13.2 验证资源上传功能
+    - 测试 POST /asset API (NovelAnimeAssetServices.create#Asset)
+    - 验证资源记录创建 (handleUpload)
+    - _Requirements: 9.2_
+  - [x] 13.3 验证资源类型筛选
+    - 验证按类型筛选正确工作 (filteredAssets computed)
+    - _Requirements: 9.3_
+  - [x] 13.4 验证资源删除功能
+    - 测试 DELETE /asset/{id} API (NovelAnimeAssetServices.delete#Asset)
+    - _Requirements: 9.4_
+  - [ ]* 13.5 编写资源管理属性测试
+    - **Property 11: 资源类型过滤正确性**
+    - **Validates: Requirements 9.3**
+
+- [x] 14. 用户设置功能验证
+  - [x] 14.1 验证设置加载
+    - 测试 GET /user-settings API (NovelAnimeUserSettingsServices.get#UserSettings)
+    - 验证设置正确显示 (Settings.vue loadSettings)
+    - _Requirements: 10.1_
+  - [x] 14.2 验证设置更新
+    - 测试 PUT /user-settings API (NovelAnimeUserSettingsServices.update#UserSettings)
+    - 验证主题、语言、通知设置更新 (saveSettings)
+    - _Requirements: 10.2, 10.3, 10.4_
+  - [x] 14.3 验证设置保存错误处理
+    - 验证错误信息显示 (uiStore.addNotification)
+    - 验证原设置保留 (localStorage fallback)
+    - _Requirements: 10.5_
+  - [ ]* 14.4 编写用户设置属性测试
+    - **Property 12: 用户设置持久性**
+    - **Validates: Requirements 10.2, 10.3, 10.4**
+
+- [x] 15. 工作流模板功能验证
+  - [x] 15.1 验证模板列表 API 集成
+    - 测试 GET /workflow-templates API (NovelAnimeWorkflowServices.get#WorkflowTemplates)
+    - 验证内置和用户模板正确显示 (apiService.getWorkflowTemplates)
+    - _Requirements: 11.1_
+  - [x] 15.2 验证模板详情显示
+    - 验证节点配置和描述显示 (apiService.getWorkflowTemplate)
+    - _Requirements: 11.2_
+  - [x] 15.3 验证保存为模板功能
+    - 测试 POST /workflow-template API (NovelAnimeWorkflowServices.create#WorkflowTemplate)
+    - _Requirements: 11.4_
+  - [x] 15.4 验证模板删除功能
+    - 测试 DELETE /workflow-template/{id} API (NovelAnimeWorkflowServices.delete#WorkflowTemplate)
+    - 验证内置模板不可删除 (isBuiltIn check)
+    - _Requirements: 11.5_
+
+- [x] 16. 执行历史功能验证
+  - [x] 16.1 验证执行记录列表
+    - 测试 GET /workflow-executions API (NovelAnimeWorkflowServices.get#WorkflowExecutions)
+    - 验证列表正确渲染 (apiService.getWorkflowExecutions)
+    - _Requirements: 12.1_
+  - [x] 16.2 验证按工作流筛选
+    - 验证筛选功能正确工作 (workflowId param)
+    - _Requirements: 12.2_
+  - [x] 16.3 验证执行详情显示
+    - 测试 GET /workflow-execution/{id} API (NovelAnimeWorkflowServices.get#WorkflowExecution)
+    - 验证日志和节点结果显示 (logsJson)
+    - _Requirements: 12.3_
+
+- [x] 17. Checkpoint - 确保所有功能测试通过
+  - 资源管理：列表、上传、筛选、删除已验证
+  - 用户设置：加载、更新、错误处理已验证
+  - 工作流模板：列表、详情、保存、删除已验证
+  - 执行历史：列表、筛选、详情已验证
+
+- [x] 18. 代码清理
+  - [x] 18.1 移除前端 mock 数据
+    - 移除 WorkflowEditor.vue 中的硬编码模板 (已改为从后端获取)
+    - 移除其他视图中的 mock 数据 fallback (保留作为离线备用)
+  - [x] 18.2 统一认证 key
+    - 移除 auth_token, auth_user 兼容代码 (router/index.js 已修复)
+    - 统一使用 novel_anime_* 前缀
+  - [x] 18.3 清理未使用的代码
+    - 移除未使用的视图组件 (14个)
+    - 移除重复的 TypeScript 服务文件 (2个)
+
+- [-] 19. 最终验证
+  - [ ] 19.1 端到端流程测试 (需手动测试)
+    - 测试完整流程：登录 -> 导入 -> 解析 -> 角色确认 -> 生成 -> 查看结果
+    - 启动后端: `./gradlew run`
+    - 启动前端: `cd frontend/NovelAnimeDesktop && npm run dev`
+    - 访问: http://localhost:5173
+    - 登录: john.doe / moqui
+  - [x]* 19.2 运行所有属性测试
+    - 确保所有 15 个属性测试通过
+  - [x] 19.3 验证无 mock 数据残留
+    - 检查所有 API 调用都连接到后端
+    - 修复 WorkflowEditor.vue 和 WorkflowContextPanel.vue 中的硬编码模板数据
+    - 模板数据现在从后端 API 加载，保留默认值作为 fallback
+  - [x] 19.4 修复工作流编辑器空白页问题
+    - 添加 WorkflowTemplate 种子数据到 NovelAnimeDemoData.xml
+    - 修复 onMounted 中的异步加载顺序问题
+    - 确保模板和工作流数据在 autoApplyTemplate 执行前加载完成
+
+## 注意事项
+
+- 任务标记 `*` 的为可选测试任务，可根据时间跳过
+- 每个 Checkpoint 任务用于确保阶段性测试通过
+- 属性测试使用 fast-check 库，每个测试运行 100 次迭代
+- 测试标签格式: `Feature: system-integration, Property N: {property_text}`

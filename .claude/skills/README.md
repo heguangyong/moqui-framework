@@ -1,80 +1,72 @@
 # Claude Skills for Moqui Project
 
-This directory contains various skills to assist with Moqui development.
+⚠️ **重要通知**: 本目录下的技术规范文档已迁移到 `.kiro/steering/` 目录下，以建立统一的项目级技术标准体系。
 
-## Available Skills
+## 文档迁移说明
 
-### 🔧 moqui/
-- **Description**: Moqui Framework & 智能供需平台开发 - 完整官方文档 + 项目实践
-- **Version**: v3.0 (2025-11-02 更新) 🎉 **MAJOR UPDATE**
-- **Source**:
-  - ✅ **Complete Moqui.org documentation** (73页完整官网文档)
-  - ✅ **Local project documentation** from `/Users/demo/Workspace/moqui/docs/`
-- **Coverage**:
-  - 🚀 **Getting Started** (10页): 入门指南、IDE设置、部署
-  - 🏗️ **Framework Core** (50页): 数据、服务、UI、集成、工具
-  - 📱 **Applications** (13页): 应用构建、业务构件、ERP
-  - 🏢 **Local Project**: 智能供需平台完整实现
-- **Features**:
-  - Moqui Framework 完整生态系统
-  - Entity Facade 数据建模
-  - Service Implementation 服务实现
-  - XML Screen 用户界面
-  - Apache Camel 企业集成
-  - Docker Multi-instance 部署
-  - Performance & Security 性能安全
-  - 智能供需平台开发
-  - Telegram Bot + AI集成
-  - JWT认证 + Vue3+Quasar2
-  - MCP调试工具链
-- **Files**:
-  - `SKILL.md` - 主技能文档 (30.6KB) ⭐**ENHANCED**
-  - `moqui_complete.zip` - 完整技能包 (156.3KB) 🆕**NEW**
-  - `moqui.zip` - 基础技能包 (6.0KB)
-  - `references/` - 详细参考文档:
-    - `getting_started.md` - 入门指南 (139KB)
-    - `framework.md` - 框架核心 (340KB) 📈**MASSIVE**
-    - `applications.md` - 应用构件 (18KB)
-    - `local_project.md` - 本地项目 (4.5KB)
-    - `index.md` - 文档导航 (1.8KB)
+### 已迁移的文档
 
-## Usage
+- **moqui/SKILL.md** → **`.kiro/steering/moqui-framework-guide.md`**
+  - 完整的 Moqui Framework 开发指南
+  - 基于73页官方文档 + 智能供需平台项目实践
+  - 包含实体驱动开发、服务实现、屏幕定义等核心模式
 
-### Local Development
-- Reference the skill files directly for development guidance
-- Use `references/` for detailed API documentation
-- Check `SKILL.md` for quick patterns and examples
+- **quasar/SKILL.md** → **`.kiro/steering/quasar-framework-guide.md`**
+  - 完整的 Quasar Vue.js 框架开发指南
+  - 跨平台应用开发（Web、移动端、桌面端）
+  - 包含组件使用、响应式设计、状态管理等
 
-### Claude Integration
-- Upload `moqui.zip` to https://claude.ai/skills
-- Claude will use this knowledge for Moqui-related questions
-
-## Adding New Skills
-
-To add new skills to this project:
-
-1. Create a new directory: `.claude/skills/{skill-name}/`
-2. Add the skill files (SKILL.md, references/, etc.)
-3. Update this README.md with the new skill information
-4. Consider creating a packaged .zip file for Claude upload
-
-## File Structure
+### 新的文档架构
 
 ```
-.claude/skills/
-├── README.md              # This file
-├── moqui/                 # Moqui Framework skill
-│   ├── SKILL.md          # Main skill file
-│   ├── SKILL.md.backup   # Backup version
-│   ├── moqui.zip         # Packaged for upload
-│   └── references/       # Detailed documentation
-│       ├── index.md
-│       └── other.md
-└── {future-skills}/      # Additional skills can be added here
+.kiro/steering/
+├── project-overview.md           # 项目概览（技术栈、结构、命令）
+├── moqui-framework-guide.md      # Moqui框架完整开发指南
+├── quasar-framework-guide.md     # Quasar框架开发指南
+├── moqui-standards.md            # Moqui开发标准和最佳实践
+├── development-principles.md     # 开发实施原则
+├── design-principles.md          # 设计原则
+└── document-management-principles.md  # 文档管理原则
 ```
 
-## Maintenance
+## 迁移的优势
 
-- Skills should be updated when framework documentation changes
-- Consider versioning skills if major framework updates occur
-- Keep skill descriptions up to date in this README
+1. **统一权威性**: 所有技术标准现在都在 steering 目录下，具有项目级权威性
+2. **避免重复**: 整合了重复的内容，消除了文档冗余
+3. **更好的组织**: 按照功能和用途进行了更清晰的分类
+4. **易于维护**: 集中管理，便于更新和维护
+
+## 如何使用新的文档
+
+### 本地开发参考
+- 查看 `.kiro/steering/project-overview.md` 了解项目整体情况
+- 参考 `.kiro/steering/moqui-framework-guide.md` 进行 Moqui 开发
+- 参考 `.kiro/steering/quasar-framework-guide.md` 进行前端开发
+- 遵循 `.kiro/steering/moqui-standards.md` 中的开发标准
+
+### Claude 集成
+如需要为 Claude 创建技能包，请从新的 steering 目录中提取相关内容。
+
+---
+
+## 原有内容（已废弃）
+
+### 🔧 moqui/ ❌ 已迁移
+- **新位置**: `.kiro/steering/moqui-framework-guide.md`
+- **描述**: Moqui Framework & 智能供需平台开发 - 完整官方文档 + 项目实践
+
+### 🎨 quasar/ ❌ 已迁移  
+- **新位置**: `.kiro/steering/quasar-framework-guide.md`
+- **描述**: Quasar Vue.js 框架开发指南
+
+## 维护说明
+
+- 本目录将保留用于记录迁移历史
+- 新的技术文档应该在 `.kiro/steering/` 目录下创建和维护
+- 如需要创建新的 Claude 技能，请基于 steering 目录下的最新文档
+
+---
+
+**迁移完成日期**: 2025年1月13日  
+**迁移原因**: 建立统一的项目级技术标准体系  
+**新文档位置**: `.kiro/steering/`
