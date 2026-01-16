@@ -158,15 +158,15 @@ function handleRecharge() {
   font-weight: 600;
 
   &.required {
-    color: #667eea;
+    color: #7a9188;
   }
 
   &.current {
-    color: #f44336;
+    color: #e53e3e;
   }
 
   &.shortage {
-    color: #ff9800;
+    color: #d69e2e;
   }
 }
 
@@ -193,20 +193,20 @@ function handleRecharge() {
   transition: all 0.2s;
 
   &--secondary {
-    background: #f5f5f5;
-    color: #666;
+    background-color: #c8c8c8;
+    color: #2c2c2e;
 
     &:hover {
-      background: #eee;
+      background-color: #d8d8d8;
     }
   }
 
   &--primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
+    background-color: #7a9188;
+    color: #ffffff;
 
     &:hover {
-      opacity: 0.9;
+      background-color: #6a8178;
     }
   }
 }

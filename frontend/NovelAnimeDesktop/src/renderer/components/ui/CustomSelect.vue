@@ -154,7 +154,7 @@ onUnmounted(() => {
 }
 
 .custom-select__option--selected {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(190, 199, 195, 0.45);
   font-weight: 500;
 }
 </style>

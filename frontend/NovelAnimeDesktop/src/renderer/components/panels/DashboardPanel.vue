@@ -2,7 +2,10 @@
   <div class="dashboard-panel">
     <!-- 项目分组 -->
     <div class="section">
-      <div class="section-title">项目</div>
+      <div class="section-header">
+        <div class="section-title">项目</div>
+        <span class="add-btn" @click="handleCreateProject">+</span>
+      </div>
       <div class="section-items">
         <div 
           class="section-item"
@@ -10,7 +13,7 @@
           @click="handleProjectClick('dashboard')"
         >
           <component :is="icons.grid" :size="16" />
-          <span>仪表盘</span>
+          <span>概览</span>
         </div>
         <div 
           class="section-item"
@@ -18,74 +21,56 @@
           @click="handleProjectClick('library')"
         >
           <component :is="icons.book" :size="16" />
-          <span>我的项目</span>
-          <span v-if="projectCounts.my > 0" class="item-badge">{{ projectCounts.my }}</span>
-        </div>
-        <div 
-          class="section-item"
-          :class="{ 'section-item--active': activeView === 'project-shared' }"
-          @click="handleProjectClick('shared')"
-        >
-          <component :is="icons.share" :size="16" />
-          <span>共享项目</span>
-          <span v-if="projectCounts.shared > 0" class="item-badge">{{ projectCounts.shared }}</span>
+          <span>全部项目</span>
+          <span v-if="projectCounts.total > 0" class="item-badge">{{ projectCounts.total }}</span>
         </div>
       </div>
     </div>
     
-    <!-- 状态分组 -->
+    <!-- 任务状态分组 -->
     <div class="section">
-      <div class="section-title">状态</div>
+      <div class="section-title">任务</div>
       <div class="section-items">
-        <div 
-          class="section-item"
-          :class="{ 'section-item--active': activeView === 'status-new' }"
-          @click="handleStatusClick('new')"
-        >
-          <component :is="icons.circle" :size="16" />
-          <span>新建</span>
-          <span v-if="taskCounts.new > 0" class="item-badge">{{ taskCounts.new }}</span>
-        </div>
         <div 
           class="section-item"
           :class="{ 'section-item--active': activeView === 'status-running' }"
           @click="handleStatusClick('running')"
         >
           <component :is="icons.refresh" :size="16" />
-          <span>处理中</span>
+          <span>进行中</span>
           <span v-if="taskCounts.running > 0" class="item-badge item-badge--highlight">{{ taskCounts.running }}</span>
         </div>
         <div 
           class="section-item"
-          :class="{ 'section-item--active': activeView === 'status-review' }"
-          @click="handleStatusClick('review')"
+          :class="{ 'section-item--active': activeView === 'status-completed' }"
+          @click="handleStatusClick('completed')"
         >
-          <component :is="icons.users" :size="16" />
-          <span>待审核</span>
-          <span v-if="taskCounts.review > 0" class="item-badge">{{ taskCounts.review }}</span>
+          <component :is="icons.check" :size="16" />
+          <span>已完成</span>
+          <span v-if="taskCounts.completed > 0" class="item-badge">{{ taskCounts.completed }}</span>
         </div>
       </div>
     </div>
     
-    <!-- 历史分组 -->
-    <div class="section section--history">
-      <div class="section-title">历史</div>
+    <!-- 快捷入口分组 -->
+    <div class="section section--shortcuts">
+      <div class="section-title">快捷入口</div>
       <div class="section-items">
         <div 
           class="section-item"
-          :class="{ 'section-item--active': activeView === 'history-recent' }"
-          @click="handleHistoryClick('recent')"
+          :class="{ 'section-item--active': activeView === 'shortcut-recent' }"
+          @click="handleShortcutClick('recent')"
         >
           <component :is="icons.clock" :size="16" />
-          <span>最近编辑</span>
+          <span>最近打开</span>
         </div>
         <div 
           class="section-item"
-          :class="{ 'section-item--active': activeView === 'history-archive' }"
-          @click="handleHistoryClick('archive')"
+          :class="{ 'section-item--active': activeView === 'shortcut-favorites' }"
+          @click="handleShortcutClick('favorites')"
         >
-          <component :is="icons.archive" :size="16" />
-          <span>归档</span>
+          <component :is="icons.star" :size="16" />
+          <span>收藏</span>
         </div>
       </div>
     </div>
@@ -109,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProjectStore } from '../../stores/project.js';
 import { useTaskStore } from '../../stores/task.js';
@@ -133,19 +118,45 @@ const activeView = ref('project-dashboard');
 const projectCounts = computed(() => projectStore.projectCounts);
 const taskCounts = computed(() => taskStore.taskCounts);
 
+// 组件挂载时加载项目数据
+onMounted(async () => {
+  console.log('📊 DashboardPanel mounted, fetching projects...');
+  await projectStore.fetchProjects();
+  console.log('📊 Projects loaded, count:', projectStore.projects.length);
+});
+
+// 创建项目
+function handleCreateProject() {
+  const name = prompt('请输入项目名称:');
+  if (name && name.trim()) {
+    projectStore.createProject({ 
+      name: name.trim(),
+      description: '新建的小说动漫项目',
+      type: 'novel-to-anime'
+    }).then(project => {
+      if (project) {
+        uiStore.addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: `项目 "${name}" 已创建`,
+          timeout: 2000
+        });
+      }
+    });
+  }
+}
+
 // 项目点击处理
 function handleProjectClick(projectType) {
   console.log('🖱️ Project clicked:', projectType);
   activeView.value = `project-${projectType}`;
   
   // 更新面板上下文 - 主视图会监听这个变化
-  // 完全重置所有字段，确保不会残留之前的状态
-  // 注意: 'dashboard' 类型应该显示默认仪表盘，所以 viewType 设为 null
   const context = { 
     selectedProject: projectType === 'dashboard' ? null : projectType,
     viewType: projectType === 'dashboard' ? null : 'project',
     statusFilter: null,
-    historyType: null
+    shortcutType: null
   };
   console.log('📤 Updating panelContext:', context);
   navigationStore.updatePanelContext('dashboard', context);
@@ -161,22 +172,23 @@ function handleStatusClick(statusType) {
   const context = { 
     statusFilter: statusType,
     viewType: 'status',
-    selectedProject: null
+    selectedProject: null,
+    shortcutType: null
   };
   console.log('📤 Updating panelContext:', context);
   navigationStore.updatePanelContext('dashboard', context);
   console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
 }
 
-// 历史记录点击处理
-function handleHistoryClick(historyType) {
-  console.log('🖱️ History clicked:', historyType);
-  activeView.value = `history-${historyType}`;
+// 快捷入口点击处理
+function handleShortcutClick(shortcutType) {
+  console.log('🖱️ Shortcut clicked:', shortcutType);
+  activeView.value = `shortcut-${shortcutType}`;
   
   // 更新面板上下文 - 主视图会监听这个变化
   const context = { 
-    historyType: historyType,
-    viewType: 'history',
+    shortcutType: shortcutType,
+    viewType: 'shortcut',
     selectedProject: null,
     statusFilter: null
   };
@@ -290,7 +302,7 @@ function handleDocumentDelete(node) {
   display: none;
 }
 
-.section--history {
+.section--shortcuts {
   flex-shrink: 0;
 }
 
@@ -375,7 +387,7 @@ function handleDocumentDelete(node) {
 }
 
 .section-item--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 210, 0.45);
   backdrop-filter: blur(10px);
   color: #2c2c2e;
   position: relative;
@@ -393,7 +405,7 @@ function handleDocumentDelete(node) {
   top: 3px;
   bottom: 3px;
   width: 5px;
-  background: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  background: #a1a1a1;
   border-radius: 3px;
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.15),

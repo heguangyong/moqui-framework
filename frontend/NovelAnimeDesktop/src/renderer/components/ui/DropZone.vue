@@ -257,7 +257,7 @@ function formatSize(bytes) {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  background: rgba(165, 174, 171, 0.85);
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -268,7 +268,7 @@ function formatSize(bytes) {
 }
 
 .browse-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
+  background: rgba(145, 154, 151, 0.9);
   transform: translateY(-1px);
 }
 

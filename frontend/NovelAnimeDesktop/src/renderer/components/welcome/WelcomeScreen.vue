@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
+import { apiService } from '../../services/index.ts';
 
 interface RecentProject {
   id: string;
@@ -166,22 +167,24 @@ const formatDate = (date: Date): string => {
   return date.toLocaleDateString('zh-CN');
 };
 
-const loadRecentProjects = () => {
-  // 模拟加载最近项目
-  recentProjects.value = [
-    {
-      id: '1',
-      name: '三体动画项目',
-      path: '/Users/demo/Projects/三体动画',
-      lastOpened: new Date(Date.now() - 1000 * 60 * 60 * 24) // 1天前
-    },
-    {
-      id: '2',
-      name: '流浪地球短片',
-      path: '/Users/demo/Projects/流浪地球',
-      lastOpened: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3) // 3天前
+const loadRecentProjects = async () => {
+  // 从后端 API 加载最近项目
+  try {
+    const result = await apiService.getProjects();
+    if (result.success && result.projects && result.projects.length > 0) {
+      recentProjects.value = result.projects.slice(0, 5).map((p: any) => ({
+        id: p.projectId || p.id,
+        name: p.name || '未命名项目',
+        path: `/projects/${p.projectId || p.id}`,
+        lastOpened: p.lastUpdated ? new Date(p.lastUpdated) : new Date(p.createdDate || Date.now())
+      }));
+    } else {
+      recentProjects.value = [];
     }
-  ];
+  } catch (error) {
+    console.warn('Failed to load recent projects:', error);
+    recentProjects.value = [];
+  }
 };
 
 // Lifecycle
@@ -194,7 +197,7 @@ onMounted(() => {
 .welcome-screen {
   height: 100%;
   overflow-y: auto;
-  background: linear-gradient(135deg, #8a8a8a 0%, #a0b0aa 100%);
+  background: #959da2;
   color: white;
 }
 
@@ -213,10 +216,7 @@ onMounted(() => {
   font-size: 3rem;
   font-weight: 700;
   margin: 20px 0 10px;
-  background: linear-gradient(45deg, #fff, #f0f0f0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .welcome-subtitle {

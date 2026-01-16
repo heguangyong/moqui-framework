@@ -528,7 +528,7 @@ function formatWordCount(count) {
 }
 
 .step--active .step-number {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  background: rgba(165, 174, 171, 0.85);
   color: #fff;
 }
 
@@ -616,7 +616,7 @@ function formatWordCount(count) {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
+  background: #959da2;
   transition: width 0.3s ease;
 }
 
@@ -676,6 +676,19 @@ function formatWordCount(count) {
   color: #6a6a6a;
 }
 
+.chapter-number {
+  width: 24px;
+  height: 24px;
+  background: rgba(165, 174, 171, 0.85);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .stat-label {
   font-size: 12px;
   color: #6c6c6e;
@@ -707,19 +720,6 @@ function formatWordCount(count) {
 
 .chapter-item:last-child {
   border-bottom: none;
-}
-
-.chapter-number {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .chapter-title {
@@ -807,11 +807,11 @@ function formatWordCount(count) {
 }
 
 .btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  background: rgba(165, 174, 171, 0.85);
   color: #fff;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.95), rgba(160, 178, 172, 0.85));
+  background: rgba(145, 154, 151, 0.9);
 }
 </style>

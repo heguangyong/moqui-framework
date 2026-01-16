@@ -283,7 +283,7 @@ async function save() {
 
 .profile-edit-dialog {
   width: 420px;
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8);
+  background: #b0b0b0;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -368,7 +368,7 @@ async function save() {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: linear-gradient(135deg, #8a8a8a, #a0b0aa);
+    background: #959da2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -530,12 +530,12 @@ async function save() {
   }
 
   &--primary {
-    background: linear-gradient(180deg, #4a4a4a, #3a3a3a);
+    background: #424242;
     color: #e8e8e8;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 
     &:hover:not(:disabled) {
-      background: linear-gradient(180deg, #5a5a5a, #4a4a4a);
+      background: #525252;
     }
   }
 }

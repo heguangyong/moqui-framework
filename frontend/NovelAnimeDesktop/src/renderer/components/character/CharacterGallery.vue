@@ -551,7 +551,7 @@ onMounted(() => {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  background: #3498db;
+  background-color: #7a9188;
   color: white;
   font-size: 12px;
   font-weight: 500;
@@ -560,11 +560,11 @@ onMounted(() => {
 }
 
 .extract-btn:hover:not(:disabled) {
-  background: #2980b9;
+  background-color: #6a8178;
 }
 
 .extract-btn:disabled {
-  background: #bdc3c7;
+  background-color: #c8c8c8;
   cursor: not-allowed;
 }
 
@@ -623,7 +623,7 @@ onMounted(() => {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3498db, #2ecc71);
+  background: #2db77a;
   color: white;
   display: flex;
   align-items: center;
@@ -726,15 +726,18 @@ onMounted(() => {
 }
 
 .edit-btn:hover {
-  background: #3498db;
+  background-color: #7a9188;
+  color: white;
 }
 
 .lock-btn:hover {
-  background: #f39c12;
+  background-color: #d69e2e;
+  color: white;
 }
 
 .delete-btn:hover:not(:disabled) {
-  background: #e74c3c;
+  background-color: #e53e3e;
+  color: white;
 }
 
 /* Modal Styles */
@@ -888,21 +891,21 @@ onMounted(() => {
 }
 
 .modal-actions .edit-btn {
-  background: #3498db;
+  background-color: #7a9188;
   color: white;
 }
 
 .modal-actions .edit-btn:hover {
-  background: #2980b9;
+  background-color: #6a8178;
 }
 
 .modal-actions .lock-btn {
-  background: #f39c12;
+  background-color: #d69e2e;
   color: white;
 }
 
 .modal-actions .lock-btn:hover {
-  background: #e67e22;
+  background-color: #b7891f;
 }
 
 /* Form Styles */
@@ -962,25 +965,25 @@ onMounted(() => {
 }
 
 .cancel-btn {
-  background: #ecf0f1;
-  color: #7f8c8d;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
 .cancel-btn:hover {
-  background: #d5dbdb;
+  background-color: #d8d8d8;
 }
 
 .save-btn {
-  background: #27ae60;
+  background-color: #7a9188;
   color: white;
 }
 
 .save-btn:hover:not(:disabled) {
-  background: #229954;
+  background-color: #6a8178;
 }
 
 .save-btn:disabled {
-  background: #bdc3c7;
+  background-color: #c8c8c8;
   cursor: not-allowed;
 }
 </style>

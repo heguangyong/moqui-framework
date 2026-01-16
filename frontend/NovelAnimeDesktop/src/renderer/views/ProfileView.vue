@@ -133,9 +133,9 @@ const lastLoginDate = computed(() => authStore.user?.lastLoginDate || new Date()
 
 const avatarGradient = computed(() => {
   const colors = [
-    'linear-gradient(135deg, #6a7a72, #8fa89e)',
-    'linear-gradient(135deg, #7a8a9a, #9ab0c0)',
-    'linear-gradient(135deg, #8a8a8a, #a0a8a4)',
+    '#7a9188',
+    '#8a9cad',
+    '#949c98',
   ];
   const index = userName.value.charCodeAt(0) % colors.length;
   return colors[index];
@@ -261,17 +261,17 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.08);
+  background-color: #c8c8c8;
   border: none;
   border-radius: 6px;
-  color: #4a4a4c;
+  color: #2c2c2e;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .change-avatar-btn:hover {
-  background: rgba(0, 0, 0, 0.12);
+  background-color: #d8d8d8;
 }
 
 .info-section {
@@ -354,18 +354,18 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #7a9188;
+  border: none;
   border-radius: 6px;
-  color: #2c2c2e;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .recharge-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background-color: #6a8178;
 }
 
 .credits-amount {

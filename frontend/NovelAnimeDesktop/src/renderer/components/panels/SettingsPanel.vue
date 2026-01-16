@@ -17,6 +17,21 @@
       </div>
     </div>
     
+    <!-- 快捷操作 -->
+    <div class="section">
+      <div class="section-title">快捷操作</div>
+      <div class="section-items">
+        <div class="section-item" @click="handleQuickAction('clear-cache')">
+          <component :is="icons.trash" :size="16" />
+          <span>清除缓存</span>
+        </div>
+        <div class="section-item" @click="handleQuickAction('export-settings')">
+          <component :is="icons.download" :size="16" />
+          <span>导出设置</span>
+        </div>
+      </div>
+    </div>
+    
     <!-- 应用信息 -->
     <div class="section section--info">
       <div class="section-title">关于</div>
@@ -36,21 +51,21 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useNavigationStore } from '../../stores/navigation.js';
+import { useUIStore } from '../../stores/ui.js';
 import { icons } from '../../utils/icons.js';
 
 const navigationStore = useNavigationStore();
+const uiStore = useUIStore();
 
 // 应用版本
 const appVersion = ref('1.0.0');
 
-// 设置分类
+// 设置分类 - 精简为核心设置项
 const categories = ref([
   { id: 'profile', name: '个人资料', icon: icons.user },
   { id: 'ai', name: 'AI服务', icon: icons.zap },
   { id: 'generation', name: '生成参数', icon: icons.settings },
-  { id: 'interface', name: '界面设置', icon: icons.eye },
-  { id: 'storage', name: '存储设置', icon: icons.folder },
-  { id: 'about', name: '关于', icon: icons.info }
+  { id: 'interface', name: '界面设置', icon: icons.eye }
 ]);
 
 // 当前激活的分类 - 从 navigationStore 获取
@@ -62,6 +77,42 @@ const activeCategory = computed(() => {
 function handleCategoryClick(category) {
   // 更新面板上下文，Settings.vue 会监听这个变化
   navigationStore.updatePanelContext('settings', { activeCategory: category.id });
+}
+
+// 快捷操作处理
+function handleQuickAction(action) {
+  switch (action) {
+    case 'clear-cache':
+      // 清除缓存
+      localStorage.removeItem('novel_anime_cache');
+      uiStore.addNotification({
+        type: 'success',
+        title: '清除成功',
+        message: '缓存已清除',
+        timeout: 2000
+      });
+      break;
+    case 'export-settings':
+      // 导出设置
+      const settings = {
+        theme: localStorage.getItem('novel_anime_theme'),
+        language: localStorage.getItem('novel_anime_language')
+      };
+      const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'novel-anime-settings.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      uiStore.addNotification({
+        type: 'success',
+        title: '导出成功',
+        message: '设置已导出',
+        timeout: 2000
+      });
+      break;
+  }
 }
 
 // 有效的分类ID列表
@@ -151,7 +202,7 @@ onMounted(() => {
 }
 
 .section-item--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 210, 0.45);
   backdrop-filter: blur(10px);
   color: #2c2c2e;
   position: relative;
@@ -162,7 +213,7 @@ onMounted(() => {
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 右侧独立标注线 - 左深右浅渐变，立体凸起 */
+/* 右侧独立标注线 - 纯色，立体凸起 */
 .section-item--active::after {
   content: '';
   position: absolute;
@@ -170,7 +221,7 @@ onMounted(() => {
   top: 3px;
   bottom: 3px;
   width: 5px;
-  background: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  background: #a1a1a1;
   border-radius: 3px;
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.15),

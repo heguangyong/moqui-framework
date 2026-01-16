@@ -91,27 +91,27 @@ const getStatusLabel = (status: string): string => {
 };
 
 const loadWorkflows = () => {
-  // 模拟加载工作流
-  workflows.value = [
-    {
-      id: '1',
-      name: '小说转视频',
-      description: '完整的小说到视频转换流程',
-      status: 'idle'
-    },
-    {
-      id: '2',
-      name: '角色分析',
-      description: '分析小说中的角色关系',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      name: '分镜生成',
-      description: '生成视频分镜头脚本',
-      status: 'running'
+  // 从 localStorage 加载工作流数据
+  try {
+    const savedWorkflows = localStorage.getItem('novel_anime_workflows');
+    if (savedWorkflows) {
+      const parsed = JSON.parse(savedWorkflows);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        workflows.value = parsed.map(w => ({
+          id: w.id,
+          name: w.name,
+          description: w.description || '工作流',
+          status: w.status || 'idle'
+        }));
+        return;
+      }
     }
-  ];
+  } catch (e) {
+    console.warn('加载工作流失败:', e);
+  }
+  
+  // 如果没有保存的工作流，显示空列表
+  workflows.value = [];
 };
 
 // Lifecycle

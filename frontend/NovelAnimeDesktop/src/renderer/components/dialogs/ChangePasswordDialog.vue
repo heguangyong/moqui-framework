@@ -275,7 +275,7 @@ async function save() {
 
 .change-password-dialog {
   width: 400px;
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8);
+  background: #b0b0b0;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -505,12 +505,12 @@ async function save() {
   }
 
   &--primary {
-    background: linear-gradient(180deg, #4a4a4a, #3a3a3a);
+    background: #424242;
     color: #e8e8e8;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 
     &:hover:not(:disabled) {
-      background: linear-gradient(180deg, #5a5a5a, #4a4a4a);
+      background: #525252;
     }
   }
 }

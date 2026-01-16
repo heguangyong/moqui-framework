@@ -1,0 +1,565 @@
+/**
+ * Responsive Layout Styles
+ * 
+ * Provides breakpoints, media queries, and responsive utilities
+ * for adapting the application to different screen sizes.
+ */
+
+// ===== Breakpoint Variables =====
+$breakpoint-xs: 0;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// ===== Media Query Mixins =====
+
+// Mobile first approach - min-width
+@mixin sm {
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (min-width: $breakpoint-xl) {
+    @content;
+  }
+}
+
+@mixin xxl {
+  @media (min-width: $breakpoint-2xl) {
+    @content;
+  }
+}
+
+// Max-width queries for specific ranges
+@mixin xs-only {
+  @media (max-width: #{$breakpoint-sm - 1px}) {
+    @content;
+  }
+}
+
+@mixin sm-only {
+  @media (min-width: $breakpoint-sm) and (max-width: #{$breakpoint-md - 1px}) {
+    @content;
+  }
+}
+
+@mixin md-only {
+  @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+@mixin lg-only {
+  @media (min-width: $breakpoint-lg) and (max-width: #{$breakpoint-xl - 1px}) {
+    @content;
+  }
+}
+
+@mixin xl-only {
+  @media (min-width: $breakpoint-xl) and (max-width: #{$breakpoint-2xl - 1px}) {
+    @content;
+  }
+}
+
+// Mobile and tablet
+@mixin mobile {
+  @media (max-width: #{$breakpoint-md - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-lg - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+// Orientation
+@mixin portrait {
+  @media (orientation: portrait) {
+    @content;
+  }
+}
+
+@mixin landscape {
+  @media (orientation: landscape) {
+    @content;
+  }
+}
+
+// ===== Responsive Container =====
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  @include sm {
+    max-width: 640px;
+  }
+
+  @include md {
+    max-width: 768px;
+  }
+
+  @include lg {
+    max-width: 1024px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  @include xl {
+    max-width: 1280px;
+  }
+
+  @include xxl {
+    max-width: 1536px;
+  }
+}
+
+// ===== Responsive Grid =====
+.grid-responsive {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+
+  @include sm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include md {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  @include lg {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @include xl {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+// ===== Responsive Spacing =====
+.spacing-responsive {
+  padding: 0.75rem;
+
+  @include sm {
+    padding: 1rem;
+  }
+
+  @include md {
+    padding: 1.5rem;
+  }
+
+  @include lg {
+    padding: 2rem;
+  }
+}
+
+// ===== Responsive Typography =====
+.text-responsive {
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  @include sm {
+    font-size: 1rem;
+  }
+
+  @include md {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  @include lg {
+    font-size: 1.25rem;
+  }
+}
+
+.heading-responsive {
+  font-size: 1.5rem;
+  line-height: 1.3;
+
+  @include sm {
+    font-size: 1.875rem;
+  }
+
+  @include md {
+    font-size: 2.25rem;
+  }
+
+  @include lg {
+    font-size: 3rem;
+  }
+}
+
+// ===== Responsive Visibility =====
+.hide-on-mobile {
+  @include mobile {
+    display: none !important;
+  }
+}
+
+.hide-on-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+.hide-on-desktop {
+  @include desktop {
+    display: none !important;
+  }
+}
+
+.show-on-mobile {
+  display: none !important;
+
+  @include mobile {
+    display: block !important;
+  }
+}
+
+.show-on-tablet {
+  display: none !important;
+
+  @include tablet {
+    display: block !important;
+  }
+}
+
+.show-on-desktop {
+  display: none !important;
+
+  @include desktop {
+    display: block !important;
+  }
+}
+
+// ===== App Layout Responsive Adjustments =====
+
+// Mobile: Stack layout vertically
+@include mobile {
+  .app-layout {
+    flex-direction: column !important;
+    padding: 8px !important;
+    gap: 8px !important;
+  }
+
+  // Hide narrow sidebar on mobile
+  .narrow-sidebar {
+    display: none !important;
+  }
+
+  // Middle panel takes full width
+  .middle-panel {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  // Menu column becomes horizontal tabs or hamburger menu
+  .menu-column {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  // Main area adjustments
+  .main-area {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  // Reduce padding in content areas
+  .workspace-content,
+  .content-area {
+    padding: 0.75rem !important;
+  }
+
+  // Stack user section vertically
+  .user-section {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 8px 12px !important;
+  }
+
+  // Smaller avatar on mobile
+  .avatar-circle {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 10px !important;
+  }
+
+  // Compact section items
+  .section-item {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+
+  // Smaller badges
+  .item-badge {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    font-size: 9px !important;
+  }
+}
+
+// Tablet: Adjust spacing and layout
+@include tablet {
+  .app-layout {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+
+  // Narrower sidebar on tablet
+  .narrow-sidebar {
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+  }
+
+  // Adjust menu column width
+  .menu-column {
+    flex: 0 0 180px !important;
+    width: 180px !important;
+    min-width: 140px !important;
+    max-width: 200px !important;
+  }
+
+  // Reduce icon sizes
+  .sidebar-icon-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .sidebar-logo svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+// Desktop: Optimal spacing
+@include desktop {
+  .app-layout {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+
+  .narrow-sidebar {
+    flex: 0 0 56px !important;
+    width: 56px !important;
+  }
+
+  .menu-column {
+    flex: 0 0 200px !important;
+    width: 200px !important;
+  }
+}
+
+// Large desktop: More spacious layout
+@include xl {
+  .app-layout {
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+
+  .menu-column {
+    flex: 0 0 220px !important;
+    width: 220px !important;
+    max-width: 260px !important;
+  }
+}
+
+// ===== Settings View Responsive =====
+@include mobile {
+  .settings-view {
+    .settings-content {
+      padding: 0.75rem !important;
+    }
+
+    .profile-card {
+      flex-direction: column !important;
+      padding: 1rem !important;
+    }
+
+    .avatar-section {
+      margin-bottom: 1rem !important;
+    }
+
+    .info-section {
+      width: 100% !important;
+    }
+
+    .setting-group {
+      margin-bottom: 1rem !important;
+    }
+
+    .settings-actions {
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+
+      button {
+        width: 100% !important;
+      }
+    }
+  }
+}
+
+@include tablet {
+  .settings-view {
+    .settings-content {
+      padding: 1.25rem !important;
+    }
+
+    .profile-card {
+      padding: 1.5rem !important;
+    }
+  }
+}
+
+// ===== Workflow Editor Responsive =====
+@include mobile {
+  .workflow-editor {
+    .toolbar {
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+
+    .node-library {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 40% !important;
+      transform: translateY(100%) !important;
+      transition: transform 0.3s ease !important;
+
+      &.is-open {
+        transform: translateY(0) !important;
+      }
+    }
+
+    .canvas-container {
+      touch-action: pan-x pan-y !important;
+    }
+  }
+}
+
+// ===== Dashboard Responsive =====
+@include mobile {
+  .dashboard-view {
+    .stats-grid {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .project-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+}
+
+@include tablet {
+  .dashboard-view {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+}
+
+@include desktop {
+  .dashboard-view {
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .project-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+  }
+}
+
+// ===== Touch-friendly Adjustments =====
+@include mobile {
+  // Larger touch targets
+  button,
+  .btn,
+  .nav-item,
+  .section-item {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  // Prevent text selection on touch
+  .sidebar,
+  .menu-column,
+  .toolbar {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  // Smooth scrolling
+  .scrollable {
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+// ===== Print Styles =====
+@media print {
+  .narrow-sidebar,
+  .menu-column,
+  .toolbar,
+  .settings-actions,
+  button {
+    display: none !important;
+  }
+
+  .app-layout {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .main-area {
+    flex: 1 !important;
+  }
+
+  .content-area {
+    overflow: visible !important;
+  }
+}

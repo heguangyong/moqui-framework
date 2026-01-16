@@ -17,9 +17,52 @@
       </div>
     </div>
     
-    <!-- 筛选 分组 -->
+    <!-- 角色分类 -->
     <div class="section">
-      <div class="section-title">筛选</div>
+      <div class="section-title">角色分类</div>
+      <div class="section-items">
+        <div 
+          class="section-item"
+          :class="{ 'section-item--active': filterRole === null }"
+          @click="setRoleFilter(null)"
+        >
+          <component :is="icons.users" :size="16" />
+          <span>全部角色</span>
+          <span class="item-badge">{{ characters.length }}</span>
+        </div>
+        <div 
+          class="section-item"
+          :class="{ 'section-item--active': filterRole === '主角' }"
+          @click="setRoleFilter('主角')"
+        >
+          <component :is="icons.star" :size="16" />
+          <span>主角</span>
+          <span v-if="roleCount('主角') > 0" class="item-badge">{{ roleCount('主角') }}</span>
+        </div>
+        <div 
+          class="section-item"
+          :class="{ 'section-item--active': filterRole === '配角' }"
+          @click="setRoleFilter('配角')"
+        >
+          <component :is="icons.user" :size="16" />
+          <span>配角</span>
+          <span v-if="roleCount('配角') > 0" class="item-badge">{{ roleCount('配角') }}</span>
+        </div>
+        <div 
+          class="section-item"
+          :class="{ 'section-item--active': filterRole === '龙套' }"
+          @click="setRoleFilter('龙套')"
+        >
+          <component :is="icons.circle" :size="16" />
+          <span>龙套</span>
+          <span v-if="roleCount('龙套') > 0" class="item-badge">{{ roleCount('龙套') }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 状态筛选 -->
+    <div class="section">
+      <div class="section-title">状态</div>
       <div class="filter-options">
         <div 
           class="filter-option"
@@ -75,6 +118,9 @@
             :class="{ 'character-lock--locked': character.locked }"
           />
         </div>
+        <div v-if="filteredCharacters.length === 0" class="empty-hint">
+          暂无角色
+        </div>
       </div>
     </div>
   </div>
@@ -102,15 +148,21 @@ function ensureCharactersPage() {
 // 状态
 const searchQuery = ref('');
 const filterLocked = ref(null);
+const filterRole = ref(null);
 const selectedCharacter = ref(null);
 
 // 角色数据 - 使用灰色系配色，ID 与 CharactersView 保持一致
 const characters = ref([
   { id: '1', name: '李明', role: '主角', color: '#6a7a72', locked: true },
   { id: '2', name: '王芳', role: '配角', color: '#7a8a9a', locked: true },
-  { id: '3', name: '张威', role: '反派', color: '#5a5a5a', locked: false },
+  { id: '3', name: '张威', role: '配角', color: '#5a5a5a', locked: false },
   { id: '4', name: '老陈', role: '龙套', color: '#9a9a9a', locked: false }
 ]);
+
+// 角色类型计数
+function roleCount(role) {
+  return characters.value.filter(c => c.role === role).length;
+}
 
 // 过滤后的角色列表
 const filteredCharacters = computed(() => {
@@ -123,6 +175,11 @@ const filteredCharacters = computed(() => {
       c.name.toLowerCase().includes(query) || 
       c.role.toLowerCase().includes(query)
     );
+  }
+  
+  // 角色类型过滤
+  if (filterRole.value !== null) {
+    result = result.filter(c => c.role === filterRole.value);
   }
   
   // 锁定状态过滤
@@ -150,6 +207,13 @@ function setFilter(locked) {
   filterLocked.value = locked;
   ensureCharactersPage();
   navigationStore.updatePanelContext('characters', { filterLocked: locked });
+}
+
+// 设置角色类型过滤
+function setRoleFilter(role) {
+  filterRole.value = role;
+  ensureCharactersPage();
+  navigationStore.updatePanelContext('characters', { filterRole: role });
 }
 
 // 角色点击处理
@@ -201,18 +265,19 @@ function handleCreateCharacter() {
   border: none;
   border-radius: 8px;
   font-size: 12px;
-  background-color: rgba(160, 160, 160, 0.3);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.search-input:hover {
+  background-color: #d0d0d0;
 }
 
 .search-input:focus {
   outline: none;
-  background-color: rgba(200, 200, 200, 0.5);
-  border: 1px solid rgba(150, 150, 150, 0.4);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .search-input::placeholder {
@@ -307,20 +372,22 @@ function handleCreateCharacter() {
 
 .filter-options {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .filter-option {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
+  gap: 3px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 10px;
   color: #6c6c6e;
   background-color: rgba(160, 160, 160, 0.3);
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .filter-option:hover {
@@ -338,6 +405,63 @@ function handleCreateCharacter() {
   gap: 4px;
 }
 
+.section-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #4a4a4c;
+  font-size: 13px;
+}
+
+.section-item:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.section-item--active {
+  background: rgba(205, 214, 210, 0.45);
+  backdrop-filter: blur(10px);
+  color: #2c2c2e;
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.section-item--active::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  top: 3px;
+  bottom: 3px;
+  width: 5px;
+  background: #a1a1a1;
+  border-radius: 3px;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.item-badge {
+  margin-left: auto;
+  padding: 2px 6px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 10px;
+  color: #6c6c6e;
+}
+
+.section-item--active .item-badge {
+  background-color: rgba(0, 0, 0, 0.15);
+  color: #4a4a4c;
+}
+
 .character-item {
   display: flex;
   align-items: center;
@@ -353,7 +477,7 @@ function handleCreateCharacter() {
 }
 
 .character-item--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 210, 0.45);
   backdrop-filter: blur(10px);
   color: #2c2c2e;
   position: relative;
@@ -364,7 +488,7 @@ function handleCreateCharacter() {
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 右侧独立标注线 - 左深右浅渐变，立体凸起 */
+/* 右侧独立标注线 - 纯色，立体凸起 */
 .character-item--active::after {
   content: '';
   position: absolute;
@@ -372,7 +496,7 @@ function handleCreateCharacter() {
   top: 3px;
   bottom: 3px;
   width: 5px;
-  background: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  background: #a1a1a1;
   border-radius: 3px;
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.15),
@@ -416,5 +540,12 @@ function handleCreateCharacter() {
 
 .character-lock--locked {
   color: #6a6a6a;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #9a9a9a;
+  padding: 8px 10px;
+  text-align: center;
 }
 </style>

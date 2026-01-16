@@ -453,7 +453,7 @@ async function restartProcessing() {
 
 .chunk-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6a8a7a, #8aaa9a);
+  background: #7a9a8a;
   border-radius: 4px;
   transition: width 0.3s ease;
 }

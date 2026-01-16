@@ -132,54 +132,294 @@ const projectName = computed(() => {
 
 // 统计数据
 const stats = ref({
-  chapters: 3,
-  scenes: 12,
-  characters: 5,
-  videos: 12
+  chapters: 0,
+  scenes: 0,
+  characters: 0,
+  videos: 0
 });
 
-// 生成的章节数据（模拟）
-const generatedChapters = ref([
-  {
-    id: 'ch1',
-    number: 1,
-    title: '初遇',
-    scenes: [
-      { id: 's1', title: '场景1: 清晨的街道', description: '主角走在清晨的街道上，阳光洒落', characters: ['主角', '路人A'] },
-      { id: 's2', title: '场景2: 咖啡店相遇', description: '在咖啡店与女主角第一次相遇', characters: ['主角', '女主角'] },
-      { id: 's3', title: '场景3: 意外的邂逅', description: '两人因为一杯咖啡而开始交谈', characters: ['主角', '女主角'] },
-      { id: 's4', title: '场景4: 告别', description: '短暂的相遇后各自离开', characters: ['主角', '女主角'] }
-    ]
-  },
-  {
-    id: 'ch2',
-    number: 2,
-    title: '重逢',
-    scenes: [
-      { id: 's5', title: '场景1: 公司大厅', description: '主角来到新公司报到', characters: ['主角', '前台'] },
-      { id: 's6', title: '场景2: 意外重逢', description: '发现女主角竟然是同事', characters: ['主角', '女主角'] },
-      { id: 's7', title: '场景3: 尴尬的午餐', description: '被安排在同一个项目组', characters: ['主角', '女主角', '组长'] },
-      { id: 's8', title: '场景4: 加班时光', description: '两人一起加班完成项目', characters: ['主角', '女主角'] }
-    ]
-  },
-  {
-    id: 'ch3',
-    number: 3,
-    title: '心动',
-    scenes: [
-      { id: 's9', title: '场景1: 雨中送伞', description: '主角在雨中为女主角撑伞', characters: ['主角', '女主角'] },
-      { id: 's10', title: '场景2: 深夜谈心', description: '两人在天台聊起各自的梦想', characters: ['主角', '女主角'] },
-      { id: 's11', title: '场景3: 心意渐明', description: '主角意识到自己的心意', characters: ['主角'] },
-      { id: 's12', title: '场景4: 表白', description: '鼓起勇气向女主角表白', characters: ['主角', '女主角'] }
-    ]
-  }
-]);
+// 生成的章节数据
+const generatedChapters = ref([]);
 
-onMounted(() => {
+onMounted(async () => {
   // 从执行结果中获取实际数据
   const result = navigationStore.workflowState.executionResult;
+  console.log('📋 Execution result:', result);
+  console.log('📋 Execution result keys:', result ? Object.keys(result) : 'null');
+  
+  // 获取项目 ID（从 store 或 localStorage）
+  let projectId = projectStore.currentProject?.id || projectStore.currentProject?.projectId;
+  if (!projectId) {
+    projectId = localStorage.getItem('novel_anime_current_project_id');
+    console.log('📦 从 localStorage 获取 projectId:', projectId);
+  }
+  
+  // 获取 novelId
+  let novelId = projectStore.currentProject?.novelId || 
+                projectStore.currentProject?.novel?.id ||
+                localStorage.getItem('novel_anime_current_novel_id');
+  console.log('📦 novelId:', novelId);
+  
+  // 首先尝试从工作流执行结果中获取数据（最新的数据）
   if (result) {
-    console.log('Execution result:', result);
+    console.log('📊 尝试从工作流执行结果中获取数据...');
+    console.log('📊 nodeResultsData:', result.nodeResultsData);
+    console.log('📊 nodeResults type:', result.nodeResults ? result.nodeResults.constructor.name : 'null');
+    
+    let chapters = [];
+    let scenes = [];
+    let characters = [];
+    let scripts = [];
+    
+    // 处理函数：从节点结果中提取数据
+    const processNodeResult = (nodeResult, nodeId) => {
+      console.log(`📦 处理节点 ${nodeId}:`, {
+        hasChapters: !!(nodeResult.chapters?.length),
+        hasScenes: !!(nodeResult.scenes?.length),
+        hasCharacters: !!(nodeResult.characters?.length),
+        hasScripts: !!(nodeResult.scripts?.length)
+      });
+      
+      if (nodeResult.chapters && nodeResult.chapters.length > 0) {
+        chapters = nodeResult.chapters;
+      }
+      if (nodeResult.scenes && nodeResult.scenes.length > 0) {
+        scenes = nodeResult.scenes;
+      }
+      if (nodeResult.characters && nodeResult.characters.length > 0) {
+        characters = nodeResult.characters;
+      }
+      if (nodeResult.scripts && nodeResult.scripts.length > 0) {
+        scripts = nodeResult.scripts;
+      }
+    };
+    
+    // 尝试从 nodeResultsData (普通对象) 获取数据
+    const nodeResultsData = result.nodeResultsData || {};
+    if (Object.keys(nodeResultsData).length > 0) {
+      console.log('📦 使用 nodeResultsData (普通对象), keys:', Object.keys(nodeResultsData));
+      Object.entries(nodeResultsData).forEach(([nodeId, nodeResult]) => {
+        processNodeResult(nodeResult, nodeId);
+      });
+    } 
+    // 如果没有 nodeResultsData，尝试使用 nodeResults (Map)
+    else if (result.nodeResults) {
+      const nodeResultsMap = result.nodeResults;
+      if (typeof nodeResultsMap.forEach === 'function') {
+        console.log('📦 使用 nodeResults (Map), size:', nodeResultsMap.size);
+        nodeResultsMap.forEach((nodeResult, nodeId) => {
+          processNodeResult(nodeResult, nodeId);
+        });
+      } else if (typeof nodeResultsMap === 'object') {
+        // 可能是从 localStorage 恢复的普通对象
+        console.log('📦 使用 nodeResults (Object), keys:', Object.keys(nodeResultsMap));
+        Object.entries(nodeResultsMap).forEach(([nodeId, nodeResult]) => {
+          processNodeResult(nodeResult, nodeId);
+        });
+      }
+    }
+    
+    console.log('📊 从执行结果获取到:', {
+      chapters: chapters.length,
+      scenes: scenes.length,
+      characters: characters.length,
+      scripts: scripts.length
+    });
+    
+    // 如果有章节数据，构建显示数据
+    if (chapters.length > 0) {
+      generatedChapters.value = chapters.map((chapter, index) => {
+        // 查找属于这个章节的场景
+        const chapterScenes = scenes.filter(s => 
+          s.chapterId === chapter.id || 
+          s.chapterId === chapter.chapterId
+        );
+        
+        // 如果章节自带场景数据，使用它；否则使用匹配的场景
+        const scenesToUse = chapter.scenes && chapter.scenes.length > 0 
+          ? chapter.scenes 
+          : chapterScenes;
+        
+        return {
+          id: chapter.id || chapter.chapterId || `ch${index + 1}`,
+          number: chapter.chapterNumber || index + 1,
+          title: chapter.title || `第${index + 1}章`,
+          scenes: scenesToUse.map((scene, sIndex) => {
+            // 构建场景标题：优先使用 title，其次使用 setting，最后使用默认格式
+            let sceneTitle = scene.title;
+            if (!sceneTitle || sceneTitle === 'Unknown' || sceneTitle.includes('未知')) {
+              // 尝试从 setting 构建标题
+              const setting = scene.setting && scene.setting !== 'Unknown' && scene.setting !== '未知场景' 
+                ? scene.setting 
+                : null;
+              if (setting) {
+                sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${setting}`;
+              } else {
+                // 尝试从内容提取简短描述
+                const contentPreview = (scene.content || scene.description || '').substring(0, 20).trim();
+                if (contentPreview) {
+                  sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${contentPreview}...`;
+                } else {
+                  sceneTitle = `场景${scene.sceneNumber || sIndex + 1}`;
+                }
+              }
+            }
+            
+            return {
+              id: scene.id || scene.sceneId || `s${sIndex + 1}`,
+              title: sceneTitle,
+              description: scene.description || scene.visualDescription || scene.content?.substring(0, 100) || '',
+              characters: scene.characters || []
+            };
+          })
+        };
+      });
+      
+      // 更新统计数据
+      stats.value = {
+        chapters: chapters.length,
+        scenes: scenes.length || chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0),
+        characters: characters.length,
+        videos: scripts.length || scenes.length
+      };
+      
+      console.log('✅ 从工作流执行结果构建了显示数据:', generatedChapters.value.length, '章');
+      return; // 成功获取数据
+    }
+  }
+  
+  // 如果执行结果没有数据，尝试从 localStorage 加载缓存的小说数据
+  if (novelId) {
+    console.log('📚 尝试从 localStorage 加载小说数据, novelId:', novelId);
+    try {
+      const cachedData = localStorage.getItem(`novel_${novelId}`);
+      if (cachedData) {
+        const novelData = JSON.parse(cachedData);
+        console.log('📚 从 localStorage 加载到小说数据:', novelData.title, '章节数:', novelData.chapters?.length);
+        
+        if (novelData.chapters && novelData.chapters.length > 0) {
+          generatedChapters.value = novelData.chapters.map((chapter, index) => ({
+            id: chapter.id || chapter.chapterId || `ch${index + 1}`,
+            number: chapter.chapterNumber || index + 1,
+            title: chapter.title || `第${index + 1}章`,
+            scenes: (chapter.scenes || []).map((scene, sIndex) => {
+              // 构建场景标题
+              let sceneTitle = scene.title;
+              if (!sceneTitle || sceneTitle === 'Unknown' || sceneTitle.includes('未知')) {
+                const setting = scene.setting && scene.setting !== 'Unknown' && scene.setting !== '未知场景' 
+                  ? scene.setting 
+                  : null;
+                if (setting) {
+                  sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${setting}`;
+                } else {
+                  const contentPreview = (scene.content || scene.description || '').substring(0, 20).trim();
+                  if (contentPreview) {
+                    sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${contentPreview}...`;
+                  } else {
+                    sceneTitle = `场景${scene.sceneNumber || sIndex + 1}`;
+                  }
+                }
+              }
+              return {
+                id: scene.id || scene.sceneId || `s${sIndex + 1}`,
+                title: sceneTitle,
+                description: scene.description || scene.visualDescription || scene.content?.substring(0, 100) || '',
+                characters: scene.characters || []
+              };
+            })
+          }));
+          
+          const totalScenes = novelData.chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0);
+          stats.value = {
+            chapters: novelData.chapters.length,
+            scenes: totalScenes,
+            characters: 0,
+            videos: totalScenes
+          };
+          
+          console.log('✅ 从 localStorage 构建了显示数据:', generatedChapters.value.length, '章');
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ 从 localStorage 加载失败:', e);
+    }
+  }
+  
+  // 最后尝试从后端 API 加载数据
+  if (projectId) {
+    try {
+      console.log('📚 尝试从后端加载项目数据, projectId:', projectId);
+      
+      const { novelApi } = await import('../services/index.ts');
+      
+      const novelsResult = await novelApi.listNovels(projectId);
+      console.log('📚 小说列表:', novelsResult);
+      
+      if (novelsResult.success && novelsResult.novels && novelsResult.novels.length > 0) {
+        const backendNovelId = novelsResult.novels[0].novelId;
+        console.log('📚 获取小说详情, novelId:', backendNovelId);
+        
+        const novelResult = await novelApi.getNovel(backendNovelId);
+        console.log('📚 小说详情:', novelResult);
+        
+        if (novelResult.success && novelResult.novel) {
+          const novel = novelResult.novel;
+          console.log('📚 从后端获取到小说数据:', novel.title, '章节数:', novel.chapters?.length);
+          
+          if (novel.chapters && novel.chapters.length > 0) {
+            generatedChapters.value = novel.chapters.map((chapter, index) => ({
+              id: chapter.chapterId || chapter.id || `ch${index + 1}`,
+              number: chapter.chapterNumber || index + 1,
+              title: chapter.title || `第${index + 1}章`,
+              scenes: (chapter.scenes || []).map((scene, sIndex) => {
+                // 构建场景标题
+                let sceneTitle = scene.title;
+                if (!sceneTitle || sceneTitle === 'Unknown' || sceneTitle.includes('未知')) {
+                  const setting = scene.setting && scene.setting !== 'Unknown' && scene.setting !== '未知场景' 
+                    ? scene.setting 
+                    : null;
+                  if (setting) {
+                    sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${setting}`;
+                  } else {
+                    const contentPreview = (scene.visualDescription || scene.content || '').substring(0, 20).trim();
+                    if (contentPreview) {
+                      sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${contentPreview}...`;
+                    } else {
+                      sceneTitle = `场景${scene.sceneNumber || sIndex + 1}`;
+                    }
+                  }
+                }
+                return {
+                  id: scene.sceneId || `s${sIndex + 1}`,
+                  title: sceneTitle,
+                  description: scene.visualDescription || scene.content?.substring(0, 100) || '',
+                  characters: []
+                };
+              })
+            }));
+            
+            const totalScenes = novel.scenes?.length || novel.chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0);
+            stats.value = {
+              chapters: novel.chapters.length,
+              scenes: totalScenes,
+              characters: 0,
+              videos: totalScenes
+            };
+            
+            console.log('✅ 从后端构建了显示数据:', generatedChapters.value.length, '章,', totalScenes, '个场景');
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load generated content from backend:', error);
+    }
+  }
+  
+  // 如果没有从任何来源获取到数据，显示空状态
+  if (generatedChapters.value.length === 0) {
+    console.log('❌ No generated content found, showing empty state');
   }
 });
 
@@ -509,49 +749,61 @@ async function finishProject() {
   color: #6c6c6e;
 }
 
-/* 按钮样式 */
+/* 按钮样式 - 统一无渐变风格 */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   height: 32px;
   padding: 0 14px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
-  background: rgba(255, 255, 255, 0.6);
-  color: #5a5a5c;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
+  white-space: nowrap;
 }
 
-.btn:hover {
-  background: rgba(255, 255, 255, 0.8);
+.btn:hover:not(:disabled) {
+  background-color: #d8d8d8;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-primary {
-  background: rgba(100, 140, 120, 0.25);
-  border-color: rgba(100, 140, 120, 0.35);
-  color: #3a5a42;
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
-.btn-primary:hover {
-  background: rgba(100, 140, 120, 0.35);
+.btn-primary:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
 .btn-secondary {
-  background: rgba(160, 160, 160, 0.15);
-  color: #6a6a6a;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
-.btn-secondary:hover {
-  background: rgba(160, 160, 160, 0.25);
+.btn-secondary:hover:not(:disabled) {
+  background-color: #d8d8d8;
 }
 
 .btn-small {
   height: 26px;
   padding: 0 10px;
   font-size: 11px;
+}
+
+.btn-large {
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
 }
 </style>

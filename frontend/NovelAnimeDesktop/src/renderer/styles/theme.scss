@@ -1,0 +1,637 @@
+/**
+ * Theme Variables and Styles
+ * 
+ * Defines CSS custom properties for light and dark themes.
+ * Requirements: 11.5
+ * 
+ * 统一的灰色系设计风格：
+ * - 主色调：#7a9188 (绿灰色)
+ * - 背景：#8a8a8a ~ #b0b0b0 (灰色系)
+ * - 文字：#2c2c2e ~ #8a8a8c (深灰到浅灰)
+ */
+
+// ============================================================================
+// Light Theme (Default) - 统一灰色系风格
+// ============================================================================
+
+:root {
+  // Primary Colors - 绿灰色系
+  --color-primary: #7a9188;
+  --color-primary-hover: #6a8178;
+  --color-primary-light: rgba(100, 140, 120, 0.15);
+  --primary-color: #7a9188;
+  --primary-color-dark: #6a8178;
+  --primary-color-light: rgba(100, 140, 120, 0.15);
+  
+  // Status Colors
+  --color-success: #5ab05e;
+  --color-warning: #d69e2e;
+  --color-error: #e53e3e;
+  --color-info: #6a8a7a;
+  --danger-color: #e53e3e;
+  
+  // Background - 灰色系
+  --bg-primary: #a5a5a5;
+  --bg-secondary: rgba(255, 255, 255, 0.3);
+  --bg-tertiary: rgba(255, 255, 255, 0.4);
+  --bg-hover: rgba(255, 255, 255, 0.5);
+  --bg-active: rgba(255, 255, 255, 0.6);
+  --bg-input: rgba(255, 255, 255, 0.4);
+  
+  // Text - 深灰到浅灰
+  --text-primary: #2c2c2e;
+  --text-secondary: #5a5a5c;
+  --text-tertiary: #7a7a7c;
+  --text-muted: #8a8a8c;
+  --text-inverse: #ffffff;
+  
+  // Border
+  --border-primary: rgba(0, 0, 0, 0.08);
+  --border-secondary: rgba(0, 0, 0, 0.12);
+  --border-hover: rgba(0, 0, 0, 0.18);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-input: rgba(0, 0, 0, 0.12);
+  --border-focus: rgba(100, 140, 120, 0.5);
+  
+  // Shadow
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  // Overlay
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+  
+  // Transitions
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-normal: 200ms ease;
+  --transition-colors: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  
+  // Spacing
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  
+  // Border Radius
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  
+  // Font
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  // Content Panel
+  --content-panel-bg: rgba(255, 255, 255, 0.3);
+  --content-panel-border: rgba(0, 0, 0, 0.06);
+  --content-panel-width: 300px;
+  --content-panel-min-width: 240px;
+  --content-panel-max-width: 500px;
+  
+  // Main Area
+  --main-area-bg: #a5a5a5;
+}
+
+// ============================================================================
+// Dark Theme - 深色灰色系风格
+// ============================================================================
+
+:root.dark,
+[data-theme="dark"] {
+  // Primary Colors
+  --color-primary: #8aa898;
+  --color-primary-hover: #7a9888;
+  --color-primary-light: rgba(100, 140, 120, 0.25);
+  --primary-color: #8aa898;
+  --primary-color-dark: #7a9888;
+  --primary-color-light: rgba(100, 140, 120, 0.25);
+  
+  // Status Colors
+  --color-success: #6ac06e;
+  --color-warning: #e6ae3e;
+  --color-error: #f54e4e;
+  --color-info: #7a9a8a;
+  --danger-color: #f54e4e;
+  
+  // Background - 深灰色系
+  --bg-primary: #2a2a2a;
+  --bg-secondary: rgba(60, 60, 60, 0.6);
+  --bg-tertiary: rgba(80, 80, 80, 0.5);
+  --bg-hover: rgba(100, 100, 100, 0.4);
+  --bg-active: rgba(120, 120, 120, 0.4);
+  --bg-input: rgba(60, 60, 60, 0.6);
+  
+  // Text
+  --text-primary: #e8e8e8;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #8a8a8a;
+  --text-muted: #6a6a6a;
+  --text-inverse: #2a2a2a;
+  
+  // Border
+  --border-primary: rgba(255, 255, 255, 0.1);
+  --border-secondary: rgba(255, 255, 255, 0.15);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-input: rgba(255, 255, 255, 0.15);
+  --border-focus: rgba(138, 168, 152, 0.5);
+  
+  // Shadow
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.5);
+  
+  // Overlay
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  
+  // Content Panel
+  --content-panel-bg: rgba(60, 60, 60, 0.5);
+  --content-panel-border: rgba(255, 255, 255, 0.08);
+  
+  // Main Area
+  --main-area-bg: #3a3a3a;
+}
+
+// ============================================================================
+// Theme Transition
+// ============================================================================
+
+// Smooth transition when switching themes
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: var(--transition-base);
+  transition-timing-function: ease;
+}
+
+// Disable transitions on theme change to avoid flash
+.theme-transitioning * {
+  transition: none !important;
+}
+
+// ============================================================================
+// Utility Classes
+// ============================================================================
+
+// Background utilities
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+// Text utilities
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+// Border utilities
+.border-primary {
+  border-color: var(--border-primary);
+}
+
+.border-secondary {
+  border-color: var(--border-secondary);
+}
+
+// ============================================================================
+// Component Overrides for Dark Mode
+// ============================================================================
+
+// Ensure proper contrast in dark mode
+:root.dark,
+[data-theme="dark"] {
+  // Inputs
+  input,
+  textarea,
+  select {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-primary);
+    
+    &::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    &:focus {
+      border-color: var(--color-primary);
+    }
+  }
+  
+  // Buttons
+  button {
+    &:not(.btn--primary):not(.btn--secondary) {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--border-primary);
+      
+      &:hover {
+        background-color: var(--bg-hover);
+      }
+    }
+  }
+  
+  // Cards
+  .card {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-primary);
+  }
+  
+  // Modals/Dialogs
+  .modal,
+  .dialog {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  // Tooltips
+  .tooltip {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-primary);
+  }
+  
+  // Scrollbars (webkit)
+  ::-webkit-scrollbar {
+    background-color: var(--bg-secondary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--bg-tertiary);
+    
+    &:hover {
+      background-color: var(--bg-hover);
+    }
+  }
+}
+
+// ============================================================================
+// Print Styles (always light)
+// ============================================================================
+
+@media print {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-primary: #e5e7eb;
+  }
+}
+
+// ============================================================================
+// Global Input Styles - 统一输入框风格
+// ============================================================================
+
+// 基础输入框样式 - 默认浅灰色，选中时浅色
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: var(--font-size-base, 13px);
+  color: var(--text-primary, #2c2c2e);
+  background-color: #c8c8c8; // 默认浅灰色
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md, 6px);
+  outline: none;
+  transition: all 0.15s ease;
+  
+  &::placeholder {
+    color: var(--text-tertiary, #7a7a7c);
+  }
+  
+  &:hover {
+    background-color: #d0d0d0;
+  }
+  
+  &:focus {
+    background-color: #e8e8e8; // 选中时浅色
+    border-color: var(--color-primary, #7a9188);
+    box-shadow: 0 0 0 2px rgba(122, 145, 136, 0.15);
+  }
+  
+  &:disabled {
+    background-color: #b8b8b8;
+    color: var(--text-muted, #8a8a8c);
+    cursor: not-allowed;
+  }
+}
+
+// 搜索框特殊样式
+.search-input,
+input[type="search"] {
+  padding-left: 32px; // 为搜索图标留空间
+}
+
+// 带图标的输入框容器
+.input-with-icon {
+  position: relative;
+  
+  .input-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary, #7a7a7c);
+    pointer-events: none;
+  }
+  
+  input {
+    padding-left: 32px;
+  }
+}
+
+// 带操作按钮的输入框
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  
+  input {
+    flex: 1;
+    padding-right: 36px;
+  }
+  
+  .input-action {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary, #7a7a7c);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: var(--text-secondary, #5a5a5c);
+    }
+  }
+}
+
+// 深色主题输入框样式
+:root.dark,
+[data-theme="dark"] {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    background-color: #4a4a4a; // 深色主题默认灰色
+    color: var(--text-primary, #e8e8e8);
+    
+    &::placeholder {
+      color: var(--text-tertiary, #8a8a8a);
+    }
+    
+    &:hover {
+      background-color: #555555;
+    }
+    
+    &:focus {
+      background-color: #606060; // 深色主题选中时稍亮
+      border-color: var(--color-primary, #8aa898);
+      box-shadow: 0 0 0 2px rgba(138, 168, 152, 0.2);
+    }
+    
+    &:disabled {
+      background-color: #3a3a3a;
+      color: var(--text-muted, #6a6a6a);
+    }
+  }
+}
+
+// ============================================================================
+// Global Button Styles - 统一按钮风格
+// ============================================================================
+
+// 基础按钮样式
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// 主要按钮 - 绿灰色主题色
+.btn--primary {
+  background-color: #7a9188;
+  color: #ffffff;
+  
+  &:hover:not(:disabled) {
+    background-color: #6a8178;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: #5a7168;
+  }
+}
+
+// 次要按钮 - 浅灰色背景
+.btn--secondary {
+  background-color: #c8c8c8;
+  color: #2c2c2e;
+  
+  &:hover:not(:disabled) {
+    background-color: #d8d8d8;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: #b8b8b8;
+  }
+}
+
+// 轮廓按钮 - 透明背景带边框
+.btn--outline {
+  background-color: transparent;
+  color: #5a5a5c;
+  border: 1px solid #c8c8c8;
+  
+  &:hover:not(:disabled) {
+    background-color: rgba(200, 200, 200, 0.3);
+    border-color: #b8b8b8;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: rgba(200, 200, 200, 0.5);
+  }
+}
+
+// 文本按钮 - 无背景
+.btn--text {
+  background-color: transparent;
+  color: #5a5a5c;
+  padding: 8px 12px;
+  
+  &:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #2c2c2e;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 危险按钮 - 红色
+.btn--danger {
+  background-color: #e53e3e;
+  color: #ffffff;
+  
+  &:hover:not(:disabled) {
+    background-color: #c53030;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: #9b2c2c;
+  }
+}
+
+// 成功按钮 - 绿色
+.btn--success {
+  background-color: #5ab05e;
+  color: #ffffff;
+  
+  &:hover:not(:disabled) {
+    background-color: #4a9a4e;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: #3a8a3e;
+  }
+}
+
+// 按钮尺寸
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.btn--lg {
+  padding: 12px 24px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+// 图标按钮
+.btn--icon {
+  padding: 8px;
+  border-radius: 8px;
+  
+  &.btn--sm {
+    padding: 6px;
+    border-radius: 6px;
+  }
+  
+  &.btn--lg {
+    padding: 12px;
+    border-radius: 10px;
+  }
+}
+
+// 深色主题按钮样式
+:root.dark,
+[data-theme="dark"] {
+  .btn--primary {
+    background-color: #8aa898;
+    
+    &:hover:not(:disabled) {
+      background-color: #7a9888;
+    }
+    
+    &:active:not(:disabled) {
+      background-color: #6a8878;
+    }
+  }
+  
+  .btn--secondary {
+    background-color: #4a4a4a;
+    color: #e8e8e8;
+    
+    &:hover:not(:disabled) {
+      background-color: #5a5a5a;
+    }
+    
+    &:active:not(:disabled) {
+      background-color: #3a3a3a;
+    }
+  }
+  
+  .btn--outline {
+    color: #b0b0b0;
+    border-color: #5a5a5a;
+    
+    &:hover:not(:disabled) {
+      background-color: rgba(100, 100, 100, 0.3);
+      border-color: #6a6a6a;
+    }
+  }
+  
+  .btn--text {
+    color: #b0b0b0;
+    
+    &:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #e8e8e8;
+    }
+  }
+}

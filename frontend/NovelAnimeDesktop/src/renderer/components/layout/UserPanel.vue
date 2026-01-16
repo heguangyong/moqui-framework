@@ -266,7 +266,7 @@ onUnmounted(() => {
     gap: 8px;
     width: 100%;
     padding: 10px 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #6e64c6;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -310,7 +310,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #6e64c6;
     color: #fff;
     border-radius: 50%;
     font-size: 14px;
@@ -392,7 +392,7 @@ onUnmounted(() => {
 
 .dropdown-header {
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #6e64c6;
   color: #fff;
 }
 

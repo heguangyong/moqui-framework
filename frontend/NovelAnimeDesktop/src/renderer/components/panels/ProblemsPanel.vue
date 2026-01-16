@@ -78,7 +78,7 @@ const problems = ref<Problem[]>([]);
 
 // Methods
 const refreshProblems = () => {
-  // 模拟刷新问题列表
+  // 刷新问题列表
   loadProblems();
 };
 
@@ -114,41 +114,9 @@ const getProblemColor = (severity: string): string => {
 };
 
 const loadProblems = () => {
-  // 模拟一些问题
-  problems.value = [
-    {
-      id: '1',
-      severity: 'error',
-      message: 'TypeScript编译错误：找不到模块 "./missing-component"',
-      file: 'src/components/MainLayout.vue',
-      line: 15,
-      source: 'TypeScript'
-    },
-    {
-      id: '2',
-      severity: 'warning',
-      message: '未使用的变量 "unusedVar"',
-      file: 'src/services/NovelParser.ts',
-      line: 42,
-      source: 'ESLint'
-    },
-    {
-      id: '3',
-      severity: 'info',
-      message: '建议使用const而不是let',
-      file: 'src/utils/helpers.ts',
-      line: 8,
-      source: 'ESLint'
-    },
-    {
-      id: '4',
-      severity: 'warning',
-      message: 'API密钥未配置，使用默认设置',
-      file: 'src/services/AIVideoGenerator.ts',
-      line: 25,
-      source: 'Runtime'
-    }
-  ];
+  // 问题列表应该由 IDE 或构建工具提供
+  // 目前显示空状态，等待实际问题数据
+  problems.value = [];
 };
 
 // Lifecycle

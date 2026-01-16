@@ -1,8 +1,14 @@
 // 主样式入口文件
 // 电子书风格UI的样式系统
 
+// 导入主题系统
+@use './theme.scss';
+
 // 导入设计系统
 @use './design-system.scss' as *;
+
+// 导入响应式样式
+@use './responsive.scss';
 
 // 导入组件样式
 @use './components.scss';

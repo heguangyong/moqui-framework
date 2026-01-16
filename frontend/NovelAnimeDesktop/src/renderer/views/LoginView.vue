@@ -514,7 +514,7 @@ onUnmounted(() => {
 }
 
 .login-card {
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8);
+  background: #b0b0b0;
   border-radius: 16px;
   padding: 32px;
   box-shadow: 
@@ -566,18 +566,15 @@ onUnmounted(() => {
     font-weight: 500;
     color: #5a5a5c;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 
     &.active {
-      background: linear-gradient(145deg, #c8c8c8, #b8b8b8);
+      background-color: #c8c8c8;
       color: #2c2c2e;
-      box-shadow: 
-        0 2px 6px rgba(0, 0, 0, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     &:hover:not(.active) {
-      background: rgba(255, 255, 255, 0.1);
+      background-color: rgba(200, 200, 200, 0.3);
     }
   }
 }
@@ -600,24 +597,23 @@ onUnmounted(() => {
       border: none;
       border-radius: 10px;
       font-size: 14px;
-      background: rgba(255, 255, 255, 0.5);
+      background-color: #c8c8c8;
       color: #2c2c2e;
       box-sizing: border-box;
-      box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.08),
-        inset 0 1px 2px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
 
       &::placeholder {
         color: #7a7a7c;
       }
 
+      &:hover {
+        background-color: #d0d0d0;
+      }
+
       &:focus {
         outline: none;
-        background: rgba(255, 255, 255, 0.7);
-        box-shadow: 
-          inset 0 2px 4px rgba(0, 0, 0, 0.08),
-          0 0 0 2px rgba(100, 100, 100, 0.2);
+        background-color: #e8e8e8;
+        border: 1px solid rgba(122, 145, 136, 0.5);
       }
     }
   }
@@ -699,28 +695,21 @@ onUnmounted(() => {
 .submit-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(180deg, #4a4a4a, #3a3a3a);
-  color: #e8e8e8;
+  background-color: #7a9188;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 
-    0 3px 8px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(180deg, #5a5a5a, #4a4a4a);
-    transform: translateY(-1px);
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background-color: #6a8178;
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    background-color: #5a7168;
   }
 
   &:disabled {
@@ -818,7 +807,7 @@ onUnmounted(() => {
 }
 
 .wechat-dialog {
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8);
+  background: #b0b0b0;
   border-radius: 14px;
   width: 320px;
   overflow: hidden;
@@ -885,7 +874,7 @@ onUnmounted(() => {
     .refresh-btn {
       margin-top: 16px;
       padding: 10px 28px;
-      background: linear-gradient(180deg, #4a4a4a, #3a3a3a);
+      background: #424242;
       color: #e8e8e8;
       border: none;
       border-radius: 8px;
@@ -895,7 +884,7 @@ onUnmounted(() => {
       transition: all 0.2s;
 
       &:hover {
-        background: linear-gradient(180deg, #5a5a5a, #4a4a4a);
+        background: #525252;
       }
     }
   }

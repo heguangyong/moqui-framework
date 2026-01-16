@@ -63,31 +63,33 @@ const selectedAsset = ref<Asset | null>(null);
 const assets = ref<Asset[]>([]);
 
 // Methods
-const refreshAssets = () => {
-  // 模拟加载素材
-  assets.value = [
-    {
-      id: '1',
-      name: '角色设定图',
-      type: 'image',
-      description: '主角角色设定参考图',
-      path: '/assets/characters/protagonist.jpg'
-    },
-    {
-      id: '2',
-      name: '背景音乐',
-      type: 'audio',
-      description: '开场背景音乐',
-      path: '/assets/audio/opening.mp3'
-    },
-    {
-      id: '3',
-      name: '特效素材',
-      type: 'video',
-      description: '爆炸特效视频',
-      path: '/assets/effects/explosion.mp4'
+const refreshAssets = async () => {
+  // 从后端加载素材
+  const novelId = localStorage.getItem('novel_anime_current_novel_id');
+  if (!novelId) {
+    assets.value = [];
+    return;
+  }
+  
+  try {
+    // 加载角色作为素材
+    const response = await fetch(`http://localhost:8080/rest/s1/novel-anime/characters?novelId=${novelId}`);
+    if (response.ok) {
+      const data = await response.json();
+      assets.value = (data.characters || []).map((c: any) => ({
+        id: c.characterId,
+        name: c.name,
+        type: 'image',
+        description: c.description || '角色',
+        path: c.imagePath || ''
+      }));
+    } else {
+      assets.value = [];
     }
-  ];
+  } catch (e) {
+    console.warn('加载素材失败:', e);
+    assets.value = [];
+  }
 };
 
 const addAsset = () => {

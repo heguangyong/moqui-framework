@@ -568,21 +568,16 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: loading-shimmer 1.5s infinite;
+  background: rgba(255, 255, 255, 0.3);
+  animation: loading-pulse 1.5s infinite;
 }
 
-@keyframes loading-shimmer {
-  0% {
-    transform: translateX(-100%);
+@keyframes loading-pulse {
+  0%, 100% {
+    opacity: 0.3;
   }
-  100% {
-    transform: translateX(100%);
+  50% {
+    opacity: 0.6;
   }
 }
 </style>

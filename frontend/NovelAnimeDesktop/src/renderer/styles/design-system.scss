@@ -27,11 +27,11 @@ $breakpoints: (
   --color-primary-light: #8a8a8a;
   --color-primary-dark: #4a4a4a;
   
-  // 渐变色 - 灰色到浅绿灰
-  --gradient-primary: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  --gradient-primary-hover: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
-  --gradient-active: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
-  --gradient-success: linear-gradient(90deg, rgba(140, 160, 150, 0.7), rgba(170, 198, 182, 0.6));
+  // 纯色替代渐变色 - 统一风格
+  --gradient-primary: #7a9188;
+  --gradient-primary-hover: #6a8178;
+  --gradient-active: rgba(122, 145, 136, 0.25);
+  --gradient-success: #5ab05e;
   
   // === 文本颜色 ===
   --text-primary: #2c2c2e;
@@ -71,7 +71,7 @@ $breakpoints: (
   --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
   
   // === 激活状态指示器 ===
-  --indicator-gradient: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  --indicator-gradient: #9a9a9a;
   --indicator-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.1);
   
   // === 徽章颜色 ===

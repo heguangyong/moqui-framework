@@ -33,6 +33,93 @@
           v-model="searchQuery"
           class="search-input"
         />
+        <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''" title="清除搜索">
+          <component :is="icons.x" :size="14" />
+        </button>
+      </div>
+      
+      <!-- 筛选和排序 -->
+      <div class="toolbar-controls">
+        <!-- 角色类型筛选 -->
+        <div class="filter-group">
+          <label class="filter-label">类型:</label>
+          <select v-model="filterRole" class="filter-select">
+            <option value="">全部</option>
+            <option value="protagonist">主角</option>
+            <option value="supporting">配角</option>
+            <option value="antagonist">反派</option>
+            <option value="minor">龙套</option>
+          </select>
+        </div>
+        
+        <!-- 锁定状态筛选 -->
+        <div class="filter-group">
+          <label class="filter-label">状态:</label>
+          <select v-model="filterLocked" class="filter-select">
+            <option value="">全部</option>
+            <option value="locked">已锁定</option>
+            <option value="unlocked">未锁定</option>
+          </select>
+        </div>
+        
+        <!-- 排序 -->
+        <div class="filter-group">
+          <label class="filter-label">排序:</label>
+          <select v-model="sortBy" class="filter-select">
+            <option value="name">名称</option>
+            <option value="role">类型</option>
+            <option value="appearances">出场次数</option>
+            <option value="scenes">关联场景</option>
+          </select>
+        </div>
+        
+        <!-- 排序方向 -->
+        <button 
+          class="sort-direction-btn" 
+          @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
+          :title="sortDirection === 'asc' ? '升序' : '降序'"
+        >
+          <component :is="sortDirection === 'asc' ? icons.arrowUp : icons.arrowDown" :size="16" />
+        </button>
+        
+        <!-- 导入导出 -->
+        <div class="divider"></div>
+        <button class="toolbar-btn" @click="exportCharacters" title="导出角色">
+          <component :is="icons.download" :size="16" />
+          <span>导出</span>
+        </button>
+        <button class="toolbar-btn" @click="importCharacters" title="导入角色">
+          <component :is="icons.upload" :size="16" />
+          <span>导入</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 统计信息栏 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-label">总计:</span>
+        <span class="stat-value">{{ characters.length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">主角:</span>
+        <span class="stat-value">{{ getCountByRole('protagonist') }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">配角:</span>
+        <span class="stat-value">{{ getCountByRole('supporting') }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">反派:</span>
+        <span class="stat-value">{{ getCountByRole('antagonist') }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">已锁定:</span>
+        <span class="stat-value">{{ getLockedCount() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">显示:</span>
+        <span class="stat-value">{{ filteredCharacters.length }}</span>
       </div>
     </div>
     
@@ -246,6 +333,12 @@ const isLocking = ref(false);
 const isLoading = ref(false);
 const roleSelectOpen = ref(false);
 
+// 筛选和排序状态
+const filterRole = ref('');
+const filterLocked = ref('');
+const sortBy = ref('name');
+const sortDirection = ref('asc');
+
 // 从 panelContext 获取 novelId
 const novelId = computed(() => navigationStore.panelContext.characters?.novelId);
 
@@ -340,7 +433,7 @@ function loadCharacters() {
         role: 'protagonist',
         description: '故事的主角，一个勇敢而善良的年轻人',
         tags: ['勇敢', '善良', '正义'],
-        color: 'linear-gradient(135deg, #6a7a72, #8fa89e)',
+        color: '#7a9188',
         appearances: 45,
         scenes: 12,
         appearance: '黑色短发，身材高大，眼神坚定',
@@ -352,7 +445,7 @@ function loadCharacters() {
         role: 'supporting',
         description: '主角的青梅竹马，聪明伶俐',
         tags: ['聪明', '温柔', '坚强'],
-        color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)',
+        color: '#8a9cad',
         appearances: 32,
         scenes: 8,
         appearance: '长发飘飘，面容清秀',
@@ -364,7 +457,7 @@ function loadCharacters() {
         role: 'antagonist',
         description: '故事的反派，野心勃勃',
         tags: ['狡猾', '野心', '冷酷'],
-        color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)',
+        color: '#6a6a6a',
         appearances: 18,
         scenes: 6,
         appearance: '面容阴沉，眼神锐利',
@@ -376,7 +469,7 @@ function loadCharacters() {
         role: 'minor',
         description: '村里的老人，见多识广',
         tags: ['智慧', '和蔼'],
-        color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)',
+        color: '#a9adab',
         appearances: 8,
         scenes: 3,
         appearance: '白发苍苍，慈眉善目',
@@ -409,15 +502,64 @@ function formatDescription(attributes) {
 
 // 过滤后的角色
 const filteredCharacters = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return characters.value;
+  let result = characters.value;
+  
+  // 搜索过滤
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(c => 
+      c.name.toLowerCase().includes(query) ||
+      c.description?.toLowerCase().includes(query) ||
+      c.tags?.some(t => t.toLowerCase().includes(query))
+    );
   }
-  const query = searchQuery.value.toLowerCase();
-  return characters.value.filter(c => 
-    c.name.toLowerCase().includes(query) ||
-    c.description?.toLowerCase().includes(query) ||
-    c.tags?.some(t => t.toLowerCase().includes(query))
-  );
+  
+  // 角色类型筛选
+  if (filterRole.value) {
+    result = result.filter(c => c.role === filterRole.value);
+  }
+  
+  // 锁定状态筛选
+  if (filterLocked.value === 'locked') {
+    result = result.filter(c => c.isLocked);
+  } else if (filterLocked.value === 'unlocked') {
+    result = result.filter(c => !c.isLocked);
+  }
+  
+  // 排序
+  result = [...result].sort((a, b) => {
+    let aVal, bVal;
+    
+    switch (sortBy.value) {
+      case 'name':
+        aVal = a.name;
+        bVal = b.name;
+        break;
+      case 'role':
+        const roleOrder = { protagonist: 1, supporting: 2, antagonist: 3, minor: 4 };
+        aVal = roleOrder[a.role] || 5;
+        bVal = roleOrder[b.role] || 5;
+        break;
+      case 'appearances':
+        aVal = a.appearances || 0;
+        bVal = b.appearances || 0;
+        break;
+      case 'scenes':
+        aVal = a.scenes || 0;
+        bVal = b.scenes || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (sortDirection.value === 'asc') {
+      return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    } else {
+      return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+    }
+  });
+  
+  return result;
 });
 
 // 是否显示确认所有角色按钮 - 需求 5.3
@@ -706,25 +848,164 @@ function getRoleLabel(role) {
 // 根据角色类型获取对应颜色
 function getColorByRole(role) {
   const roleColors = {
-    protagonist: 'linear-gradient(135deg, #6a7a72, #8fa89e)', // 主角 - 绿灰色
-    supporting: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)',  // 配角 - 蓝灰色
-    antagonist: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)',  // 反派 - 深灰色
-    minor: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)'        // 龙套 - 浅灰色
+    protagonist: '#7a9188', // 主角 - 绿灰色
+    supporting: '#8a9cad',  // 配角 - 蓝灰色
+    antagonist: '#6a6a6a',  // 反派 - 深灰色
+    minor: '#a9adab'        // 龙套 - 浅灰色
   };
   return roleColors[role] || roleColors.minor;
 }
 
 function getRandomColor() {
-  // 统一使用灰色系渐变，与系统风格一致
+  // 统一使用灰色系纯色，与系统风格一致
   const colors = [
-    'linear-gradient(135deg, #6a7a72, #8fa89e)', // 绿灰
-    'linear-gradient(135deg, #7a8a9a, #9ab0c0)', // 蓝灰
-    'linear-gradient(135deg, #5a5a5a, #7a7a7a)', // 深灰
-    'linear-gradient(135deg, #9a9a9a, #b8c0bc)', // 浅灰
-    'linear-gradient(135deg, #8a8a8a, #a0a8a4)', // 中灰
-    'linear-gradient(135deg, #7a7a82, #9a9aa8)'  // 紫灰
+    '#7a9188', // 绿灰
+    '#8a9cad', // 蓝灰
+    '#6a6a6a', // 深灰
+    '#a9adab', // 浅灰
+    '#959c99', // 中灰
+    '#8a8a95'  // 紫灰
   ];
   return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// 统计功能
+function getCountByRole(role) {
+  return characters.value.filter(c => c.role === role).length;
+}
+
+function getLockedCount() {
+  return characters.value.filter(c => c.isLocked).length;
+}
+
+// 导出角色数据
+function exportCharacters() {
+  try {
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      projectId: projectStore.currentProject?.id,
+      projectName: projectStore.currentProject?.name,
+      characters: characters.value.map(c => ({
+        id: c.id,
+        name: c.name,
+        role: c.role,
+        description: c.description,
+        tags: c.tags,
+        appearance: c.appearance,
+        appearances: c.appearances,
+        scenes: c.scenes,
+        isLocked: c.isLocked
+      }))
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `characters_${projectStore.currentProject?.name || 'export'}_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    uiStore.addNotification({
+      type: 'success',
+      title: '导出成功',
+      message: `已导出 ${characters.value.length} 个角色`,
+      timeout: 2000
+    });
+  } catch (error) {
+    console.error('Export failed:', error);
+    uiStore.addNotification({
+      type: 'error',
+      title: '导出失败',
+      message: error.message,
+      timeout: 3000
+    });
+  }
+}
+
+// 导入角色数据
+function importCharacters() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+      
+      // 验证数据格式
+      if (!importData.characters || !Array.isArray(importData.characters)) {
+        throw new Error('无效的角色数据格式');
+      }
+      
+      // 询问导入方式
+      const mode = confirm(
+        `发现 ${importData.characters.length} 个角色\n\n` +
+        `点击"确定"追加到现有角色\n` +
+        `点击"取消"替换所有角色`
+      ) ? 'append' : 'replace';
+      
+      if (mode === 'replace') {
+        characters.value = [];
+      }
+      
+      // 导入角色
+      let importedCount = 0;
+      let skippedCount = 0;
+      
+      for (const char of importData.characters) {
+        // 检查是否已存在
+        const exists = characters.value.some(c => c.id === char.id || c.name === char.name);
+        
+        if (exists && mode === 'append') {
+          skippedCount++;
+          continue;
+        }
+        
+        // 确保有颜色
+        if (!char.color) {
+          char.color = getColorByRole(char.role);
+        }
+        
+        characters.value.push({
+          ...char,
+          id: char.id || `char_${Date.now()}_${Math.random()}`,
+          tags: char.tags || [],
+          appearances: char.appearances || 0,
+          scenes: char.scenes || 0,
+          isLocked: char.isLocked || false
+        });
+        
+        importedCount++;
+      }
+      
+      uiStore.addNotification({
+        type: 'success',
+        title: '导入成功',
+        message: `已导入 ${importedCount} 个角色${skippedCount > 0 ? `，跳过 ${skippedCount} 个重复角色` : ''}`,
+        timeout: 3000
+      });
+    } catch (error) {
+      console.error('Import failed:', error);
+      uiStore.addNotification({
+        type: 'error',
+        title: '导入失败',
+        message: error.message,
+        timeout: 3000
+      });
+    }
+  };
+  
+  input.click();
 }
 </script>
 
@@ -742,11 +1023,14 @@ function getRandomColor() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .search-box {
   position: relative;
   width: 280px;
+  flex-shrink: 0;
 }
 
 .search-icon {
@@ -759,17 +1043,151 @@ function getRandomColor() {
 
 .search-input {
   width: 100%;
-  padding: 10px 12px 10px 40px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 36px 10px 40px;
+  border: none;
   border-radius: 8px;
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.2);
+  background-color: #c8c8c8;
+  color: #2c2c2e;
+  transition: all 0.15s ease;
+}
+
+.search-input:hover {
+  background-color: #d0d0d0;
 }
 
 .search-input:focus {
   outline: none;
-  background: rgba(200, 200, 200, 0.5);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  color: #7a7a7c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-clear:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #4a4a4c;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: #6c6c6e;
+  font-weight: 500;
+}
+
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-select:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.filter-select:focus {
+  outline: none;
   border-color: #8a8a8a;
+  background: rgba(200, 200, 200, 0.5);
+}
+
+.sort-direction-btn {
+  padding: 6px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #4a4a4c;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.sort-direction-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #4a4a4c;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 统计信息栏 */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-item .stat-label {
+  font-size: 11px;
+  color: #6c6c6e;
+  font-weight: 500;
+}
+
+.stat-item .stat-value {
+  font-size: 13px;
+  color: #2c2c2e;
+  font-weight: 600;
 }
 
 .add-btn {
@@ -777,7 +1195,7 @@ function getRandomColor() {
   align-items: center;
   gap: 6px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  background: rgba(165, 188, 182, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   color: #2c2c2e;
@@ -788,7 +1206,7 @@ function getRandomColor() {
 }
 
 .add-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(145, 168, 162, 0.85);
 }
 
 /* 角色卡片网格 */
@@ -937,33 +1355,33 @@ function getRandomColor() {
   padding: 6px;
   border: none;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.1);
-  color: #4a4a4c;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background-color: #d8d8d8;
 }
 
 .action-btn--danger:hover {
-  background: #e74c3c;
-  color: #fff;
+  background-color: #e53e3e;
+  color: #ffffff;
 }
 
 .action-btn--lock:hover {
-  background: #27ae60;
-  color: #fff;
+  background-color: #5ab05e;
+  color: #ffffff;
 }
 
 .action-btn--unlock {
-  color: #27ae60;
+  color: #5ab05e;
 }
 
 .action-btn--unlock:hover {
-  background: #f39c12;
-  color: #fff;
+  background-color: #d69e2e;
+  color: #ffffff;
 }
 
 .locked-indicator {
@@ -1023,7 +1441,7 @@ function getRandomColor() {
   transform: translate(50%, -50%);
   width: 380px;
   max-height: 85vh;
-  background: linear-gradient(180deg, rgba(230, 230, 230, 0.98), rgba(215, 225, 220, 0.96));
+  background: rgba(222, 230, 226, 0.97);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 16px;
@@ -1192,7 +1610,7 @@ function getRandomColor() {
 }
 
 .custom-select__option--selected {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(190, 209, 205, 0.45);
   font-weight: 500;
 }
 
@@ -1256,80 +1674,88 @@ function getRandomColor() {
 
 .btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn--secondary {
-  background: rgba(0, 0, 0, 0.08);
-  color: #4a4a4c;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
-.btn--secondary:hover {
-  background: rgba(0, 0, 0, 0.12);
+.btn--secondary:hover:not(:disabled) {
+  background-color: #d8d8d8;
 }
 
 .btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #2c2c2e;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
-.btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+.btn--primary:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
-/* 头部按钮样式 */
+/* 头部按钮样式 - 使用系统统一风格 */
 .confirm-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background: linear-gradient(90deg, rgba(130, 160, 140, 0.9), rgba(150, 180, 165, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  color: #2c2c2e;
-  font-size: 13px;
+  height: 28px;
+  padding: 0 12px;
+  background-color: #7a9188;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.confirm-btn:hover {
-  background: linear-gradient(90deg, rgba(110, 140, 120, 0.9), rgba(130, 160, 145, 0.8));
+.confirm-btn:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
 .confirm-btn:disabled {
-  background: rgba(160, 160, 160, 0.5);
+  background-color: #c8c8c8;
   color: #8a8a8a;
   cursor: not-allowed;
 }
 
 .add-character-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  height: 28px;
+  padding: 0 12px;
+  background-color: #c8c8c8;
+  border: none;
+  border-radius: 6px;
   color: #2c2c2e;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .add-character-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background-color: #d8d8d8;
 }
 
 /* 弹窗遮罩层 */

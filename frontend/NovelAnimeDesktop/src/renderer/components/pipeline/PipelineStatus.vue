@@ -499,7 +499,7 @@ onUnmounted(() => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3498db, #2ecc71);
+  background: #2db77a;
   transition: width 0.3s ease;
 }
 

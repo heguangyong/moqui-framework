@@ -505,19 +505,19 @@ onUnmounted(() => {
 }
 
 .progress-fill--running {
-  background: linear-gradient(90deg, #6a8a7a, #8aaa9a);
+  background: #7a9a8a;
 }
 
 .progress-fill--completed {
-  background: linear-gradient(90deg, #6a8a7a, #7a9a8a);
+  background: #728f82;
 }
 
 .progress-fill--failed {
-  background: linear-gradient(90deg, #a07070, #b08080);
+  background: #a87878;
 }
 
 .progress-fill--cancelled {
-  background: linear-gradient(90deg, #8a8a8a, #9a9a9a);
+  background: #929292;
 }
 
 /* 阶段列表 */

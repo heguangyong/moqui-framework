@@ -190,41 +190,9 @@ const formatTime = (seconds: number): string => {
 
 // Lifecycle
 onMounted(() => {
-  // 模拟一些任务
-  tasks.value = [
-    {
-      id: '1',
-      name: '小说解析',
-      description: '正在解析小说文本结构...',
-      status: 'completed',
-      progress: 100,
-      logs: [
-        { timestamp: Date.now() - 30000, message: '开始解析小说文件' },
-        { timestamp: Date.now() - 20000, message: '检测到15个章节' },
-        { timestamp: Date.now() - 10000, message: '解析完成' }
-      ]
-    },
-    {
-      id: '2',
-      name: '角色分析',
-      description: '正在分析角色关系和属性...',
-      status: 'running',
-      progress: 65,
-      eta: 45,
-      logs: [
-        { timestamp: Date.now() - 15000, message: '开始角色识别' },
-        { timestamp: Date.now() - 10000, message: '发现主要角色5个' },
-        { timestamp: Date.now() - 5000, message: '正在分析角色关系...' }
-      ]
-    },
-    {
-      id: '3',
-      name: '视频生成',
-      description: '等待角色分析完成...',
-      status: 'waiting',
-      progress: 0
-    }
-  ];
+  // 任务数据应该通过 props 传入或从工作流状态获取
+  // 默认显示空状态
+  tasks.value = [];
 });
 </script>
 

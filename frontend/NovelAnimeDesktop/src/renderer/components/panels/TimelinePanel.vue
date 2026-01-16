@@ -149,32 +149,10 @@ const formatTime = (seconds: number): string => {
 
 // Lifecycle
 onMounted(() => {
-  // 模拟时间轴数据
+  // 时间轴数据应该通过 props 传入
+  // 如果没有数据，显示空状态提示用户
   if (!props.timelineData) {
-    const mockData: TimelineData = {
-      duration: 120, // 2分钟
-      tracks: [
-        {
-          id: 'video',
-          name: '视频轨道',
-          icon: 'movie',
-          clips: [
-            { id: 'clip1', name: '开场', startTime: 0, endTime: 30 },
-            { id: 'clip2', name: '主体', startTime: 30, endTime: 90 },
-            { id: 'clip3', name: '结尾', startTime: 90, endTime: 120 }
-          ]
-        },
-        {
-          id: 'audio',
-          name: '音频轨道',
-          icon: 'audiotrack',
-          clips: [
-            { id: 'audio1', name: '背景音乐', startTime: 0, endTime: 120 }
-          ]
-        }
-      ]
-    };
-    emit('timeline-changed', mockData);
+    console.log('时间轴面板：等待数据传入');
   }
 });
 </script>

@@ -173,7 +173,7 @@ const sampleCharacters = [
     role: 'protagonist',
     description: '故事的主角，一个勇敢而善良的年轻人，在逆境中不断成长',
     tags: ['勇敢', '善良', '正义', '坚韧'],
-    color: 'linear-gradient(135deg, #6a7a72, #8fa89e)',
+    color: '#7a9188',
     appearances: 45,
     scenes: 12,
     appearance: '黑色短发，身材高大，眼神坚定，常穿深色外套',
@@ -185,7 +185,7 @@ const sampleCharacters = [
     role: 'supporting',
     description: '主角的青梅竹马，聪明伶俐，是主角最信任的伙伴',
     tags: ['聪明', '温柔', '坚强', '细心'],
-    color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)',
+    color: '#8a9cad',
     appearances: 32,
     scenes: 8,
     appearance: '长发飘飘，面容清秀，笑容温暖',
@@ -197,7 +197,7 @@ const sampleCharacters = [
     role: 'antagonist',
     description: '故事的反派，野心勃勃，为达目的不择手段',
     tags: ['狡猾', '野心', '冷酷', '精明'],
-    color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)',
+    color: '#6a6a6a',
     appearances: 18,
     scenes: 6,
     appearance: '面容阴沉，眼神锐利，穿着考究',
@@ -209,7 +209,7 @@ const sampleCharacters = [
     role: 'minor',
     description: '村里的老人，见多识广，常给主角提供智慧建议',
     tags: ['智慧', '和蔼', '经验丰富'],
-    color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)',
+    color: '#a9adab',
     appearances: 8,
     scenes: 3,
     appearance: '白发苍苍，慈眉善目',
@@ -224,18 +224,18 @@ const relationships = computed(() => {
   // 根据角色返回不同的关系
   const relMap = {
     '1': [
-      { id: '2', name: '王芳', relationship: '青梅竹马', color: 'linear-gradient(135deg, #7a8a9a, #9ab0c0)' },
-      { id: '3', name: '张威', relationship: '宿敌', color: 'linear-gradient(135deg, #5a5a5a, #7a7a7a)' },
-      { id: '4', name: '老陈', relationship: '师徒', color: 'linear-gradient(135deg, #9a9a9a, #b8c0bc)' }
+      { id: '2', name: '王芳', relationship: '青梅竹马', color: '#8a9cad' },
+      { id: '3', name: '张威', relationship: '宿敌', color: '#6a6a6a' },
+      { id: '4', name: '老陈', relationship: '师徒', color: '#a9adab' }
     ],
     '2': [
-      { id: '1', name: '李明', relationship: '青梅竹马', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
+      { id: '1', name: '李明', relationship: '青梅竹马', color: '#7a9188' }
     ],
     '3': [
-      { id: '1', name: '李明', relationship: '宿敌', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
+      { id: '1', name: '李明', relationship: '宿敌', color: '#7a9188' }
     ],
     '4': [
-      { id: '1', name: '李明', relationship: '师徒', color: 'linear-gradient(135deg, #6a7a72, #8fa89e)' }
+      { id: '1', name: '李明', relationship: '师徒', color: '#7a9188' }
     ]
   };
   
@@ -563,7 +563,7 @@ onMounted(() => {
   color: #7a7a7c;
 }
 
-/* 操作按钮 */
+/* 操作按钮 - 统一无渐变风格 */
 .action-buttons {
   display: flex;
   gap: 12px;
@@ -571,46 +571,48 @@ onMounted(() => {
 }
 
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  height: 36px;
+  padding: 0 20px;
+  border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  background: rgba(255, 255, 255, 0.5);
-  color: #5a5a5c;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
+  white-space: nowrap;
 }
 
-.btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: #2c2c2e;
-  border-color: rgba(0, 0, 0, 0.18);
+.btn:hover:not(:disabled) {
+  background-color: #d8d8d8;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn--primary {
-  background: rgba(120, 140, 130, 0.25);
-  color: #4a5a52;
-  border-color: rgba(100, 120, 110, 0.3);
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
-.btn--primary:hover {
-  background: rgba(120, 140, 130, 0.35);
-  color: #3a4a42;
+.btn--primary:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
 .btn--danger {
-  background: rgba(200, 120, 120, 0.15);
-  color: #8a5050;
-  border-color: rgba(200, 120, 120, 0.25);
+  background-color: #e53e3e;
+  color: #ffffff;
 }
 
-.btn--danger:hover {
-  background: rgba(200, 120, 120, 0.25);
-  color: #7a4040;
+.btn--danger:hover:not(:disabled) {
+  background-color: #c53030;
 }
 
 /* 头部操作按钮 */

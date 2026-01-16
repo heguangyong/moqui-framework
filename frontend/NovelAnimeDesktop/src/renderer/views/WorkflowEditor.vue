@@ -1,5 +1,10 @@
 <template>
   <div class="workflow-editor">
+    <!-- 加载状态 -->
+    <div v-if="!isReady" class="loading-overlay">
+      <div class="loading-spinner">正在加载工作流编辑器...</div>
+    </div>
+
     <!-- 视图头部 -->
     <ViewHeader 
       :title="viewTitle" 
@@ -12,40 +17,44 @@
               <span>{{ selectedWorkflowName }}</span>
               <span class="arrow">▼</span>
             </div>
+            <button 
+              v-if="selectedWorkflowId" 
+              @click.stop="renameCurrentWorkflow" 
+              class="icon-btn"
+              title="重命名"
+            >✏️</button>
+            <button 
+              v-if="selectedWorkflowId" 
+              @click.stop="deleteCurrentWorkflow" 
+              class="icon-btn icon-btn-danger"
+              title="删除"
+            >🗑️</button>
+            <span v-if="selectedWorkflowId" class="header-divider"></span>
             <div class="select-dropdown" v-if="dropdownOpen">
               <div 
                 class="select-option" 
                 :class="{ selected: selectedWorkflowId === '' }"
-                @click="selectWorkflow('')"
+                @click="handleSelectWorkflow('')"
               >
                 选择工作流
               </div>
               <div 
                 v-for="workflow in workflows" 
                 :key="workflow.id"
-                class="select-option-row"
+                class="select-option"
                 :class="{ selected: selectedWorkflowId === workflow.id }"
+                @click="handleSelectWorkflow(workflow.id)"
               >
-                <span class="option-name" @click="selectWorkflow(workflow.id)">{{ workflow.name }}</span>
-                <button 
-                  class="option-edit" 
-                  @click.stop="renameWorkflow(workflow.id)"
-                  title="重命名"
-                >✎</button>
-                <button 
-                  class="option-delete" 
-                  @click.stop="deleteWorkflow(workflow.id)"
-                  title="删除工作流"
-                >×</button>
+                {{ workflow.name }}
               </div>
             </div>
           </div>
           <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
           <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
-          <button @click="saveWorkflow" class="btn btn-primary" :disabled="!currentWorkflow">
+          <button @click="saveWorkflow" class="btn btn-primary" :disabled="!selectedWorkflowId">
             保存工作流
           </button>
-          <button @click="runWorkflow" class="btn btn-success" :disabled="!currentWorkflow || isExecuting">
+          <button @click="runWorkflow" class="btn btn-success" :disabled="!selectedWorkflowId || isExecuting">
             {{ isExecuting ? '执行中...' : '运行工作流' }}
           </button>
         </template>
@@ -58,44 +67,147 @@
       </template>
     </ViewHeader>
 
-    <!-- Execution Progress -->
-    <div v-if="isExecuting" class="execution-progress">
+    <!-- Execution Progress - Enhanced -->
+    <div v-if="isExecuting" class="execution-progress-panel">
       <div class="progress-header">
-        <span>{{ executionMessage }}</span>
-        <button @click="cancelExecution" class="btn btn-small btn-danger">取消</button>
+        <div class="progress-title">
+          <component :is="icons.play" :size="16" class="progress-icon" />
+          <span>{{ executionMessage }}</span>
+        </div>
+        <div class="progress-actions">
+          <button @click="toggleExecutionLogs" class="btn btn-small btn-secondary">
+            {{ showExecutionLogs ? '隐藏日志' : '查看日志' }}
+          </button>
+          <button @click="cancelExecution" class="btn btn-small btn-danger">取消</button>
+        </div>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" :style="{ width: executionProgress + '%' }"></div>
+      
+      <!-- Progress Bar with Details -->
+      <div class="progress-details">
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: executionProgress + '%' }"></div>
+          </div>
+          <div class="progress-text">{{ executionProgress }}%</div>
+        </div>
+        
+        <!-- Node Status Summary -->
+        <div class="node-status-summary">
+          <div class="status-item">
+            <span class="status-label">总节点:</span>
+            <span class="status-value">{{ currentWorkflowNodes.length }}</span>
+          </div>
+          <div class="status-item status-completed">
+            <span class="status-label">已完成:</span>
+            <span class="status-value">{{ completedNodesCount }}</span>
+          </div>
+          <div class="status-item status-running">
+            <span class="status-label">执行中:</span>
+            <span class="status-value">{{ runningNodesCount }}</span>
+          </div>
+          <div class="status-item status-pending">
+            <span class="status-label">待执行:</span>
+            <span class="status-value">{{ pendingNodesCount }}</span>
+          </div>
+        </div>
       </div>
-      <div class="progress-text">{{ executionProgress }}%</div>
+      
+      <!-- Execution Logs Panel -->
+      <div v-if="showExecutionLogs" class="execution-logs-panel">
+        <div class="logs-header">
+          <h4>执行日志</h4>
+          <button @click="clearExecutionLogs" class="btn btn-small">清空</button>
+        </div>
+        <div class="logs-content" ref="logsContainer">
+          <div 
+            v-for="(log, index) in executionLogs" 
+            :key="index"
+            class="log-entry"
+            :class="`log-${log.level}`"
+          >
+            <span class="log-time">{{ formatLogTime(log.timestamp) }}</span>
+            <span class="log-level">{{ log.level.toUpperCase() }}</span>
+            <span class="log-message">{{ log.message }}</span>
+          </div>
+          <div v-if="executionLogs.length === 0" class="logs-empty">
+            暂无日志
+          </div>
+        </div>
+      </div>
     </div>
     
-    <!-- Execution Results Panel -->
-    <div v-if="showResultsPanel && executionResults" class="execution-results">
+    <!-- Execution Results Panel - Enhanced -->
+    <div v-if="showResultsPanel && executionResults" class="execution-results-panel">
       <div class="results-header">
         <h3>执行结果</h3>
-        <button @click="showResultsPanel = false" class="btn btn-small">关闭</button>
+        <div class="results-actions">
+          <button @click="showExecutionHistory" class="btn btn-small btn-secondary">
+            查看历史
+          </button>
+          <button @click="showResultsPanel = false" class="btn btn-small">关闭</button>
+        </div>
       </div>
       <div class="results-content">
         <div class="result-status" :class="executionResults.status">
-          <span v-if="executionResults.status === 'completed'">✅ 执行成功</span>
-          <span v-else>❌ 执行失败</span>
+          <component 
+            :is="executionResults.status === 'completed' ? icons.check : icons.xCircle" 
+            :size="24" 
+          />
+          <span v-if="executionResults.status === 'completed'">执行成功</span>
+          <span v-else>执行失败</span>
         </div>
-        <div class="result-duration" v-if="executionResults.duration">
-          耗时: {{ Math.round(executionResults.duration / 1000) }}秒
+        
+        <div class="result-stats">
+          <div class="stat-item">
+            <span class="stat-label">执行时长</span>
+            <span class="stat-value">{{ formatDuration(executionResults.duration) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">处理节点</span>
+            <span class="stat-value">{{ executionResults.nodeResults?.size || 0 }} 个</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">完成时间</span>
+            <span class="stat-value">{{ formatTime(Date.now()) }}</span>
+          </div>
         </div>
-        <div class="result-summary">
-          <p>已处理 {{ executionResults.nodeResults?.size || 0 }} 个节点</p>
+        
+        <!-- Node Results Details -->
+        <div class="node-results-section">
+          <h4>节点执行详情</h4>
+          <div class="node-results-list">
+            <div 
+              v-for="node in currentWorkflowNodes" 
+              :key="node.id"
+              class="node-result-item"
+              :class="{ 'has-result': hasNodeResult(node.id) }"
+            >
+              <div class="node-result-header">
+                <span class="node-icon">{{ getNodeIcon(node.type) }}</span>
+                <span class="node-name">{{ node.name }}</span>
+                <span class="node-status-badge" :class="`status-${node.status || 'idle'}`">
+                  {{ getNodeStatusText(node.status) }}
+                </span>
+              </div>
+              <div v-if="hasNodeResult(node.id)" class="node-result-data">
+                <pre>{{ formatNodeResult(node.id) }}</pre>
+              </div>
+            </div>
+          </div>
         </div>
+        
         <!-- 后续操作按钮 -->
         <div v-if="executionResults.status === 'completed'" class="result-actions">
           <button class="btn btn-primary" @click="viewGeneratedContent">
+            <component :is="icons.eye" :size="16" />
             查看生成内容
           </button>
           <button class="btn btn-secondary" @click="exportResults">
+            <component :is="icons.download" :size="16" />
             导出结果
           </button>
           <button class="btn btn-secondary" @click="backToDashboard">
+            <component :is="icons.home" :size="16" />
             返回项目概览
           </button>
         </div>
@@ -153,24 +265,60 @@
         </div>
       </template>
       
-      <!-- 执行记录视图 -->
+      <!-- 执行记录视图 - Enhanced -->
       <template v-else-if="currentViewType === 'execution'">
-        <div class="execution-view">
+        <div class="execution-history-view">
           <div class="execution-detail">
-            <div class="execution-info">
-              <div class="info-row">
-                <span class="info-label">执行ID</span>
-                <span class="info-value">{{ selectedExecutionId }}</span>
+            <div class="execution-info-card">
+              <div class="info-header">
+                <h3>执行详情</h3>
+                <span class="execution-id">ID: {{ selectedExecutionId }}</span>
               </div>
-              <div class="info-row">
-                <span class="info-label">状态</span>
-                <span class="info-value status-badge" :class="`status-badge--${selectedExecutionStatus}`">
-                  {{ selectedExecutionStatus === 'success' ? '成功' : selectedExecutionStatus === 'error' ? '失败' : selectedExecutionStatus }}
-                </span>
+              
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">状态</span>
+                  <span class="info-value status-badge" :class="`status-badge--${selectedExecutionStatus}`">
+                    <component 
+                      :is="getStatusIcon(selectedExecutionStatus)" 
+                      :size="14" 
+                    />
+                    {{ getExecutionStatusText(selectedExecutionStatus) }}
+                  </span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">执行时间</span>
+                  <span class="info-value">{{ selectedExecutionTime }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">工作流</span>
+                  <span class="info-value">{{ selectedExecutionName }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">节点数量</span>
+                  <span class="info-value">{{ selectedExecutionNodeCount || 0 }} 个</span>
+                </div>
               </div>
-              <div class="info-row">
-                <span class="info-label">执行时间</span>
-                <span class="info-value">{{ selectedExecutionTime }}</span>
+              
+              <!-- Execution Timeline -->
+              <div class="execution-timeline">
+                <h4>执行时间线</h4>
+                <div class="timeline-items">
+                  <div 
+                    v-for="(event, index) in selectedExecutionTimeline" 
+                    :key="index"
+                    class="timeline-item"
+                  >
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">{{ formatLogTime(event.timestamp) }}</span>
+                      <span class="timeline-message">{{ event.message }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -181,42 +329,41 @@
       <template v-else>
         <div class="node-palette">
         <h3>节点库</h3>
+        
+        <!-- 节点搜索 -->
+        <div class="node-search">
+          <component :is="icons.search" :size="14" class="search-icon" />
+          <input 
+            type="text" 
+            v-model="nodeSearchQuery"
+            placeholder="搜索节点..."
+            class="search-input"
+            @keydown.esc="nodeSearchQuery = ''"
+          />
+          <button v-if="nodeSearchQuery" @click="nodeSearchQuery = ''" class="search-clear">
+            <component :is="icons.x" :size="12" />
+          </button>
+        </div>
+        
         <div class="node-categories">
-          <div class="category">
-            <h4>输入节点</h4>
-            <div class="node-item" draggable="true" @dragstart="startDrag($event, 'novel-parser')">
-              <span class="node-item-icon">📖</span>
+          <div class="category" v-for="category in filteredNodeCategories" :key="category.name">
+            <h4>{{ category.name }}</h4>
+            <div 
+              v-for="node in category.nodes" 
+              :key="node.type"
+              class="node-item" 
+              draggable="true" 
+              @dragstart="startDrag($event, node.type)"
+            >
+              <span class="node-item-icon">{{ node.icon }}</span>
               <span class="node-item-divider"></span>
-              <span class="node-item-text">小说解析器</span>
+              <span class="node-item-text">{{ node.title }}</span>
             </div>
           </div>
           
-          <div class="category">
-            <h4>处理节点</h4>
-            <div class="node-item" draggable="true" @dragstart="startDrag($event, 'character-analyzer')">
-              <span class="node-item-icon">👤</span>
-              <span class="node-item-divider"></span>
-              <span class="node-item-text">角色分析器</span>
-            </div>
-            <div class="node-item" draggable="true" @dragstart="startDrag($event, 'scene-generator')">
-              <span class="node-item-icon">🎬</span>
-              <span class="node-item-divider"></span>
-              <span class="node-item-text">场景生成器</span>
-            </div>
-            <div class="node-item" draggable="true" @dragstart="startDrag($event, 'script-converter')">
-              <span class="node-item-icon">📝</span>
-              <span class="node-item-divider"></span>
-              <span class="node-item-text">脚本转换器</span>
-            </div>
-          </div>
-          
-          <div class="category">
-            <h4>输出节点</h4>
-            <div class="node-item" draggable="true" @dragstart="startDrag($event, 'video-generator')">
-              <span class="node-item-icon">🎥</span>
-              <span class="node-item-divider"></span>
-              <span class="node-item-text">视频生成器</span>
-            </div>
+          <div v-if="filteredNodeCategories.length === 0" class="no-results">
+            <component :is="icons.search" :size="32" />
+            <p>未找到匹配的节点</p>
           </div>
         </div>
 
@@ -242,7 +389,24 @@
         </div>
       </div>
       
-      <div class="workflow-canvas" @drop="dropNode" @dragover.prevent>
+      <div class="workflow-canvas" @drop="dropNode" @dragover.prevent @wheel="handleCanvasWheel" @mousedown="handleCanvasMouseDown" @mousemove="handleCanvasMouseMove" @mouseup="handleCanvasMouseUp">
+        <!-- 缩放和平移控制 -->
+        <div class="canvas-controls">
+          <div class="zoom-controls">
+            <button @click="zoomIn" class="control-btn" title="放大 (Ctrl/Cmd + +)">
+              <component :is="icons.plus" :size="16" />
+            </button>
+            <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
+            <button @click="zoomOut" class="control-btn" title="缩小 (Ctrl/Cmd + -)">
+              <component :is="icons.minus" :size="16" />
+            </button>
+            <button @click="resetZoom" class="control-btn" title="重置 (Ctrl/Cmd + 0)">
+              <component :is="icons.maximize" :size="16" />
+            </button>
+          </div>
+          <div class="pan-hint" v-if="!isPanning">按住空格键拖拽画布</div>
+        </div>
+        
         <div v-if="!currentWorkflow" class="empty-canvas">
           <div class="empty-message">
             <h3>请选择或创建一个工作流</h3>
@@ -250,7 +414,7 @@
           </div>
         </div>
         
-        <div v-else class="canvas-grid">
+        <div v-else class="canvas-grid" :style="canvasTransformStyle">
           <div 
             v-for="node in currentWorkflowNodes" 
             :key="node.id"
@@ -258,6 +422,8 @@
             :class="{ 
               'node-running': node.status === 'running', 
               'node-completed': node.status === 'completed',
+              'node-error': node.status === 'error',
+              'node-pending': node.status === 'pending',
               'node-selected': selectedNodeId === node.id
             }"
             :style="{ left: node.position.x + 'px', top: node.position.y + 'px' }"
@@ -265,6 +431,34 @@
             @click.stop="selectNode(node)"
             @dblclick.stop="editNode(node)"
           >
+            <!-- Node Status Indicator -->
+            <div v-if="node.status && node.status !== 'idle'" class="node-status-indicator">
+              <component 
+                v-if="node.status === 'running'" 
+                :is="icons.refresh" 
+                :size="12" 
+                class="status-icon spinning"
+              />
+              <component 
+                v-else-if="node.status === 'completed'" 
+                :is="icons.check" 
+                :size="12" 
+                class="status-icon"
+              />
+              <component 
+                v-else-if="node.status === 'error'" 
+                :is="icons.xCircle" 
+                :size="12" 
+                class="status-icon"
+              />
+              <component 
+                v-else-if="node.status === 'pending'" 
+                :is="icons.clock" 
+                :size="12" 
+                class="status-icon"
+              />
+            </div>
+            
             <div class="node-header">
               <span class="node-icon">{{ getNodeIcon(node.type) }}</span>
               <span class="node-title">{{ node.name }}</span>
@@ -288,6 +482,14 @@
               <div v-for="(value, key) in node.config" :key="key" class="config-item">
                 {{ key }}: {{ value }}
               </div>
+            </div>
+            
+            <!-- Node Execution Progress (for running nodes) -->
+            <div v-if="node.status === 'running' && node.progress !== undefined" class="node-progress">
+              <div class="node-progress-bar">
+                <div class="node-progress-fill" :style="{ width: node.progress + '%' }"></div>
+              </div>
+              <span class="node-progress-text">{{ node.progress }}%</span>
             </div>
           </div>
           
@@ -391,33 +593,73 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+/**
+ * WorkflowEditor.vue - 重构为 TypeScript + Composition API
+ * 使用新的 workflowStore.ts，移除直接的 Service 访问
+ * 
+ * Requirements: 6.4, 8.3
+ */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useWorkflowStore } from '../stores/workflow.js';
+import { useWorkflowStore } from '../stores/workflowStore';
 import { useProjectStore } from '../stores/project.js';
 import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
+import { useAppInit } from '../composables/useAppInit';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 import InputDialog from '../components/dialogs/InputDialog.vue';
+import type { Workflow, WorkflowNode, WorkflowConnection, WorkflowNodeType, ValidationResult } from '../types/workflow';
 
 const router = useRouter();
 const workflowStore = useWorkflowStore();
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
 const navigationStore = useNavigationStore();
+const { initialize, isAppInitialized, waitForInit } = useAppInit();
+
+// 初始化状态 - Requirements: 3.4, 3.5
+const isReady = ref(false);
 
 // Reactive data
 const selectedWorkflowId = ref('');
-const selectedNodeId = ref('');
-const validationResult = ref(null);
-const currentExecutionId = ref(null);
-const executionResults = ref(null);
+const selectedNodeId = ref<string>('');
+const selectedConnectionId = ref<string>('');
+const validationResult = ref<ValidationResult | null>(null);
+const currentExecutionId = ref<string | null>(null);
+const executionResults = ref<any>(null);
 const showResultsPanel = ref(false);
 const dropdownOpen = ref(false);
 const showNodeEditor = ref(false);
-const editingNode = ref(null);
+const editingNode = ref<WorkflowNode | null>(null);
+
+// 节点搜索
+const nodeSearchQuery = ref('');
+
+// 执行日志
+const showExecutionLogs = ref(false);
+const executionLogs = ref<Array<{ timestamp: number; level: string; message: string }>>([]);
+const logsContainer = ref<HTMLElement | null>(null);
+
+// 执行历史
+const selectedExecutionNodeCount = ref(0);
+const selectedExecutionTimeline = ref<Array<{ timestamp: number; message: string }>>([]);
+
+// 画布缩放和平移
+const canvasZoom = ref(1);
+const canvasOffset = ref({ x: 0, y: 0 });
+const isPanning = ref(false);
+const panStart = ref({ x: 0, y: 0 });
+const isSpacePressed = ref(false);
+
+// 连线拖拽状态
+const isConnecting = ref(false);
+const connectingFromNode = ref<WorkflowNode | null>(null);
+const connectingFromPort = ref(0);
+const connectingMousePos = ref({ x: 0, y: 0 });
+const highlightedPort = ref<{ nodeId: string; portIndex: number; portType: string } | null>(null);
+const connectionsLayer = ref<SVGSVGElement | null>(null);
 
 // 输入对话框状态
 const inputDialogVisible = ref(false);
@@ -425,7 +667,7 @@ const inputDialogTitle = ref('');
 const inputDialogMessage = ref('');
 const inputDialogPlaceholder = ref('');
 const inputDialogDefaultValue = ref('');
-const inputDialogCallback = ref(null);
+const inputDialogCallback = ref<((value: string) => void) | null>(null);
 
 // 从 panelContext 获取当前视图状态
 const workflowContext = computed(() => navigationStore.panelContext.workflow || {});
@@ -536,6 +778,115 @@ function formatTime(time) {
   return date.toLocaleDateString('zh-CN');
 }
 
+// 格式化日志时间
+function formatLogTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+// 格式化持续时间
+function formatDuration(ms: number): string {
+  if (!ms) return '0秒';
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  
+  if (hours > 0) {
+    return `${hours}小时${minutes % 60}分${seconds % 60}秒`;
+  } else if (minutes > 0) {
+    return `${minutes}分${seconds % 60}秒`;
+  } else {
+    return `${seconds}秒`;
+  }
+}
+
+// 获取节点状态文本
+function getNodeStatusText(status: string | undefined): string {
+  const statusMap: Record<string, string> = {
+    idle: '空闲',
+    pending: '待执行',
+    running: '执行中',
+    completed: '已完成',
+    error: '错误'
+  };
+  return statusMap[status || 'idle'] || '未知';
+}
+
+// 获取执行状态文本
+function getExecutionStatusText(status: string): string {
+  const statusMap: Record<string, string> = {
+    success: '成功',
+    completed: '成功',
+    error: '失败',
+    failed: '失败',
+    running: '执行中',
+    cancelled: '已取消'
+  };
+  return statusMap[status] || status;
+}
+
+// 检查节点是否有结果
+function hasNodeResult(nodeId: string): boolean {
+  if (!executionResults.value?.nodeResultsData) return false;
+  return nodeId in executionResults.value.nodeResultsData;
+}
+
+// 格式化节点结果
+function formatNodeResult(nodeId: string): string {
+  if (!executionResults.value?.nodeResultsData) return '';
+  const result = executionResults.value.nodeResultsData[nodeId];
+  if (!result) return '';
+  
+  try {
+    return JSON.stringify(result, null, 2);
+  } catch (e) {
+    return String(result);
+  }
+}
+
+// 切换执行日志显示
+function toggleExecutionLogs(): void {
+  showExecutionLogs.value = !showExecutionLogs.value;
+  
+  // 自动滚动到底部
+  if (showExecutionLogs.value) {
+    setTimeout(() => {
+      if (logsContainer.value) {
+        logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+      }
+    }, 100);
+  }
+}
+
+// 清空执行日志
+function clearExecutionLogs(): void {
+  executionLogs.value = [];
+}
+
+// 添加执行日志
+function addExecutionLog(level: string, message: string): void {
+  executionLogs.value.push({
+    timestamp: Date.now(),
+    level,
+    message
+  });
+  
+  // 自动滚动到底部
+  setTimeout(() => {
+    if (logsContainer.value) {
+      logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+    }
+  }, 50);
+}
+
+// 显示执行历史
+function showExecutionHistory(): void {
+  navigationStore.updatePanelContext('workflow', {
+    viewType: 'status',
+    statusFilter: 'completed'
+  });
+}
+
 // 查看工作流详情
 function viewWorkflowDetail(workflow) {
   selectedWorkflowId.value = workflow.id;
@@ -550,8 +901,8 @@ function viewWorkflowDetail(workflow) {
 }
 
 // 刷新状态
-function refreshStatus() {
-  workflowStore.loadAllWorkflows();
+async function refreshStatus(): Promise<void> {
+  await workflowStore.loadWorkflows();
   uiStore.addNotification({
     type: 'info',
     title: '刷新成功',
@@ -561,7 +912,7 @@ function refreshStatus() {
 }
 
 // 使用模板
-function useTemplate() {
+async function useTemplate(): Promise<void> {
   console.log('useTemplate called');
   console.log('selectedTemplateId:', selectedTemplateId.value);
   console.log('selectedTemplate:', selectedTemplate.value);
@@ -572,20 +923,31 @@ function useTemplate() {
     const defaultName = `${selectedTemplate.value.name}`;
     console.log('Creating workflow with name:', defaultName);
     
-    const workflow = workflowStore.createWorkflow(
-      defaultName,
-      selectedTemplate.value.description
-    );
+    const workflow = await workflowStore.createWorkflow({
+      name: defaultName,
+      description: selectedTemplate.value.description
+    });
     
-    // 先设置为当前工作流，这样 addNode 才能正确添加节点
-    workflowStore.setCurrentWorkflow(workflow.id);
+    if (!workflow) {
+      uiStore.addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建工作流',
+        timeout: 3000
+      });
+      return;
+    }
+    
+    // 先设置为当前工作流
+    workflowStore.selectWorkflow(workflow.id);
     selectedWorkflowId.value = workflow.id;
     
     // 添加模板节点并自动连接
-    const nodeIds = [];
-    selectedTemplate.value.nodes.forEach((nodeType, index) => {
+    const nodeIds: string[] = [];
+    selectedTemplate.value.nodes.forEach((nodeType: string, index: number) => {
       const node = workflowStore.addNode(
-        nodeType, 
+        workflow.id,
+        nodeType as WorkflowNodeType, 
         getNodeTitle(nodeType), 
         { x: 100 + index * 220, y: 100 }
       );
@@ -596,7 +958,7 @@ function useTemplate() {
     
     // 自动连接相邻节点
     for (let i = 0; i < nodeIds.length - 1; i++) {
-      workflowStore.addConnection(nodeIds[i], nodeIds[i + 1]);
+      workflowStore.addConnection(workflow.id, nodeIds[i], nodeIds[i + 1]);
     }
     
     navigationStore.updatePanelContext('workflow', {
@@ -622,8 +984,8 @@ function useTemplate() {
 }
 
 // 获取节点标题
-function getNodeTitle(type) {
-  const titles = {
+function getNodeTitle(type: string): string {
+  const titles: Record<string, string> = {
     'novel-parser': '小说解析器',
     'character-analyzer': '角色分析器',
     'scene-generator': '场景生成器',
@@ -634,48 +996,189 @@ function getNodeTitle(type) {
 }
 
 // Computed for selected workflow name
-const selectedWorkflowName = computed(() => {
+const selectedWorkflowName = computed((): string => {
   if (!selectedWorkflowId.value) return '选择工作流';
   const workflow = workflows.value.find(w => w.id === selectedWorkflowId.value);
   return workflow ? workflow.name : '选择工作流';
 });
 
 // Custom dropdown functions
-function toggleDropdown() {
+function toggleDropdown(): void {
   dropdownOpen.value = !dropdownOpen.value;
 }
 
-function selectWorkflow(id) {
+// 重命名为 handleSelectWorkflow 避免与 store 方法冲突
+function handleSelectWorkflow(id: string): void {
   selectedWorkflowId.value = id;
   dropdownOpen.value = false;
   switchWorkflow();
 }
 
 // Close dropdown when clicking outside
-function handleClickOutside(event) {
+function handleClickOutside(event: MouseEvent): void {
   const customSelect = document.querySelector('.custom-select');
-  if (customSelect && !customSelect.contains(event.target)) {
+  if (customSelect && !customSelect.contains(event.target as Node)) {
     dropdownOpen.value = false;
   }
 }
 
-onMounted(() => {
-  workflowStore.loadAllWorkflows();
-  document.addEventListener('click', handleClickOutside);
-  
-  // 检查是否需要自动应用模板（从 Dashboard 跳转过来）
-  const context = navigationStore.panelContext.workflow;
-  if (context?.viewType === 'template' && context?.templateId && context?.projectName) {
-    console.log('🚀 Auto-applying template on mount:', context.templateId, 'for project:', context.projectName);
-    // 延迟执行，确保组件完全挂载
-    setTimeout(() => {
-      autoApplyTemplate(context);
-    }, 100);
+// 初始化函数 - Requirements: 3.4, 3.5
+async function initializeEditor(): Promise<void> {
+  try {
+    // 等待应用初始化完成
+    await waitForInit();
+    
+    // 加载工作流数据
+    await workflowStore.loadWorkflows();
+    
+    console.log('📂 WorkflowEditor initialized, workflows loaded:', workflowStore.workflows.length);
+    
+    // 检查是否需要自动应用模板（从 Dashboard 跳转过来）
+    const context = navigationStore.panelContext.workflow;
+    if (context?.viewType === 'template' && context?.templateId && context?.projectName) {
+      console.log('🚀 Auto-applying template on mount:', context.templateId, 'for project:', context.projectName);
+      await autoApplyTemplate(context);
+    }
+    
+    isReady.value = true;
+  } catch (error) {
+    console.error('❌ WorkflowEditor initialization failed:', error);
+    // 即使初始化失败，也设置 isReady 为 true，让用户可以看到界面
+    isReady.value = true;
+    uiStore.addNotification({
+      type: 'error',
+      title: '初始化失败',
+      message: '工作流编辑器加载失败，部分功能可能不可用',
+      timeout: 5000
+    });
   }
+}
+
+// 画布缩放功能
+function zoomIn(): void {
+  canvasZoom.value = Math.min(canvasZoom.value + 0.1, 2);
+}
+
+function zoomOut(): void {
+  canvasZoom.value = Math.max(canvasZoom.value - 0.1, 0.5);
+}
+
+function resetZoom(): void {
+  canvasZoom.value = 1;
+  canvasOffset.value = { x: 0, y: 0 };
+}
+
+// 画布滚轮缩放
+function handleCanvasWheel(event: WheelEvent): void {
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    const delta = -event.deltaY * 0.001;
+    canvasZoom.value = Math.max(0.5, Math.min(2, canvasZoom.value + delta));
+  }
+}
+
+// 画布平移
+function handleCanvasMouseDown(event: MouseEvent): void {
+  if (isSpacePressed.value || event.button === 1) { // 空格键或中键
+    event.preventDefault();
+    isPanning.value = true;
+    panStart.value = { x: event.clientX - canvasOffset.value.x, y: event.clientY - canvasOffset.value.y };
+  }
+}
+
+function handleCanvasMouseMove(event: MouseEvent): void {
+  if (isPanning.value) {
+    canvasOffset.value = {
+      x: event.clientX - panStart.value.x,
+      y: event.clientY - panStart.value.y
+    };
+  }
+}
+
+function handleCanvasMouseUp(): void {
+  isPanning.value = false;
+}
+
+// 快捷键处理
+function handleKeyDown(event: KeyboardEvent): void {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifier = isMac ? event.metaKey : event.ctrlKey;
+  
+  // 空格键 - 平移模式
+  if (event.code === 'Space' && !event.repeat) {
+    event.preventDefault();
+    isSpacePressed.value = true;
+  }
+  
+  // Ctrl/Cmd + S - 保存
+  if (modifier && event.key === 's') {
+    event.preventDefault();
+    if (selectedWorkflowId.value) {
+      saveWorkflow();
+    }
+  }
+  
+  // Ctrl/Cmd + N - 新建工作流
+  if (modifier && event.key === 'n') {
+    event.preventDefault();
+    createNewWorkflow();
+  }
+  
+  // Ctrl/Cmd + + - 放大
+  if (modifier && (event.key === '+' || event.key === '=')) {
+    event.preventDefault();
+    zoomIn();
+  }
+  
+  // Ctrl/Cmd + - - 缩小
+  if (modifier && event.key === '-') {
+    event.preventDefault();
+    zoomOut();
+  }
+  
+  // Ctrl/Cmd + 0 - 重置缩放
+  if (modifier && event.key === '0') {
+    event.preventDefault();
+    resetZoom();
+  }
+  
+  // Delete/Backspace - 删除选中节点
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodeId.value) {
+    event.preventDefault();
+    removeNode(selectedNodeId.value);
+  }
+  
+  // Escape - 取消选择
+  if (event.key === 'Escape') {
+    selectedNodeId.value = '';
+    nodeSearchQuery.value = '';
+  }
+  
+  // Ctrl/Cmd + F - 搜索节点
+  if (modifier && event.key === 'f') {
+    event.preventDefault();
+    const searchInput = document.querySelector('.node-search .search-input') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }
+}
+
+function handleKeyUp(event: KeyboardEvent): void {
+  if (event.code === 'Space') {
+    isSpacePressed.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keyup', handleKeyUp);
+  initializeEditor();
 });
 
 // 自动应用模板（从 Dashboard 继续处理跳转过来时）
-function autoApplyTemplate(context) {
+async function autoApplyTemplate(context: any): Promise<void> {
   const template = templates.value.find(t => t.id === context.templateId);
   if (!template) {
     console.warn('Template not found:', context.templateId);
@@ -686,17 +1189,22 @@ function autoApplyTemplate(context) {
   const workflowName = context.projectName ? `${context.projectName} - ${template.name}` : template.name;
   console.log('📋 Creating workflow from template:', workflowName);
   
-  const workflow = workflowStore.createWorkflow(workflowName, template.description);
+  const workflow = await workflowStore.createWorkflow({ name: workflowName, description: template.description });
+  if (!workflow) {
+    console.error('Failed to create workflow');
+    return;
+  }
   
   // 设置为当前工作流
-  workflowStore.setCurrentWorkflow(workflow.id);
+  workflowStore.selectWorkflow(workflow.id);
   selectedWorkflowId.value = workflow.id;
   
   // 添加模板节点并自动连接
-  const nodeIds = [];
-  template.nodes.forEach((nodeType, index) => {
+  const nodeIds: string[] = [];
+  template.nodes.forEach((nodeType: string, index: number) => {
     const node = workflowStore.addNode(
-      nodeType, 
+      workflow.id,
+      nodeType as WorkflowNodeType, 
       getNodeTitle(nodeType), 
       { x: 100 + index * 220, y: 100 }
     );
@@ -707,7 +1215,7 @@ function autoApplyTemplate(context) {
   
   // 自动连接相邻节点
   for (let i = 0; i < nodeIds.length - 1; i++) {
-    workflowStore.addConnection(nodeIds[i], nodeIds[i + 1]);
+    workflowStore.addConnection(workflow.id, nodeIds[i], nodeIds[i + 1]);
   }
   
   // 更新 panelContext 为工作流详情视图
@@ -730,6 +1238,8 @@ function autoApplyTemplate(context) {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('keyup', handleKeyUp);
 });
 
 // 监听执行状态变化
@@ -745,13 +1255,15 @@ watch(() => workflowStore.executionStatus, (newStatus) => {
 watch(
   () => navigationStore.panelContext.workflow,
   (newVal) => {
+    if (!isReady.value) return; // 等待初始化完成
+    
     console.log('👀 WorkflowEditor panelContext changed:', newVal);
     if (newVal?.selectedWorkflow && newVal.selectedWorkflow !== selectedWorkflowId.value) {
       selectedWorkflowId.value = newVal.selectedWorkflow;
       // 如果 currentWorkflow 还没设置，尝试设置
       if (!workflowStore.currentWorkflow || workflowStore.currentWorkflow.id !== newVal.selectedWorkflow) {
-        const success = workflowStore.setCurrentWorkflow(newVal.selectedWorkflow);
-        console.log('📌 WorkflowEditor setCurrentWorkflow result:', success, 'workflow:', workflowStore.currentWorkflow?.name);
+        const success = workflowStore.selectWorkflow(newVal.selectedWorkflow);
+        console.log('📌 WorkflowEditor selectWorkflow result:', success, 'workflow:', workflowStore.currentWorkflow?.name);
       }
     }
     if (newVal?.templateId) {
@@ -764,32 +1276,45 @@ watch(
   { deep: true, immediate: true }
 );
 
-// Computed properties
-const workflows = computed(() => workflowStore.workflows);
-const currentWorkflow = computed(() => workflowStore.currentWorkflow);
-const currentWorkflowNodes = computed(() => workflowStore.currentWorkflowNodes);
-const currentWorkflowConnections = computed(() => workflowStore.currentWorkflowConnections);
-const isExecuting = computed(() => workflowStore.isExecuting);
-const executionProgress = computed(() => workflowStore.executionProgress);
-const executionMessage = computed(() => workflowStore.executionMessage);
+// Computed properties - 从 Store 读取数据 (Requirements: 6.4)
+const workflows = computed((): Workflow[] => workflowStore.workflows);
+const currentWorkflow = computed((): Workflow | null => workflowStore.currentWorkflow);
+const currentWorkflowNodes = computed((): WorkflowNode[] => workflowStore.currentWorkflowNodes);
+const currentWorkflowConnections = computed((): WorkflowConnection[] => workflowStore.currentWorkflowConnections);
+const isExecuting = computed((): boolean => workflowStore.isExecuting);
+const executionProgress = computed((): number => workflowStore.executionProgress);
+const executionMessage = computed((): string => workflowStore.executionMessage);
 
 // 选中的节点
-const selectedNode = computed(() => {
+const selectedNode = computed((): WorkflowNode | null => {
   if (!selectedNodeId.value || !currentWorkflowNodes.value) return null;
-  return currentWorkflowNodes.value.find(n => n.id === selectedNodeId.value);
+  return currentWorkflowNodes.value.find(n => n.id === selectedNodeId.value) || null;
 });
 
-// 更新选中节点名称
-function updateSelectedNodeName(newName) {
-  if (selectedNodeId.value && newName) {
-    workflowStore.updateNodeName(selectedNodeId.value, newName);
+// 节点状态统计
+const completedNodesCount = computed((): number => {
+  return currentWorkflowNodes.value.filter(n => n.status === 'completed').length;
+});
+
+const runningNodesCount = computed((): number => {
+  return currentWorkflowNodes.value.filter(n => n.status === 'running').length;
+});
+
+const pendingNodesCount = computed((): number => {
+  return currentWorkflowNodes.value.filter(n => !n.status || n.status === 'pending' || n.status === 'idle').length;
+});
+
+// 更新选中节点名称 - 通过 Store action (Requirements: 5.1, 5.2)
+function updateSelectedNodeName(newName: string): void {
+  if (selectedNodeId.value && newName && currentWorkflow.value) {
+    workflowStore.updateNodeName(currentWorkflow.value.id, selectedNodeId.value, newName);
   }
 }
 
-// 更新节点配置
-function updateNodeConfig(key, value) {
-  if (selectedNodeId.value) {
-    workflowStore.updateNodeConfig(selectedNodeId.value, { [key]: value });
+// 更新节点配置 - 通过 Store action (Requirements: 5.1, 5.2)
+function updateNodeConfig(key: string, value: any): void {
+  if (selectedNodeId.value && currentWorkflow.value) {
+    workflowStore.updateNodeConfig(currentWorkflow.value.id, selectedNodeId.value, { [key]: value });
   }
 }
 
@@ -827,110 +1352,209 @@ const nodeTypes = {
   }
 };
 
+// 节点分类
+const nodeCategories = [
+  {
+    name: '输入节点',
+    nodes: [
+      { type: 'novel-parser', icon: '📖', title: '小说解析器' }
+    ]
+  },
+  {
+    name: '处理节点',
+    nodes: [
+      { type: 'character-analyzer', icon: '👤', title: '角色分析器' },
+      { type: 'scene-generator', icon: '🎬', title: '场景生成器' },
+      { type: 'script-converter', icon: '📝', title: '脚本转换器' }
+    ]
+  },
+  {
+    name: '输出节点',
+    nodes: [
+      { type: 'video-generator', icon: '🎥', title: '视频生成器' }
+    ]
+  }
+];
+
+// 过滤后的节点分类
+const filteredNodeCategories = computed(() => {
+  if (!nodeSearchQuery.value.trim()) {
+    return nodeCategories;
+  }
+  
+  const query = nodeSearchQuery.value.toLowerCase();
+  return nodeCategories
+    .map(category => ({
+      ...category,
+      nodes: category.nodes.filter(node => 
+        node.title.toLowerCase().includes(query) ||
+        node.type.toLowerCase().includes(query)
+      )
+    }))
+    .filter(category => category.nodes.length > 0);
+});
+
+// 画布变换样式
+const canvasTransformStyle = computed(() => ({
+  transform: `translate(${canvasOffset.value.x}px, ${canvasOffset.value.y}px) scale(${canvasZoom.value})`,
+  transformOrigin: '0 0'
+}));
+
 // Workflow management
-function createNewWorkflow() {
+function createNewWorkflow(): void {
   inputDialogTitle.value = '新建工作流';
   inputDialogMessage.value = '';
   inputDialogPlaceholder.value = '请输入工作流名称';
   inputDialogDefaultValue.value = '';
-  inputDialogCallback.value = (name) => {
+  inputDialogCallback.value = async (name: string) => {
     if (name) {
-      const workflow = workflowStore.createWorkflow(name, '新建的工作流');
-      selectedWorkflowId.value = workflow.id;
-      workflowStore.setCurrentWorkflow(workflow.id);
-      uiStore.addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: `工作流 "${name}" 已创建`,
-        timeout: 2000
-      });
+      const workflow = await workflowStore.createWorkflow({ name, description: '新建的工作流' });
+      if (workflow) {
+        selectedWorkflowId.value = workflow.id;
+        workflowStore.selectWorkflow(workflow.id);
+        uiStore.addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: `工作流 "${name}" 已创建`,
+          timeout: 2000
+        });
+      }
     }
   };
   inputDialogVisible.value = true;
 }
 
+// 重命名当前工作流
+function renameCurrentWorkflow(): void {
+  console.log('🔧 renameCurrentWorkflow called, selectedWorkflowId:', selectedWorkflowId.value);
+  if (selectedWorkflowId.value) {
+    renameWorkflow(selectedWorkflowId.value);
+  } else {
+    console.warn('⚠️ No workflow selected');
+    uiStore.addNotification({
+      type: 'warning',
+      title: '请先选择工作流',
+      message: '请从下拉列表中选择一个工作流',
+      timeout: 2000
+    });
+  }
+}
+
+// 删除当前工作流
+function deleteCurrentWorkflow(): void {
+  if (selectedWorkflowId.value) {
+    deleteWorkflow(selectedWorkflowId.value);
+  }
+}
+
 // 处理输入对话框确认
-function handleInputDialogConfirm(value) {
+function handleInputDialogConfirm(value: string): void {
   if (inputDialogCallback.value) {
     inputDialogCallback.value(value);
   }
 }
 
-function createDefaultWorkflow() {
-  const workflow = workflowStore.createDefaultWorkflow();
-  selectedWorkflowId.value = workflow.id;
+async function createDefaultWorkflow(): Promise<void> {
+  const workflow = await workflowStore.createDefaultWorkflow();
+  if (workflow) {
+    selectedWorkflowId.value = workflow.id;
+  }
 }
 
-function deleteWorkflow(workflowId) {
+async function deleteWorkflow(workflowId: string): Promise<void> {
   const workflow = workflows.value.find(w => w.id === workflowId);
   if (!workflow) return;
   
   // 先关闭下拉菜单
   dropdownOpen.value = false;
   
-  setTimeout(() => {
+  setTimeout(async () => {
     if (confirm(`确定要删除工作流 "${workflow.name}" 吗？`)) {
-      workflowStore.deleteWorkflow(workflowId);
+      const success = await workflowStore.deleteWorkflow(workflowId);
       
-      // 如果删除的是当前选中的工作流，清空选择
-      if (selectedWorkflowId.value === workflowId) {
-        selectedWorkflowId.value = '';
+      if (success) {
+        // 如果删除的是当前选中的工作流，清空选择
+        if (selectedWorkflowId.value === workflowId) {
+          selectedWorkflowId.value = '';
+        }
+        
+        uiStore.addNotification({
+          type: 'success',
+          title: '删除成功',
+          message: `工作流 "${workflow.name}" 已删除`,
+          timeout: 2000
+        });
       }
-      
-      uiStore.addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: `工作流 "${workflow.name}" 已删除`,
-        timeout: 2000
-      });
     }
   }, 100);
 }
 
-function renameWorkflow(workflowId) {
-  console.log('renameWorkflow called with id:', workflowId);
+function renameWorkflow(workflowId: string): void {
+  console.log('🔧 renameWorkflow called with id:', workflowId);
   const workflow = workflows.value.find(w => w.id === workflowId);
   if (!workflow) {
-    console.log('Workflow not found');
+    console.log('⚠️ Workflow not found in workflows list');
+    console.log('📋 Available workflows:', workflows.value.map(w => ({ id: w.id, name: w.name })));
     return;
   }
+  
+  console.log('✅ Found workflow:', workflow.name);
   
   // 先关闭下拉菜单
   dropdownOpen.value = false;
   
   // 使用自定义对话框
   setTimeout(() => {
+    console.log('📝 Opening input dialog for rename');
     inputDialogTitle.value = '重命名工作流';
     inputDialogMessage.value = '';
     inputDialogPlaceholder.value = '请输入新的工作流名称';
     inputDialogDefaultValue.value = workflow.name;
-    inputDialogCallback.value = (newName) => {
+    inputDialogCallback.value = async (newName: string) => {
+      console.log('📝 Rename callback called with:', newName);
       if (newName && newName !== workflow.name) {
-        workflowStore.renameWorkflow(workflowId, newName);
-        uiStore.addNotification({
-          type: 'success',
-          title: '重命名成功',
-          message: `工作流已重命名为 "${newName}"`,
-          timeout: 2000
-        });
+        const result = await workflowStore.renameWorkflow(workflowId, newName);
+        console.log('📝 Rename result:', result);
+        if (result.success) {
+          uiStore.addNotification({
+            type: 'success',
+            title: '重命名成功',
+            message: `工作流已重命名为 "${result.name}"`,
+            timeout: 2000
+          });
+        } else {
+          uiStore.addNotification({
+            type: 'error',
+            title: '重命名失败',
+            message: '无法重命名工作流，请重试',
+            timeout: 3000
+          });
+        }
       }
     };
     inputDialogVisible.value = true;
+    console.log('📝 inputDialogVisible set to true');
   }, 100);
 }
 
-function switchWorkflow() {
+function switchWorkflow(): void {
   if (selectedWorkflowId.value) {
-    workflowStore.setCurrentWorkflow(selectedWorkflowId.value);
+    workflowStore.selectWorkflow(selectedWorkflowId.value);
     validationResult.value = null;
   }
 }
 
-function saveWorkflow() {
+async function saveWorkflow(): Promise<void> {
   if (currentWorkflow.value) {
-    // In a real implementation, this would save to file system
-    console.log('保存工作流:', currentWorkflow.value);
-    alert('工作流已保存！');
+    const success = await workflowStore.saveWorkflow(currentWorkflow.value.id);
+    if (success) {
+      uiStore.addNotification({
+        type: 'success',
+        title: '保存成功',
+        message: '工作流已保存',
+        timeout: 2000
+      });
+    }
   }
 }
 
@@ -956,7 +1580,7 @@ async function runWorkflow() {
   }
 
   // 准备初始数据（从当前项目获取）
-  const initialData = {};
+  const initialData: Record<string, unknown> = {};
   if (projectStore.currentProject) {
     initialData.projectId = projectStore.currentProject.id;
     initialData.novelId = projectStore.currentProject.novelId;
@@ -974,14 +1598,15 @@ async function runWorkflow() {
   try {
     executionResults.value = null;
     showResultsPanel.value = false;
+    executionLogs.value = [];
+    showExecutionLogs.value = true;
+    
+    // 添加初始日志
+    addExecutionLog('info', `开始执行工作流: ${currentWorkflow.value.name}`);
+    addExecutionLog('info', `节点数量: ${currentWorkflowNodes.value.length}`);
     
     // 更新导航状态 - 需求 5.4: 开始执行工作流
     navigationStore.startExecution();
-    
-    currentExecutionId.value = await workflowStore.executeWorkflow(
-      currentWorkflow.value.id,
-      initialData
-    );
     
     uiStore.addNotification({
       type: 'info',
@@ -989,13 +1614,22 @@ async function runWorkflow() {
       message: `工作流 "${currentWorkflow.value.name}" 开始执行`,
       timeout: 2000
     });
-  } catch (error) {
-    uiStore.addNotification({
-      type: 'error',
-      title: '执行失败',
-      message: error.message,
-      timeout: 5000
-    });
+    
+    // 执行工作流（这是一个 async 函数，会等待执行完成）
+    currentExecutionId.value = await workflowStore.executeWorkflow(
+      currentWorkflow.value.id,
+      initialData
+    );
+    
+    addExecutionLog('success', '工作流执行完成');
+    
+    // 执行完成后，直接调用处理函数（不依赖 watch）
+    handleExecutionComplete();
+    
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    addExecutionLog('error', `执行失败: ${errorMessage}`);
+    handleExecutionFailed(errorMessage);
   }
 }
 
@@ -1003,13 +1637,39 @@ async function runWorkflow() {
 function handleExecutionComplete() {
   const execution = workflowStore.getExecutionStatus(currentExecutionId.value);
   if (execution) {
+    const duration = execution.endTime && execution.startTime 
+      ? execution.endTime - execution.startTime 
+      : 0;
+    
+    // 将 Map 转换为普通对象，以便存储和传递
+    const nodeResultsMap = execution.context?.nodeResults;
+    const nodeResultsData: Record<string, any> = {};
+    
+    if (nodeResultsMap) {
+      if (typeof nodeResultsMap.forEach === 'function') {
+        // 如果是 Map
+        nodeResultsMap.forEach((value: any, key: string) => {
+          nodeResultsData[key] = value;
+        });
+      } else if (typeof nodeResultsMap === 'object') {
+        // 如果已经是普通对象
+        Object.assign(nodeResultsData, nodeResultsMap);
+      }
+    }
+    
+    console.log('📊 Execution nodeResults:', nodeResultsData);
+    console.log('📊 NodeResults keys:', Object.keys(nodeResultsData));
+    
     const results = {
       status: 'completed',
-      nodeResults: execution.context?.nodeResults || new Map(),
-      duration: execution.endTime - execution.startTime
+      nodeResults: nodeResultsMap, // 保留原始 Map 用于兼容
+      nodeResultsData, // 添加普通对象版本
+      duration
     };
     executionResults.value = results;
     showResultsPanel.value = true;
+    
+    console.log('✅ Execution completed, showing results panel:', results);
     
     // 更新导航状态 - 需求 5.5: 执行完成后显示结果预览
     navigationStore.setExecutionResult(results);
@@ -1018,6 +1678,8 @@ function handleExecutionComplete() {
     if (projectStore.currentProject) {
       projectStore.currentProject.status = 'completed';
     }
+  } else {
+    console.warn('⚠️ Execution not found:', currentExecutionId.value);
   }
   
   uiStore.addNotification({
@@ -1032,7 +1694,7 @@ function handleExecutionComplete() {
 function viewGeneratedContent() {
   console.log('viewGeneratedContent called');
   showResultsPanel.value = false;
-  router.push('/generated');
+  router.push('/preview');
 }
 
 // 导出结果
@@ -1078,49 +1740,66 @@ function backToDashboard() {
 }
 
 // 处理执行失败
-function handleExecutionFailed() {
+function handleExecutionFailed(errorMessage?: string): void {
   const error = workflowStore.error;
   
   uiStore.addNotification({
     type: 'error',
     title: '执行失败',
-    message: error || '工作流执行过程中发生错误',
+    message: errorMessage || error?.message || '工作流执行过程中发生错误',
     timeout: 5000
   });
 }
 
-function cancelExecution() {
+function cancelExecution(): void {
   if (currentExecutionId.value) {
     workflowStore.cancelExecution(currentExecutionId.value);
     currentExecutionId.value = null;
+    
+    uiStore.addNotification({
+      type: 'info',
+      title: '已取消',
+      message: '工作流执行已取消',
+      timeout: 2000
+    });
   }
 }
 
-function validateWorkflow() {
+function validateWorkflow(): void {
   validationResult.value = workflowStore.validateCurrentWorkflow();
 }
 
 // Node management
-function startDrag(event, nodeType) {
-  event.dataTransfer.setData('nodeType', nodeType);
+function startDrag(event: DragEvent, nodeType: string): void {
+  event.dataTransfer?.setData('nodeType', nodeType);
 }
 
-function dropNode(event) {
+function dropNode(event: DragEvent): void {
   if (!currentWorkflow.value) return;
   
   event.preventDefault();
-  const nodeType = event.dataTransfer.getData('nodeType');
-  const rect = event.currentTarget.getBoundingClientRect();
+  const nodeType = event.dataTransfer?.getData('nodeType');
+  if (!nodeType) return;
+  
+  const target = event.currentTarget as HTMLElement;
+  const rect = target.getBoundingClientRect();
   const x = event.clientX - rect.left - 75;
   const y = event.clientY - rect.top - 50;
   
   const nodeName = nodeTypes[nodeType]?.title || nodeType;
-  workflowStore.addNode(nodeType, nodeName, { x: Math.max(0, x), y: Math.max(0, y) });
+  workflowStore.addNode(
+    currentWorkflow.value.id,
+    nodeType as WorkflowNodeType,
+    nodeName,
+    { x: Math.max(0, x), y: Math.max(0, y) }
+  );
 }
 
-function removeNode(nodeId) {
+function removeNode(nodeId: string): void {
+  if (!currentWorkflow.value) return;
+  
   if (confirm('确定要删除这个节点吗？')) {
-    workflowStore.removeNode(nodeId);
+    workflowStore.removeNode(currentWorkflow.value.id, nodeId);
     if (selectedNodeId.value === nodeId) {
       selectedNodeId.value = '';
     }
@@ -1128,12 +1807,19 @@ function removeNode(nodeId) {
 }
 
 // 选择节点
-function selectNode(node) {
+function selectNode(node: WorkflowNode): void {
   selectedNodeId.value = node.id;
+  selectedConnectionId.value = '';
+}
+
+// 清除选中
+function clearSelection(): void {
+  selectedNodeId.value = '';
+  selectedConnectionId.value = '';
 }
 
 // 编辑节点
-function editNode(node) {
+function editNode(node: WorkflowNode): void {
   selectedNodeId.value = node.id;
   editingNode.value = node;
   
@@ -1142,9 +1828,9 @@ function editNode(node) {
   inputDialogMessage.value = `节点类型: ${getNodeTitle(node.type)}`;
   inputDialogPlaceholder.value = '请输入节点名称';
   inputDialogDefaultValue.value = node.name;
-  inputDialogCallback.value = (newName) => {
-    if (newName && newName !== node.name) {
-      workflowStore.updateNodeName(node.id, newName);
+  inputDialogCallback.value = (newName: string) => {
+    if (newName && newName !== node.name && currentWorkflow.value) {
+      workflowStore.updateNodeName(currentWorkflow.value.id, node.id, newName);
       uiStore.addNotification({
         type: 'success',
         title: '节点已更新',
@@ -1156,17 +1842,18 @@ function editNode(node) {
   inputDialogVisible.value = true;
 }
 
-function startDragNode(event, node) {
+function startDragNode(event: MouseEvent, node: WorkflowNode): void {
   const startX = event.clientX - node.position.x;
   const startY = event.clientY - node.position.y;
   
-  function onMouseMove(e) {
+  function onMouseMove(e: MouseEvent): void {
+    if (!currentWorkflow.value) return;
     const newX = e.clientX - startX;
     const newY = e.clientY - startY;
-    workflowStore.updateNodePosition(node.id, { x: Math.max(0, newX), y: Math.max(0, newY) });
+    workflowStore.updateNodePosition(currentWorkflow.value.id, node.id, { x: Math.max(0, newX), y: Math.max(0, newY) });
   }
   
-  function onMouseUp() {
+  function onMouseUp(): void {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
   }
@@ -1176,34 +1863,34 @@ function startDragNode(event, node) {
 }
 
 // Helper functions
-function getNodeIcon(type) {
+function getNodeIcon(type: string): string {
   return nodeTypes[type]?.icon || '⚙️';
 }
 
-function getNodeInputs(type) {
+function getNodeInputs(type: string): string[] {
   return nodeTypes[type]?.inputs || [];
 }
 
-function getNodeOutputs(type) {
+function getNodeOutputs(type: string): string[] {
   return nodeTypes[type]?.outputs || [];
 }
 
-function getConnectionX1(connection) {
+function getConnectionX1(connection: WorkflowConnection): number {
   const fromNode = currentWorkflowNodes.value.find(n => n.id === connection.fromNodeId);
   return fromNode ? fromNode.position.x + 150 : 0;
 }
 
-function getConnectionY1(connection) {
+function getConnectionY1(connection: WorkflowConnection): number {
   const fromNode = currentWorkflowNodes.value.find(n => n.id === connection.fromNodeId);
   return fromNode ? fromNode.position.y + 30 : 0;
 }
 
-function getConnectionX2(connection) {
+function getConnectionX2(connection: WorkflowConnection): number {
   const toNode = currentWorkflowNodes.value.find(n => n.id === connection.toNodeId);
   return toNode ? toNode.position.x : 0;
 }
 
-function getConnectionY2(connection) {
+function getConnectionY2(connection: WorkflowConnection): number {
   const toNode = currentWorkflowNodes.value.find(n => n.id === connection.toNodeId);
   return toNode ? toNode.position.y + 30 : 0;
 }
@@ -1214,6 +1901,30 @@ function getConnectionY2(connection) {
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+/* 加载状态覆盖层 */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  font-size: 1rem;
+  color: #6a6a6a;
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* ViewHeader actions styling */
@@ -1226,6 +1937,52 @@ function getConnectionY2(connection) {
 /* Custom Select Dropdown */
 .custom-select {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 图标按钮样式 */
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #555;
+}
+
+.icon-btn-danger:hover {
+  background: rgba(200, 100, 100, 0.15);
+  color: #a55;
+}
+
+/* 头部分割线 */
+.header-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.15);
+  margin: 0 8px;
+}
+
+/* 头部分割线 */
+.header-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.15);
+  margin: 0 8px;
 }
 
 .select-trigger {
@@ -1461,12 +2218,25 @@ function getConnectionY2(connection) {
 }
 
 .btn-danger {
-  background: linear-gradient(90deg, rgba(180, 140, 140, 0.7), rgba(200, 170, 170, 0.6));
+  background: rgba(190, 155, 155, 0.65);
   color: #5a4040;
 }
 
 .btn-danger:hover {
-  background: linear-gradient(90deg, rgba(170, 130, 130, 0.8), rgba(190, 160, 160, 0.7));
+  background: rgba(180, 145, 145, 0.75);
+}
+
+/* 删除按钮轮廓样式 - 用于头部操作区域 */
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid rgba(180, 100, 100, 0.4);
+  color: #8a5050;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(180, 100, 100, 0.1);
+  border-color: rgba(180, 100, 100, 0.6);
+  color: #7a4040;
 }
 
 .empty-canvas {
@@ -1566,7 +2336,7 @@ function getConnectionY2(connection) {
 /* 节点项 - 灰色系立体控件风格 */
 .node-item {
   padding: 0;
-  background: linear-gradient(145deg, rgba(160, 160, 160, 0.35), rgba(140, 140, 140, 0.25));
+  background: rgba(150, 150, 150, 0.3);
   border: 1px solid rgba(180, 180, 180, 0.4);
   border-radius: 6px;
   margin-bottom: 0.5rem;
@@ -1585,7 +2355,7 @@ function getConnectionY2(connection) {
 }
 
 .node-item:hover {
-  background: linear-gradient(145deg, rgba(170, 170, 170, 0.4), rgba(150, 150, 150, 0.3));
+  background: rgba(160, 160, 160, 0.35);
   transform: translateY(-2px);
   box-shadow: 
     0 4px 8px rgba(0, 0, 0, 0.14),
@@ -1600,7 +2370,7 @@ function getConnectionY2(connection) {
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.12),
     inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(145deg, rgba(140, 140, 140, 0.35), rgba(120, 120, 120, 0.25));
+  background: rgba(130, 130, 130, 0.3);
 }
 
 /* 节点图标区域 */
@@ -1619,13 +2389,7 @@ function getConnectionY2(connection) {
 .node-item-divider {
   width: 1px;
   align-self: stretch;
-  background: linear-gradient(
-    180deg,
-    transparent 10%,
-    rgba(0, 0, 0, 0.12) 30%,
-    rgba(0, 0, 0, 0.12) 70%,
-    transparent 90%
-  );
+  background: rgba(0, 0, 0, 0.1);
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.15);
 }
 
@@ -1794,70 +2558,60 @@ function getConnectionY2(connection) {
   justify-content: center;
   height: 28px;
   padding: 0 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
   transition: all 0.15s ease;
-  background: rgba(255, 255, 255, 0.5);
-  color: #5a5a5c;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
   box-sizing: border-box;
   white-space: nowrap;
 }
 
-.btn:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: #2c2c2e;
-  border-color: rgba(0, 0, 0, 0.18);
+.btn:hover:not(:disabled) {
+  background-color: #d8d8d8;
 }
 
 /* 次要按钮 */
 .btn-secondary {
-  background: rgba(160, 160, 160, 0.15);
-  color: #6a6a6a;
-  border-color: rgba(0, 0, 0, 0.1);
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
-.btn-secondary:hover {
-  background: rgba(160, 160, 160, 0.25);
-  color: #5a5a5a;
+.btn-secondary:hover:not(:disabled) {
+  background-color: #d8d8d8;
 }
 
 /* 主要按钮 */
 .btn-primary {
-  background: rgba(120, 140, 130, 0.25);
-  color: #4a5a52;
-  border-color: rgba(100, 120, 110, 0.3);
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
-.btn-primary:hover {
-  background: rgba(120, 140, 130, 0.35);
-  color: #3a4a42;
+.btn-primary:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
 /* 成功按钮 */
 .btn-success {
-  background: rgba(100, 160, 130, 0.2);
-  color: #4a7a5a;
-  border-color: rgba(100, 160, 130, 0.3);
+  background-color: #5ab05e;
+  color: #ffffff;
 }
 
-.btn-success:hover {
-  background: rgba(100, 160, 130, 0.3);
-  color: #3a6a4a;
+.btn-success:hover:not(:disabled) {
+  background-color: #4a9a4e;
 }
 
 /* 危险按钮 */
 .btn-danger {
-  background: rgba(200, 120, 120, 0.15);
-  color: #8a5050;
-  border-color: rgba(200, 120, 120, 0.25);
+  background-color: #e53e3e;
+  color: #ffffff;
 }
 
-.btn-danger:hover {
-  background: rgba(200, 120, 120, 0.25);
-  color: #7a4040;
+.btn-danger:hover:not(:disabled) {
+  background-color: #c53030;
 }
 
 .btn:disabled {
@@ -2043,6 +2797,632 @@ function getConnectionY2(connection) {
   padding: 20px;
 }
 
+/* 执行进度面板 - Enhanced */
+.execution-progress-panel {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.execution-progress-panel .progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.progress-icon {
+  color: #3498db;
+  animation: pulse 1.5s infinite;
+}
+
+.progress-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.progress-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar-container .progress-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar-container .progress-fill {
+  height: 100%;
+  background: #2db77a;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-container .progress-text {
+  min-width: 45px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.node-status-summary {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.status-item .status-label {
+  color: #6c6c6e;
+}
+
+.status-item .status-value {
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.status-item.status-completed .status-value {
+  color: #27ae60;
+}
+
+.status-item.status-running .status-value {
+  color: #3498db;
+}
+
+.status-item.status-pending .status-value {
+  color: #95a5a6;
+}
+
+/* 执行日志面板 */
+.execution-logs-panel {
+  margin-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 12px;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.logs-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.logs-content {
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-time {
+  color: #95a5a6;
+  min-width: 70px;
+}
+
+.log-level {
+  min-width: 50px;
+  font-weight: 600;
+}
+
+.log-entry.log-info .log-level {
+  color: #3498db;
+}
+
+.log-entry.log-success .log-level {
+  color: #27ae60;
+}
+
+.log-entry.log-error .log-level {
+  color: #e74c3c;
+}
+
+.log-entry.log-warning .log-level {
+  color: #f39c12;
+}
+
+.log-message {
+  flex: 1;
+  color: #2c2c2e;
+}
+
+.logs-empty {
+  text-align: center;
+  padding: 20px;
+  color: #95a5a6;
+  font-size: 12px;
+}
+
+/* 执行结果面板 - Enhanced */
+.execution-results-panel {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.execution-results-panel .results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.execution-results-panel .results-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.results-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.results-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.result-status.completed {
+  color: #27ae60;
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.result-status.failed {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #6c6c6e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+/* 节点结果详情 */
+.node-results-section {
+  margin-top: 8px;
+}
+
+.node-results-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.node-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.node-result-item {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s;
+}
+
+.node-result-item.has-result {
+  border-color: rgba(39, 174, 96, 0.3);
+  background: rgba(39, 174, 96, 0.05);
+}
+
+.node-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.node-result-header .node-icon {
+  font-size: 16px;
+}
+
+.node-result-header .node-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.node-status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.node-status-badge.status-idle {
+  background: rgba(149, 165, 166, 0.2);
+  color: #7f8c8d;
+}
+
+.node-status-badge.status-pending {
+  background: rgba(52, 152, 219, 0.2);
+  color: #2980b9;
+}
+
+.node-status-badge.status-running {
+  background: rgba(52, 152, 219, 0.3);
+  color: #2980b9;
+  animation: pulse 1.5s infinite;
+}
+
+.node-status-badge.status-completed {
+  background: rgba(39, 174, 96, 0.2);
+  color: #27ae60;
+}
+
+.node-status-badge.status-error {
+  background: rgba(231, 76, 60, 0.2);
+  color: #c0392b;
+}
+
+.node-result-data {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.node-result-data pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #2c2c2e;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.result-actions .btn {
+  flex: 1;
+  gap: 6px;
+}
+
+/* 节点状态指示器 */
+.node-status-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.status-icon {
+  color: #2c2c2e;
+}
+
+.status-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.workflow-node.node-pending {
+  border-color: rgba(52, 152, 219, 0.4);
+}
+
+.workflow-node.node-error {
+  border-color: rgba(231, 76, 60, 0.6);
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+}
+
+/* 节点执行进度 */
+.node-progress {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.node-progress-fill {
+  height: 100%;
+  background: #3498db;
+  transition: width 0.3s ease;
+}
+
+.node-progress-text {
+  font-size: 10px;
+  color: #6c6c6e;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* 执行历史视图 - Enhanced */
+.execution-history-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.execution-info-card {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.info-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.execution-id {
+  font-size: 11px;
+  color: #95a5a6;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item .info-label {
+  font-size: 11px;
+  color: #6c6c6e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item .info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.status-badge--success,
+.status-badge--completed {
+  background: rgba(39, 174, 96, 0.15);
+  color: #27ae60;
+}
+
+.status-badge--error,
+.status-badge--failed {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.status-badge--running {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+.status-badge--cancelled {
+  background: rgba(149, 165, 166, 0.15);
+  color: #95a5a6;
+}
+
+/* 执行时间线 */
+.execution-timeline {
+  margin-top: 20px;
+}
+
+.execution-timeline h4 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2e;
+}
+
+.timeline-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 20px;
+  bottom: -12px;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.timeline-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3498db;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.timeline-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline-time {
+  font-size: 11px;
+  color: #95a5a6;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.timeline-message {
+  font-size: 13px;
+  color: #2c2c2e;
+}
+
+/* 动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .execution-info {
   display: flex;
   flex-direction: column;
@@ -2216,3 +3596,148 @@ function getConnectionY2(connection) {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 </style>
+
+
+/* 节点搜索样式 */
+.node-search {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 0 12px;
+}
+
+.node-search .search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7a7a7c;
+  pointer-events: none;
+}
+
+.node-search .search-input {
+  width: 100%;
+  padding: 6px 28px 6px 32px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
+  transition: all 0.15s ease;
+}
+
+.node-search .search-input:hover {
+  background-color: #d0d0d0;
+}
+
+.node-search .search-input:focus {
+  outline: none;
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
+}
+
+.node-search .search-clear {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  color: #7a7a7c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.node-search .search-clear:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #4a4a4c;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9a9a9c;
+}
+
+.no-results p {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+/* 画布控制样式 */
+.canvas-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #4a4a4c;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.zoom-level {
+  font-size: 12px;
+  color: #6c6c6e;
+  font-weight: 500;
+  min-width: 45px;
+  text-align: center;
+}
+
+.pan-hint {
+  font-size: 11px;
+  color: #9a9a9c;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 画布变换 */
+.canvas-grid {
+  transition: transform 0.1s ease-out;
+  will-change: transform;
+}
+
+.workflow-canvas {
+  cursor: default;
+}
+
+.workflow-canvas.panning {
+  cursor: grab;
+}
+
+.workflow-canvas.panning:active {
+  cursor: grabbing;
+}

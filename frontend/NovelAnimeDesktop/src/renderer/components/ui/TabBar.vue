@@ -200,7 +200,7 @@ watch(() => props.tabs.length, () => {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #8a8a8a, #a0b0aa);
+  background: #959da2;
   border-radius: 2px 2px 0 0;
 }
 

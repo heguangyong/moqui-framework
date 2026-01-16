@@ -301,23 +301,7 @@
       <div v-if="activeCategory === 'interface'" class="settings-section">
         <div class="setting-group">
           <label class="setting-label">主题</label>
-          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'theme' }">
-            <div class="custom-select__trigger" @click="toggleSelect('theme')">
-              <span>{{ getOptionLabel(themeOptions, settings.interface.theme) }}</span>
-              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
-            </div>
-            <div v-if="openSelect === 'theme'" class="custom-select__options">
-              <div 
-                v-for="option in themeOptions" 
-                :key="option.value"
-                class="custom-select__option"
-                :class="{ 'custom-select__option--selected': settings.interface.theme === option.value }"
-                @click="selectOption('interface', 'theme', option.value)"
-              >
-                {{ option.label }}
-              </div>
-            </div>
-          </div>
+          <ThemeSelector />
         </div>
         
         <div class="setting-group">
@@ -440,6 +424,11 @@
         </div>
       </div>
       
+      <!-- 教程中心 -->
+      <div v-if="activeCategory === 'tutorial'" class="settings-section tutorial-section">
+        <TutorialMenu />
+      </div>
+      
       <!-- 关于 -->
       <div v-if="activeCategory === 'about'" class="settings-section">
         <div class="about-info">
@@ -488,6 +477,8 @@ import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
+import TutorialMenu from '../components/tutorial/TutorialMenu.vue';
+import ThemeSelector from '../components/ui/ThemeSelector.vue';
 import { apiService } from '../services/index.ts';
 
 const router = useRouter();
@@ -497,9 +488,9 @@ const navigationStore = useNavigationStore();
 // 测试连接状态
 const isTesting = ref(false);
 
-// 用户信息（暂时使用模拟数据）
+// 用户信息（从后端或本地缓存加载）
 const userName = ref('用户');
-const userEmail = ref('user@example.com');
+const userEmail = ref('');
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase());
 const credits = ref(0);
 const phoneNumber = ref('');
@@ -508,9 +499,9 @@ const lastLoginDate = ref(new Date());
 
 const avatarGradient = computed(() => {
   const colors = [
-    'linear-gradient(135deg, #6a7a72, #8fa89e)',
-    'linear-gradient(135deg, #7a8a9a, #9ab0c0)',
-    'linear-gradient(135deg, #8a8a8a, #a0a8a4)',
+    '#7a9188',
+    '#8a9cad',
+    '#949c98',
   ];
   const index = userName.value.charCodeAt(0) % colors.length;
   return colors[index];
@@ -581,15 +572,37 @@ async function handleLogout() {
   }
 }
 
-// 加载用户信息
-function loadUserInfo() {
+// 加载用户信息 - 优先从后端获取，失败时使用本地缓存
+async function loadUserInfo() {
+  try {
+    // 尝试从后端获取最新用户信息
+    const response = await apiService.axiosInstance.get('/auth/profile');
+    if (response.data) {
+      const user = response.data;
+      userName.value = user.username || user.userFullName || user.email?.split('@')[0] || '用户';
+      userEmail.value = user.email || user.emailAddress || '';
+      credits.value = user.credits || 0;
+      phoneNumber.value = user.phoneNumber || '';
+      createdDate.value = user.createdDate ? new Date(user.createdDate) : new Date();
+      lastLoginDate.value = user.lastLoginDate ? new Date(user.lastLoginDate) : new Date();
+      
+      // 更新本地缓存
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      return;
+    }
+  } catch (e) {
+    console.warn('从后端获取用户信息失败，使用本地缓存:', e);
+  }
+  
+  // 后端不可用时，使用本地缓存
   try {
     const userStr = localStorage.getItem('auth_user');
     if (userStr) {
       const user = JSON.parse(userStr);
       userName.value = user.username || user.email?.split('@')[0] || '用户';
-      userEmail.value = user.email || 'user@example.com';
+      userEmail.value = user.email || '';
       credits.value = user.credits || 0;
+      phoneNumber.value = user.phoneNumber || '';
       createdDate.value = user.createdDate ? new Date(user.createdDate) : new Date();
       lastLoginDate.value = user.lastLoginDate ? new Date(user.lastLoginDate) : new Date();
     }
@@ -668,6 +681,7 @@ const categoryConfig = {
   generation: { label: '生成参数', description: '配置视频生成的默认参数' },
   interface: { label: '界面设置', description: '自定义应用界面外观' },
   storage: { label: '存储设置', description: '管理项目存储和缓存' },
+  tutorial: { label: '教程中心', description: '学习如何使用应用的各项功能' },
   about: { label: '关于', description: '应用信息和更新' }
 };
 
@@ -735,15 +749,53 @@ onUnmounted(() => {
 });
 
 // 加载设置
-function loadSettings() {
+async function loadSettings() {
+  try {
+    // 首先尝试从后端加载用户设置
+    const result = await apiService.getUserSettings();
+    if (result.success && result.settings) {
+      // 合并后端设置到本地设置
+      if (result.settings.theme) {
+        settings.interface.theme = result.settings.theme;
+      }
+      if (result.settings.language) {
+        settings.interface.language = result.settings.language;
+      }
+      if (result.settings.autoSave !== undefined) {
+        settings.storage.autoSave = result.settings.autoSave;
+      }
+    }
+  } catch (e) {
+    console.warn('从后端加载用户设置失败:', e);
+  }
+  
+  // 然后加载本地存储的完整设置（包括 AI 配置等）
   try {
     const saved = localStorage.getItem('novel-anime-settings');
     if (saved) {
       const parsed = JSON.parse(saved);
-      Object.assign(settings, parsed);
+      // 合并本地设置，但不覆盖已从后端加载的用户偏好
+      if (parsed.ai) {
+        Object.assign(settings.ai, parsed.ai);
+      }
+      if (parsed.generation) {
+        Object.assign(settings.generation, parsed.generation);
+      }
+      // 本地存储的界面设置作为备份
+      if (!settings.interface.theme && parsed.interface?.theme) {
+        settings.interface.theme = parsed.interface.theme;
+      }
+      if (parsed.storage) {
+        // 保留后端的 autoSave 设置
+        const autoSave = settings.storage.autoSave;
+        Object.assign(settings.storage, parsed.storage);
+        if (autoSave !== undefined) {
+          settings.storage.autoSave = autoSave;
+        }
+      }
     }
   } catch (e) {
-    console.error('加载设置失败:', e);
+    console.error('加载本地设置失败:', e);
   }
 }
 
@@ -856,6 +908,17 @@ async function saveSettings() {
     // 保存到本地存储
     localStorage.setItem('novel-anime-settings', JSON.stringify(settings));
     
+    // 同步界面设置到后端用户设置
+    try {
+      await apiService.updateUserSettings({
+        theme: settings.interface.theme,
+        language: settings.interface.language,
+        autoSave: settings.storage.autoSave
+      });
+    } catch (syncError) {
+      console.warn('Failed to sync user settings to backend:', syncError);
+    }
+    
     // 如果有 AI 配置，尝试同步到后端
     if (settings.ai.apiKey) {
       try {
@@ -930,20 +993,22 @@ async function saveSettings() {
 .setting-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: none;
   border-radius: 8px;
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.5);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+}
+
+.setting-input:hover {
+  background-color: #d0d0d0;
 }
 
 .setting-input:focus {
   outline: none;
-  border-color: rgba(138, 138, 138, 0.5);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 0 0 3px rgba(138, 138, 138, 0.1);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .setting-hint {
@@ -963,18 +1028,16 @@ async function saveSettings() {
 
 .input-action {
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: #c8c8c8;
+  border: none;
   border-radius: 8px;
   color: #4a4a4c;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
 }
 
 .input-action:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(138, 138, 138, 0.5);
+  background-color: #d8d8d8;
 }
 
 /* 自定义下拉框 */
@@ -1044,7 +1107,7 @@ async function saveSettings() {
 }
 
 .custom-select__option--selected {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(190, 209, 205, 0.45);
   font-weight: 500;
 }
 
@@ -1097,7 +1160,7 @@ async function saveSettings() {
 }
 
 .toggle input:checked + .toggle-slider {
-  background: linear-gradient(90deg, rgba(130, 160, 140, 0.8), rgba(150, 180, 165, 0.7));
+  background: rgba(140, 170, 152, 0.75);
 }
 
 .toggle input:checked + .toggle-slider:before {
@@ -1111,19 +1174,19 @@ async function saveSettings() {
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #7a9188;
+  border: none;
   border-radius: 8px;
-  color: #2c2c2e;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   margin-top: 8px;
 }
 
 .test-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background-color: #6a8178;
 }
 
 /* 存储信息 */
@@ -1160,19 +1223,18 @@ async function saveSettings() {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: rgba(231, 76, 60, 0.08);
-  border: 1px solid rgba(231, 76, 60, 0.3);
+  background-color: #e53e3e;
+  border: none;
   border-radius: 6px;
-  color: #c0392b;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .clear-cache-btn:hover {
-  background: rgba(231, 76, 60, 0.15);
-  border-color: rgba(231, 76, 60, 0.5);
+  background-color: #c53030;
 }
 
 /* 关于页面 */
@@ -1248,39 +1310,42 @@ async function saveSettings() {
 }
 
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   min-width: 100px;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn--secondary {
-  background: rgba(0, 0, 0, 0.06);
-  color: #5a5a5c;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
-.btn--secondary:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #4a4a4c;
+.btn--secondary:hover:not(:disabled) {
+  background-color: #d8d8d8;
 }
 
 .btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  color: #2c2c2e;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
-.btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+.btn--primary:hover:not(:disabled) {
+  background-color: #6a8178;
 }
 
 /* 个人资料样式 */
@@ -1324,17 +1389,17 @@ async function saveSettings() {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.08);
+  background-color: #c8c8c8;
   border: none;
   border-radius: 6px;
-  color: #4a4a4c;
+  color: #2c2c2e;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .change-avatar-btn:hover {
-  background: rgba(0, 0, 0, 0.12);
+  background-color: #d8d8d8;
 }
 
 .profile-section .info-section {
@@ -1374,11 +1439,11 @@ async function saveSettings() {
   color: #8a8a8c;
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .edit-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background-color: #d8d8d8;
   color: #4a4a4c;
 }
 
@@ -1418,18 +1483,18 @@ async function saveSettings() {
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #7a9188;
+  border: none;
   border-radius: 6px;
-  color: #2c2c2e;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .recharge-btn:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background-color: #6a8178;
 }
 
 .credits-amount {

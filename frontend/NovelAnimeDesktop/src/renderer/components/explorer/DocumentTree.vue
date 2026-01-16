@@ -260,17 +260,19 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   font-size: 12px;
-  background-color: rgba(160, 160, 160, 0.3);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.search-input:hover {
+  background-color: #d0d0d0;
 }
 
 .search-input:focus {
   outline: none;
-  background-color: rgba(220, 220, 220, 0.6);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .search-input::placeholder {

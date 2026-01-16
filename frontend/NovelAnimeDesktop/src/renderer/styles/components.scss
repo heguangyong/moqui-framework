@@ -25,18 +25,20 @@
     transform: none !important;
   }
   
-  // 主要按钮 - 完整玻璃态样式
+  // 主要按钮 - 纯色风格
   &--primary {
-    background: var(--gradient-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-medium);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background-color: #7a9188;
+    color: #ffffff;
+    border: none;
     
     &:hover:not(:disabled) {
-      background: var(--gradient-primary-hover);
+      background-color: #6a8178;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
+    }
+    
+    &:active:not(:disabled) {
+      background-color: #5a7168;
     }
   }
   
@@ -52,28 +54,35 @@
     }
   }
   
-  // 成功按钮
+  // 成功按钮 - 纯色风格
   &--success {
-    background: var(--gradient-success);
-    color: var(--text-primary);
-    border: 1px solid var(--border-medium);
-    backdrop-filter: blur(10px);
+    background-color: #5ab05e;
+    color: #ffffff;
+    border: none;
     
     &:hover:not(:disabled) {
-      background: linear-gradient(90deg, rgba(130, 150, 140, 0.8), rgba(160, 188, 172, 0.7));
+      background-color: #4a9a4e;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
     }
+    
+    &:active:not(:disabled) {
+      background-color: #3a8a3e;
+    }
   }
   
-  // 危险按钮
+  // 危险按钮 - 纯色风格
   &--danger {
-    background: linear-gradient(90deg, rgba(180, 140, 140, 0.7), rgba(200, 170, 170, 0.6));
-    color: #5a4040;
-    border: 1px solid var(--border-medium);
+    background-color: #e53e3e;
+    color: #ffffff;
+    border: none;
     
     &:hover:not(:disabled) {
-      background: linear-gradient(90deg, rgba(170, 130, 130, 0.8), rgba(190, 160, 160, 0.7));
+      background-color: #c53030;
+    }
+    
+    &:active:not(:disabled) {
+      background-color: #9b2c2c;
     }
   }
   
@@ -123,7 +132,7 @@
   }
   
   &--active {
-    background: var(--gradient-active);
+    background-color: rgba(122, 145, 136, 0.3);
     color: var(--text-primary);
     border: 1px solid var(--border-strong);
   }
@@ -267,7 +276,7 @@
     }
     
     &--selected {
-      background: var(--gradient-active);
+      background-color: rgba(122, 145, 136, 0.25);
       font-weight: 500;
     }
   }
@@ -313,7 +322,7 @@
   }
   
   input:checked + &__slider {
-    background: linear-gradient(90deg, rgba(130, 160, 140, 0.8), rgba(150, 180, 165, 0.7));
+    background-color: rgba(122, 145, 136, 0.7);
   }
   
   input:checked + &__slider:before {
@@ -376,7 +385,7 @@
   }
   
   &--active {
-    background: var(--gradient-active);
+    background-color: rgba(122, 145, 136, 0.25);
     backdrop-filter: blur(10px);
     color: var(--text-primary);
     position: relative;
@@ -392,7 +401,7 @@
       top: 3px;
       bottom: 3px;
       width: 5px;
-      background: var(--indicator-gradient);
+      background-color: #9a9a9a;
       border-radius: 3px;
       box-shadow: var(--indicator-shadow);
     }

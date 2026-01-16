@@ -151,7 +151,7 @@ function handleCancel() {
 }
 
 .dialog-input:focus {
-  border-color: #4a9eff;
+  border-color: #7a9188;
 }
 
 .dialog-input::placeholder {
@@ -177,21 +177,21 @@ function handleCancel() {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ccc;
+  background-color: #c8c8c8;
+  color: #2c2c2e;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background-color: #d8d8d8;
 }
 
 .btn-primary {
-  background: #4a9eff;
-  color: #fff;
+  background-color: #7a9188;
+  color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #3a8eef;
+  background-color: #6a8178;
 }
 
 .btn-primary:disabled {

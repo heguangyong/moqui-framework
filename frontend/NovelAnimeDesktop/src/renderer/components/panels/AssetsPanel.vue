@@ -17,10 +17,19 @@
       </div>
     </div>
     
-    <!-- 分类 分组 -->
+    <!-- 资源类型分组 -->
     <div class="section">
-      <div class="section-title">分类</div>
+      <div class="section-title">资源类型</div>
       <div class="section-items">
+        <div 
+          class="section-item"
+          :class="{ 'section-item--active': activeCategory === 'all' }"
+          @click="handleCategoryClick({ id: 'all', name: '全部' })"
+        >
+          <component :is="icons.grid" :size="16" />
+          <span>全部</span>
+          <span v-if="totalCount > 0" class="item-badge">{{ totalCount }}</span>
+        </div>
         <div 
           v-for="category in categories"
           :key="category.id"
@@ -35,9 +44,9 @@
       </div>
     </div>
     
-    <!-- 筛选 分组 -->
+    <!-- 快速筛选 -->
     <div class="section">
-      <div class="section-title">筛选</div>
+      <div class="section-title">快速筛选</div>
       <div class="filter-tags">
         <span 
           v-for="filter in filters"
@@ -51,9 +60,9 @@
       </div>
     </div>
     
-    <!-- 最近资源 分组 -->
+    <!-- 最近使用 -->
     <div class="section section--recent">
-      <div class="section-title">最近</div>
+      <div class="section-title">最近使用</div>
       <div class="section-items">
         <div 
           v-for="asset in recentAssets"
@@ -65,6 +74,9 @@
           <component :is="getAssetIcon(asset.type)" :size="16" />
           <span>{{ asset.name }}</span>
         </div>
+        <div v-if="recentAssets.length === 0" class="empty-hint">
+          暂无最近使用
+        </div>
       </div>
     </div>
   </div>
@@ -72,14 +84,22 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUIStore } from '../../stores/ui.js';
 import { useNavigationStore } from '../../stores/navigation.js';
 import { icons } from '../../utils/icons.js';
 
 const router = useRouter();
+const route = useRoute();
 const uiStore = useUIStore();
 const navigationStore = useNavigationStore();
+
+// 确保在资源库页面
+function ensureAssetsPage() {
+  if (route.path !== '/assets') {
+    router.push('/assets');
+  }
+}
 
 // 状态
 const searchQuery = ref('');
@@ -89,19 +109,22 @@ const activeAsset = ref(null);
 
 // 分类数据 - 与 AssetsView 保持一致
 const categories = ref([
-  { id: 'character', name: '角色', icon: icons.users, count: 12 },
-  { id: 'scene', name: '场景', icon: icons.layers, count: 8 },
   { id: 'image', name: '图片', icon: icons.image, count: 5 },
   { id: 'audio', name: '音频', icon: icons.music, count: 4 },
-  { id: 'video', name: '视频', icon: icons.video, count: 3 }
+  { id: 'video', name: '视频', icon: icons.video, count: 3 },
+  { id: 'document', name: '文档', icon: icons.file, count: 2 }
 ]);
+
+// 总数
+const totalCount = computed(() => {
+  return categories.value.reduce((sum, c) => sum + c.count, 0);
+});
 
 // 筛选器
 const filters = ref([
+  { id: 'recent', name: '最近添加' },
   { id: 'used', name: '已使用' },
-  { id: 'unused', name: '未使用' },
-  { id: 'locked', name: '已锁定' },
-  { id: 'recent', name: '最近添加' }
+  { id: 'unused', name: '未使用' }
 ]);
 
 // 最近资源
@@ -125,11 +148,13 @@ function getAssetIcon(type) {
 
 // 搜索处理
 function handleSearch() {
+  ensureAssetsPage();
   navigationStore.updatePanelContext('assets', { searchQuery: searchQuery.value });
 }
 
 function clearSearch() {
   searchQuery.value = '';
+  ensureAssetsPage();
   navigationStore.updatePanelContext('assets', { searchQuery: '' });
 }
 
@@ -137,6 +162,7 @@ function clearSearch() {
 function handleCategoryClick(category) {
   activeCategory.value = category.id;
   activeAsset.value = null; // 清除最近资源的选中状态
+  ensureAssetsPage();
   navigationStore.updatePanelContext('assets', { 
     category: category.id,
     viewType: 'category',
@@ -152,6 +178,7 @@ function toggleFilter(filterId) {
   } else {
     activeFilters.value.push(filterId);
   }
+  ensureAssetsPage();
   navigationStore.updatePanelContext('assets', { 
     filters: [...activeFilters.value]
   });
@@ -161,6 +188,7 @@ function toggleFilter(filterId) {
 function handleAssetClick(asset) {
   activeAsset.value = asset.id;
   activeCategory.value = null; // 清除分类的选中状态
+  ensureAssetsPage();
   navigationStore.updatePanelContext('assets', { 
     selectedAsset: asset.id,
     viewType: 'asset-detail',
@@ -201,18 +229,19 @@ function handleAssetClick(asset) {
   border: none;
   border-radius: 8px;
   font-size: 12px;
-  background-color: rgba(160, 160, 160, 0.3);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.search-input:hover {
+  background-color: #d0d0d0;
 }
 
 .search-input:focus {
   outline: none;
-  background-color: rgba(200, 200, 200, 0.5);
-  border: 1px solid rgba(150, 150, 150, 0.4);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .search-input::placeholder {
@@ -293,7 +322,7 @@ function handleAssetClick(asset) {
 }
 
 .section-item--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 210, 0.45);
   backdrop-filter: blur(10px);
   color: #2c2c2e;
   position: relative;
@@ -304,7 +333,7 @@ function handleAssetClick(asset) {
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 右侧独立标注线 - 左深右浅渐变，立体凸起 */
+/* 右侧独立标注线 - 纯色，立体凸起 */
 .section-item--active::after {
   content: '';
   position: absolute;
@@ -312,7 +341,7 @@ function handleAssetClick(asset) {
   top: 3px;
   bottom: 3px;
   width: 5px;
-  background: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  background: #a1a1a1;
   border-radius: 3px;
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.15),
@@ -367,5 +396,12 @@ function handleAssetClick(asset) {
 .filter-tag--active {
   background-color: #2c2c2e;
   color: #ffffff;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #9a9a9a;
+  padding: 8px 10px;
+  text-align: center;
 }
 </style>
