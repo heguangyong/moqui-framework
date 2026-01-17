@@ -288,6 +288,14 @@ export const useNavigationStore = defineStore('navigation', {
     canExecuteWorkflow() {
       return this.workflowState.charactersConfirmed && 
              this.workflowState.stage === 'workflow-ready';
+    },
+    
+    // 工作流执行完成 - 需求 5.5
+    completeWorkflow() {
+      this.workflowState.stage = 'completed';
+      // 重置角色确认状态，以便下次新项目可以重新开始
+      // 但保留执行结果供查看
+      this.persistNavigationState();
     }
   }
 });

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useLayoutStore } from './layout';
 import { useProjectStore } from './project';
-import { useWorkflowStore } from './workflow';
+import { useWorkflowStore } from './workflowStore';
 import { useNotificationStore } from './notification';
 
 export interface Command {
@@ -195,7 +195,7 @@ export const useCommandStore = defineStore('command', () => {
       description: 'Create a new workflow',
       category: 'workflow',
       icon: 'add_circle',
-      action: () => workflowStore.createNewWorkflow()
+      action: () => workflowStore.createWorkflow({ name: '新建工作流' })
     },
     {
       id: 'workflow.run-workflow',
@@ -204,8 +204,11 @@ export const useCommandStore = defineStore('command', () => {
       category: 'workflow',
       icon: 'play_arrow',
       shortcut: 'Ctrl+R',
-      action: () => workflowStore.runCurrentWorkflow(),
-      enabled: computed(() => !!workflowStore.activeWorkflow)
+      action: () => {
+        // TODO: Implement workflow execution
+        console.log('Run workflow:', workflowStore.currentWorkflow?.name);
+      },
+      enabled: computed(() => !!workflowStore.currentWorkflow)
     },
     {
       id: 'workflow.stop-workflow',
@@ -213,8 +216,11 @@ export const useCommandStore = defineStore('command', () => {
       description: 'Stop the running workflow',
       category: 'workflow',
       icon: 'stop',
-      action: () => workflowStore.stopCurrentWorkflow(),
-      enabled: computed(() => workflowStore.isRunning)
+      action: () => {
+        // TODO: Implement workflow stop
+        workflowStore.resetExecution();
+      },
+      enabled: computed(() => workflowStore.isExecuting)
     },
     {
       id: 'workflow.pause-workflow',
@@ -222,8 +228,11 @@ export const useCommandStore = defineStore('command', () => {
       description: 'Pause the running workflow',
       category: 'workflow',
       icon: 'pause',
-      action: () => workflowStore.pauseCurrentWorkflow(),
-      enabled: computed(() => workflowStore.isRunning && !workflowStore.isPaused)
+      action: () => {
+        // TODO: Implement workflow pause
+        console.log('Pause workflow');
+      },
+      enabled: computed(() => workflowStore.isExecuting)
     },
     {
       id: 'workflow.resume-workflow',
@@ -231,8 +240,11 @@ export const useCommandStore = defineStore('command', () => {
       description: 'Resume the paused workflow',
       category: 'workflow',
       icon: 'play_arrow',
-      action: () => workflowStore.resumeCurrentWorkflow(),
-      enabled: computed(() => workflowStore.isPaused)
+      action: () => {
+        // TODO: Implement workflow resume
+        console.log('Resume workflow');
+      },
+      enabled: computed(() => workflowStore.executionStatus === 'paused')
     },
 
     // Asset Operations

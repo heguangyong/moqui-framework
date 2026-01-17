@@ -52,6 +52,7 @@ export interface AuthState {
   refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitialized: boolean
   error: string | null
   oauthProvider: OAuthProvider | null
   wechatQRCode: WeChatQRCodeResponse | null
@@ -65,6 +66,7 @@ const getInitialState = (): AuthState => ({
   refreshToken: localStorage.getItem('novel_anime_refresh_token'),
   isAuthenticated: false,
   isLoading: false,
+  isInitialized: false,
   error: null,
   oauthProvider: null,
   wechatQRCode: null,
@@ -86,6 +88,19 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    /**
+     * Initialize auth store (Requirements: 3.3)
+     */
+    async initialize() {
+      if (this.isInitialized) return
+      
+      if (this.accessToken) {
+        await this.validateToken()
+      }
+      
+      this.isInitialized = true
+    },
+
     /**
      * Register a new user (Requirements: 1.1, 1.5)
      */
@@ -124,7 +139,11 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
 
       try {
-        const response = await authApi.login(credentials)
+        // Convert email to username for API compatibility
+        const response = await authApi.login({
+          username: credentials.email,
+          password: credentials.password
+        })
 
         if (response.success && response.data?.success) {
           this.accessToken = response.data.accessToken

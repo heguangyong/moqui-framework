@@ -1,5 +1,6 @@
 import { NovelParser } from './NovelParser.ts';
 import { CharacterSystem } from './CharacterSystem.ts';
+import { apiService } from './api.ts';
 
 /**
  * Pipeline Orchestrator Service for Desktop App
@@ -21,6 +22,15 @@ export class PipelineOrchestrator {
    */
   async executeWorkflow(workflow, initialData = {}, options = {}) {
     const executionId = `execution_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    
+    console.log('🚀 [PipelineOrchestrator] Starting workflow execution:', {
+      executionId,
+      workflowId: workflow.id,
+      workflowName: workflow.name,
+      nodeCount: workflow.nodes?.length || 0,
+      connectionCount: workflow.connections?.length || 0,
+      initialDataKeys: Object.keys(initialData)
+    });
     
     const execution = {
       id: executionId,
@@ -46,8 +56,8 @@ export class PipelineOrchestrator {
 
     this.executions.set(executionId, execution);
     
-    // Start execution
-    this.startExecution(execution);
+    // Start execution and wait for it to complete
+    await this.startExecution(execution);
     
     return executionId;
   }
@@ -82,7 +92,7 @@ export class PipelineOrchestrator {
       pipelineId: executionId,
       status: 'cancelled',
       progress: execution.progress,
-      message: 'Execution cancelled by user'
+      message: '用户取消执行'
     });
 
     return true;
@@ -101,17 +111,31 @@ export class PipelineOrchestrator {
     const { workflow } = execution.context;
     const executedNodes = new Set();
     
+    console.log('🔄 [PipelineOrchestrator] executeNodes called:', {
+      workflowId: workflow.id,
+      nodeCount: workflow.nodes?.length || 0,
+      connectionCount: workflow.connections?.length || 0
+    });
+    
     // Find starting nodes
     const startingNodes = this.findStartingNodes(workflow);
     
+    console.log('🎯 [PipelineOrchestrator] Starting nodes found:', startingNodes.map(n => ({ id: n.id, name: n.name, type: n.type })));
+    
     if (startingNodes.length === 0) {
+      console.error('❌ [PipelineOrchestrator] No starting nodes found!');
+      console.log('📋 All nodes:', workflow.nodes?.map(n => ({ id: n.id, name: n.name, type: n.type })));
+      console.log('🔗 All connections:', workflow.connections);
       throw new Error('No starting nodes found in workflow');
     }
 
     // Execute nodes in sequence for simplicity
     for (const startNode of startingNodes) {
+      console.log('▶️ [PipelineOrchestrator] Executing node chain starting from:', startNode.name);
       await this.executeNodeChain(execution, startNode, executedNodes);
     }
+
+    console.log('✅ [PipelineOrchestrator] All nodes executed:', executedNodes.size);
 
     // Mark execution as completed
     execution.status = 'completed';
@@ -122,7 +146,7 @@ export class PipelineOrchestrator {
       pipelineId: execution.id,
       status: 'completed',
       progress: 100,
-      message: 'Workflow execution completed successfully'
+      message: '工作流执行完成'
     });
   }
 
@@ -136,7 +160,7 @@ export class PipelineOrchestrator {
         pipelineId: execution.id,
         status: 'running',
         progress: execution.progress,
-        message: `Executing: ${node.name}`,
+        message: `正在执行: ${node.name}`,
         currentNode: node.id
       });
 
@@ -181,7 +205,7 @@ export class PipelineOrchestrator {
       pipelineId: execution.id,
       status: 'failed',
       progress: execution.progress,
-      message: 'Execution failed',
+      message: '执行失败',
       error: error.message
     });
   }
@@ -204,7 +228,7 @@ export class PipelineOrchestrator {
         pipelineId: execution.id,
         status: 'failed',
         progress: execution.progress,
-        message: `Execution failed at node: ${node.name}`,
+        message: `节点执行失败: ${node.name}`,
         error: error.message
       });
     }
@@ -240,13 +264,38 @@ export class PipelineOrchestrator {
     this.nodeProcessors.set('novel-parser', async (context, node) => {
       const { data } = context;
       
+      console.log('📖 小说解析器 - 初始数据:', { 
+        hasFile: !!data.file, 
+        hasNovelId: !!data.novelId,
+        hasChapters: !!(data.chapters && data.chapters.length > 0)
+      });
+      
+      // 如果已经有章节数据（从项目加载），直接使用
+      if (data.chapters && data.chapters.length > 0) {
+        console.log('✅ 使用项目中已有的章节数据:', data.chapters.length, '章');
+        return {
+          novelId: data.novelId,
+          title: data.title || '未命名小说',
+          author: data.author || '未知作者',
+          chapters: data.chapters,
+          metadata: data.metadata || {},
+          text: data.chapters.map(c => c.content || '').join('\n\n'),
+          structure: {
+            chapterCount: data.chapters.length,
+            totalScenes: data.chapters.reduce((sum, c) => sum + (c.scenes?.length || 0), 0)
+          }
+        };
+      }
+      
       // 如果有文件，使用NovelParser解析
       if (data.file) {
+        console.log('📂 解析上传的文件...');
         const novelStructure = await NovelParser.parseNovel(data.file, data.title);
         
         // 存储解析结果
         const novelId = await NovelParser.storeNovelStructure(novelStructure);
         
+        console.log('✅ 文件解析完成:', novelStructure.chapters.length, '章');
         return {
           novelId,
           title: novelStructure.title,
@@ -261,10 +310,15 @@ export class PipelineOrchestrator {
         };
       }
       
-      // 如果有novelId，从存储中加载
+      // 如果有novelId，尝试多种方式加载数据
       if (data.novelId) {
+        console.log('📂 [PipelineOrchestrator] 尝试加载小说数据, novelId:', data.novelId);
+        
+        // 方式1: 从 localStorage 加载 (使用 NovelParser)
+        console.log('📦 [方式1] 尝试从 NovelParser localStorage 加载...');
         const novelStructure = await NovelParser.retrieveNovelStructure(data.novelId);
-        if (novelStructure) {
+        if (novelStructure && novelStructure.chapters && novelStructure.chapters.length > 0) {
+          console.log('✅ 从 NovelParser localStorage 加载成功:', novelStructure.chapters.length, '章');
           return {
             novelId: data.novelId,
             title: novelStructure.title,
@@ -278,14 +332,148 @@ export class PipelineOrchestrator {
             }
           };
         }
+        console.log('⚠️ NovelParser localStorage 无数据');
+        
+        // 方式2: 直接从 localStorage 加载 (使用 novel_ 前缀)
+        console.log('📦 [方式2] 尝试从 localStorage (novel_ 前缀) 加载...');
+        try {
+          const cachedData = localStorage.getItem(`novel_${data.novelId}`);
+          if (cachedData) {
+            const novelData = JSON.parse(cachedData);
+            if (novelData.chapters && novelData.chapters.length > 0) {
+              console.log('✅ 从 localStorage (novel_ 前缀) 加载成功:', novelData.chapters.length, '章');
+              return {
+                novelId: data.novelId,
+                title: novelData.title,
+                author: novelData.author,
+                chapters: novelData.chapters,
+                metadata: novelData.metadata || {},
+                text: novelData.chapters.map(c => c.content || '').join('\n\n'),
+                structure: {
+                  chapterCount: novelData.chapters.length,
+                  totalScenes: novelData.chapters.reduce((sum, c) => sum + (c.scenes?.length || 0), 0)
+                }
+              };
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ localStorage (novel_ 前缀) 加载失败:', e);
+        }
+        console.log('⚠️ localStorage (novel_ 前缀) 无数据');
+        
+        // 方式3: 从后端 API 加载
+        console.log('📡 [方式3] 尝试从后端 API 加载... URL: /novel/' + data.novelId);
+        try {
+          const response = await apiService.getNovel(data.novelId);
+          console.log('📡 后端 API 响应:', { success: response.success, hasNovel: !!response.novel, message: response.message });
+          
+          if (response.success && response.novel) {
+            const novel = response.novel;
+            console.log('✅ 从后端 API 加载成功:', novel.title, '- 章节数:', novel.chapters?.length || 0);
+            
+            // 如果后端返回的小说没有章节，尝试调用结构分析 API
+            if (!novel.chapters || novel.chapters.length === 0) {
+              console.log('📊 小说没有章节数据，尝试调用结构分析 API...');
+              try {
+                const analyzeResponse = await apiService.axiosInstance.post('/novels/analyze-structure', {
+                  novelId: data.novelId
+                });
+                console.log('📊 结构分析响应:', analyzeResponse.data);
+                
+                if (analyzeResponse.data.success || analyzeResponse.data.chaptersCreated > 0) {
+                  // 重新获取小说数据（现在应该有章节了）
+                  console.log('🔄 重新获取小说数据...');
+                  const refreshResponse = await apiService.getNovel(data.novelId);
+                  if (refreshResponse.success && refreshResponse.novel?.chapters?.length > 0) {
+                    const refreshedNovel = refreshResponse.novel;
+                    console.log('✅ 结构分析后获取到章节:', refreshedNovel.chapters.length, '章');
+                    
+                    const novelData = {
+                      id: data.novelId,
+                      title: refreshedNovel.title,
+                      author: refreshedNovel.author,
+                      chapters: refreshedNovel.chapters,
+                      metadata: {
+                        wordCount: refreshedNovel.wordCount,
+                        status: refreshedNovel.status,
+                        sourceType: refreshedNovel.sourceType
+                      }
+                    };
+                    
+                    // 存储到 localStorage
+                    try {
+                      localStorage.setItem(`novel_${data.novelId}`, JSON.stringify(novelData));
+                      console.log('💾 已将小说数据缓存到 localStorage');
+                    } catch (e) {
+                      console.warn('⚠️ 缓存到 localStorage 失败:', e);
+                    }
+                    
+                    return {
+                      novelId: data.novelId,
+                      title: refreshedNovel.title,
+                      author: refreshedNovel.author,
+                      chapters: refreshedNovel.chapters,
+                      metadata: novelData.metadata,
+                      text: refreshedNovel.chapters.map(c => c.content || '').join('\n\n'),
+                      structure: {
+                        chapterCount: refreshedNovel.chapters.length,
+                        totalScenes: refreshedNovel.chapters.reduce((sum, c) => sum + (c.scenes?.length || 0), 0)
+                      }
+                    };
+                  }
+                }
+              } catch (analyzeError) {
+                console.error('❌ 结构分析 API 请求失败:', analyzeError);
+              }
+            }
+            
+            // 将后端数据存储到 localStorage 以便后续使用
+            if (novel.chapters && novel.chapters.length > 0) {
+              const novelData = {
+                id: data.novelId,
+                title: novel.title,
+                author: novel.author,
+                chapters: novel.chapters,
+                metadata: {
+                  wordCount: novel.wordCount,
+                  status: novel.status,
+                  sourceType: novel.sourceType
+                }
+              };
+              
+              // 存储到 localStorage
+              try {
+                localStorage.setItem(`novel_${data.novelId}`, JSON.stringify(novelData));
+                console.log('💾 已将小说数据缓存到 localStorage');
+              } catch (e) {
+                console.warn('⚠️ 缓存到 localStorage 失败:', e);
+              }
+              
+              return {
+                novelId: data.novelId,
+                title: novel.title,
+                author: novel.author,
+                chapters: novel.chapters,
+                metadata: novelData.metadata,
+                text: novel.chapters.map(c => c.content || '').join('\n\n'),
+                structure: {
+                  chapterCount: novel.chapters.length,
+                  totalScenes: novel.chapters.reduce((sum, c) => sum + (c.scenes?.length || 0), 0)
+                }
+              };
+            } else {
+              console.warn('⚠️ 后端返回的小说没有章节数据, novel:', JSON.stringify(novel, null, 2));
+            }
+          } else {
+            console.warn('⚠️ 后端 API 加载失败:', response.message);
+          }
+        } catch (apiError) {
+          console.error('❌ 后端 API 请求失败:', apiError);
+        }
       }
       
-      // 模拟数据（用于演示）
-      await this.simulateProcessing(1000);
-      return {
-        chapters: ['第一章', '第二章', '第三章'],
-        metadata: { totalWords: 50000, estimatedReadTime: '3小时' }
-      };
+      // 没有小说数据时抛出错误，不使用模拟数据
+      throw new Error('无法加载小说数据：请确保已上传小说文件或选择了有效的项目');
     });
 
     // Character Analyzer - 使用真实的CharacterSystem服务
@@ -293,53 +481,116 @@ export class PipelineOrchestrator {
       const previousResults = this.getPreviousNodeResults(context, node);
       const chapters = previousResults?.chapters || [];
       
-      if (chapters.length > 0 && chapters[0].content) {
-        // 使用CharacterSystem识别角色
-        const characters = CharacterSystem.identifyCharacters(chapters);
+      console.log('🔍 角色分析器 - 收到章节数据:', chapters.length, '章');
+      
+      // 检查是否有有效的章节内容
+      const hasValidContent = chapters.length > 0 && 
+        chapters.some(ch => ch.content || (ch.scenes && ch.scenes.length > 0));
+      
+      if (hasValidContent) {
+        console.log('✅ 使用真实章节数据进行角色分析');
         
-        // 追踪重复出现的角色
-        const trackedCharacters = CharacterSystem.trackRecurringCharacters(characters, chapters);
+        // 尝试调用后端 AI 服务进行智能场景分割
+        let processedChapters = chapters;
+        const novelId = context.data?.novelId;
         
-        // 为主要角色创建锁定档案
-        const mainCharacters = trackedCharacters.filter(
-          c => c.role === 'protagonist' || c.role === 'antagonist'
-        );
-        
-        for (const character of mainCharacters) {
-          CharacterSystem.createLockedProfile(character);
+        if (novelId) {
+          try {
+            console.log('🤖 调用后端 AI 服务进行智能场景分割...');
+            
+            // 调用后端 AI 分析服务
+            const analyzeResponse = await apiService.axiosInstance.post('/novels/analyze-structure', {
+              novelId: novelId
+            });
+            
+            if (analyzeResponse.data?.success) {
+              console.log('✅ 后端 AI 分析完成:', analyzeResponse.data);
+              
+              // 重新获取小说数据（包含 AI 分析后的场景）
+              const novelResponse = await apiService.getNovel(novelId);
+              if (novelResponse.success && novelResponse.novel?.chapters?.length > 0) {
+                processedChapters = novelResponse.novel.chapters.map(chapter => ({
+                  ...chapter,
+                  id: chapter.chapterId || chapter.id,
+                  scenes: (chapter.scenes || []).map((scene, idx) => ({
+                    id: scene.sceneId || `${chapter.chapterId}_scene_${idx + 1}`,
+                    chapterId: chapter.chapterId || chapter.id,
+                    sceneNumber: scene.sceneNumber || idx + 1,
+                    content: scene.content || scene.visualDescription || '',
+                    title: scene.title || this.generateSceneTitle(scene.content || '', chapter.title, idx + 1),
+                    setting: scene.setting || this.inferSetting(scene.content || ''),
+                    mood: scene.mood || '中性',
+                    characters: scene.characters || this.extractCharactersFromText(scene.content || '')
+                  }))
+                }));
+                console.log('✅ 从后端获取到 AI 分析后的章节数据:', processedChapters.length, '章');
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️ 后端 AI 分析失败，使用本地智能分割:', error.message);
+          }
         }
         
-        return {
-          characters: trackedCharacters.map(c => ({
-            id: c.id,
-            name: c.name,
-            role: c.role,
-            description: c.attributes?.personality || '',
-            appearance: c.attributes?.appearance || '',
-            relationships: c.relationships || []
-          })),
-          relationships: trackedCharacters.flatMap(c => 
-            c.relationships.map(r => `${c.name}-${r.toCharacterId}: ${r.relationshipType}`)
-          ),
-          statistics: {
-            total: trackedCharacters.length,
-            protagonists: trackedCharacters.filter(c => c.role === 'protagonist').length,
-            antagonists: trackedCharacters.filter(c => c.role === 'antagonist').length,
-            supporting: trackedCharacters.filter(c => c.role === 'supporting').length,
-            minor: trackedCharacters.filter(c => c.role === 'minor').length
+        // 如果后端分析失败或没有场景数据，使用本地智能分割
+        processedChapters = processedChapters.map((chapter, chapterIndex) => {
+          if (!chapter.scenes || chapter.scenes.length === 0) {
+            // 智能分割章节内容为多个场景
+            const scenes = this.splitChapterIntoScenes(chapter, chapterIndex);
+            return {
+              ...chapter,
+              scenes
+            };
           }
-        };
+          return chapter;
+        });
+        
+        try {
+          // 使用CharacterSystem识别角色
+          const characters = CharacterSystem.identifyCharacters(processedChapters);
+          console.log('📊 识别到角色:', characters.length, '个');
+          
+          // 追踪重复出现的角色
+          const trackedCharacters = CharacterSystem.trackRecurringCharacters(characters, processedChapters);
+          
+          // 为主要角色创建锁定档案
+          const mainCharacters = trackedCharacters.filter(
+            c => c.role === 'protagonist' || c.role === 'antagonist'
+          );
+          
+          for (const character of mainCharacters) {
+            CharacterSystem.createLockedProfile(character);
+          }
+          
+          // 传递章节数据给下一个节点
+          return {
+            chapters: processedChapters, // 保持章节数据传递
+            characters: trackedCharacters.map(c => ({
+              id: c.id,
+              name: c.name,
+              role: c.role,
+              description: c.attributes?.personality || '',
+              appearance: c.attributes?.appearance || '',
+              relationships: c.relationships || []
+            })),
+            relationships: trackedCharacters.flatMap(c => 
+              c.relationships.map(r => `${c.name}-${r.toCharacterId}: ${r.relationshipType}`)
+            ),
+            statistics: {
+              total: trackedCharacters.length,
+              protagonists: trackedCharacters.filter(c => c.role === 'protagonist').length,
+              antagonists: trackedCharacters.filter(c => c.role === 'antagonist').length,
+              supporting: trackedCharacters.filter(c => c.role === 'supporting').length,
+              minor: trackedCharacters.filter(c => c.role === 'minor').length
+            }
+          };
+        } catch (error) {
+          console.error('❌ 角色分析失败:', error);
+          throw new Error(`角色分析失败: ${error.message}`);
+        }
       }
       
-      // 模拟数据
-      await this.simulateProcessing(1500);
-      return {
-        characters: [
-          { name: '主角', role: 'protagonist', description: '勇敢的年轻人' },
-          { name: '配角1', role: 'supporting', description: '忠诚的伙伴' }
-        ],
-        relationships: ['主角-配角1: 朋友关系']
-      };
+      // 没有有效章节内容时抛出错误
+      throw new Error('角色分析失败：没有有效的章节内容，请确保小说已正确解析');
     });
 
     // Scene Generator - 场景生成节点
@@ -348,12 +599,14 @@ export class PipelineOrchestrator {
       const chapters = previousResults?.chapters || [];
       const characters = previousResults?.characters || [];
       
+      console.log('🎬 场景生成器 - 收到章节数据:', chapters.length, '章, 角色:', characters.length, '个');
+      
       // 从章节中提取场景
       const scenes = [];
       let sceneIndex = 0;
       
       for (const chapter of chapters) {
-        if (chapter.scenes) {
+        if (chapter.scenes && chapter.scenes.length > 0) {
           for (const scene of chapter.scenes) {
             sceneIndex++;
             scenes.push({
@@ -366,28 +619,37 @@ export class PipelineOrchestrator {
               content: scene.content
             });
           }
+        } else if (chapter.content) {
+          // 如果章节没有预分割的场景，将整个章节作为一个场景
+          sceneIndex++;
+          scenes.push({
+            id: sceneIndex,
+            chapterId: chapter.id,
+            title: chapter.title || `场景 ${sceneIndex}`,
+            description: chapter.content.substring(0, 100) + '...',
+            setting: '未知场景',
+            characters: [],
+            content: chapter.content
+          });
         }
       }
       
       if (scenes.length === 0) {
-        // 模拟数据
-        await this.simulateProcessing(2000);
-        return {
-          scenes: [
-            { id: 1, title: '开场', description: '故事开始的场景' },
-            { id: 2, title: '冲突', description: '主要冲突发生' },
-            { id: 3, title: '解决', description: '问题得到解决' }
-          ]
-        };
+        // 没有有效场景数据时抛出错误
+        throw new Error('场景生成失败：没有有效的场景数据，请确保章节已正确分析');
       }
       
-      return { scenes, totalScenes: scenes.length };
+      console.log('✅ 生成了', scenes.length, '个场景');
+      return { chapters, characters, scenes, totalScenes: scenes.length };
     });
 
     // Script Converter - 脚本转换节点
     this.nodeProcessors.set('script-converter', async (context, node) => {
       const previousResults = this.getPreviousNodeResults(context, node);
       const scenes = previousResults?.scenes || [];
+      const characters = previousResults?.characters || [];
+      
+      console.log('📝 脚本转换器 - 收到场景数据:', scenes.length, '个场景');
       
       // 将场景转换为脚本格式
       const scripts = scenes.map((scene, index) => ({
@@ -399,14 +661,13 @@ export class PipelineOrchestrator {
       }));
       
       if (scripts.length === 0) {
-        await this.simulateProcessing(2000);
-        return {
-          scripts: ['场景1脚本', '场景2脚本', '场景3脚本'],
-          dialogues: ['对话1', '对话2', '对话3']
-        };
+        // 没有有效场景数据时抛出错误
+        throw new Error('脚本转换失败：没有有效的场景数据，请确保场景已正确生成');
       }
       
+      console.log('✅ 生成了', scripts.length, '个脚本');
       return {
+        characters,
         scripts,
         totalScripts: scripts.length,
         dialogues: scripts.flatMap(s => s.dialogues)
@@ -417,25 +678,43 @@ export class PipelineOrchestrator {
     this.nodeProcessors.set('video-generator', async (context, node) => {
       const previousResults = this.getPreviousNodeResults(context, node);
       const scripts = previousResults?.scripts || [];
+      const chapters = previousResults?.chapters || [];
+      const characters = previousResults?.characters || [];
+      const scenes = previousResults?.scenes || [];
       
-      // 模拟视频生成（实际实现需要调用AI视频生成服务）
-      await this.simulateProcessing(3000);
+      console.log('🎥 视频生成器 - 收到脚本数据:', scripts.length, '个脚本');
       
-      const videos = scripts.map((script, index) => ({
-        id: `video_${index + 1}`,
+      if (scripts.length === 0) {
+        throw new Error('视频生成失败：没有有效的脚本数据，请确保脚本已正确转换');
+      }
+      
+      // TODO: 调用真实的 AI 视频生成服务
+      // 目前返回脚本数据作为视频生成的准备数据
+      // 实际的视频生成需要集成 AI 视频生成 API（如 Runway、Pika 等）
+      
+      const videoTasks = scripts.map((script, index) => ({
+        id: `video_task_${index + 1}`,
         scriptId: script.id || `script_${index + 1}`,
-        filename: `scene_${index + 1}.mp4`,
-        status: 'generated',
-        duration: Math.floor(Math.random() * 60) + 30 // 30-90秒
+        title: script.title,
+        status: 'pending', // pending, processing, completed, failed
+        content: script.content,
+        dialogues: script.dialogues
       }));
       
+      console.log('✅ 创建了', videoTasks.length, '个视频生成任务');
+      
       return {
-        videos: videos.length > 0 ? videos : [
-          { id: 'video_1', filename: 'video1.mp4', duration: 60 },
-          { id: 'video_2', filename: 'video2.mp4', duration: 45 }
-        ],
+        // 传递所有上游数据
+        chapters,
+        characters,
+        scenes,
+        scripts,
+        // 视频生成任务
+        videoTasks,
+        totalTasks: videoTasks.length,
         metadata: { 
-          totalDuration: videos.reduce((sum, v) => sum + (v.duration || 0), 0),
+          status: 'tasks_created',
+          message: '视频生成任务已创建，等待 AI 视频服务处理',
           resolution: '1080p',
           format: 'mp4'
         }
@@ -498,7 +777,184 @@ export class PipelineOrchestrator {
     return dialogues.slice(0, 10); // 限制返回数量
   }
 
-  async simulateProcessing(duration) {
-    return new Promise(resolve => setTimeout(resolve, duration));
+  /**
+   * 智能分割章节内容为多个场景
+   * 基于段落分隔、场景标记、对话密度等进行分割
+   */
+  splitChapterIntoScenes(chapter, chapterIndex) {
+    const content = chapter.content || '';
+    if (!content.trim()) {
+      return [{
+        id: `${chapter.id}_scene_1`,
+        chapterId: chapter.id,
+        sceneNumber: 1,
+        content: '',
+        title: `${chapter.title || `第${chapterIndex + 1}章`} - 场景1`,
+        setting: this.inferSetting(content),
+        characters: []
+      }];
+    }
+
+    const scenes = [];
+    
+    // 场景分割策略：
+    // 1. 按明显的场景分隔符分割（如 "***", "---", "===", 空行组）
+    // 2. 按段落数量分割（每3-5个段落为一个场景）
+    // 3. 按对话块分割
+    
+    // 首先尝试按场景分隔符分割
+    const sceneDelimiters = /\n\s*(?:\*{3,}|—{3,}|-{3,}|={3,}|·{3,})\s*\n/g;
+    let segments = content.split(sceneDelimiters).filter(s => s.trim());
+    
+    // 如果没有明显分隔符，按段落分割
+    if (segments.length <= 1) {
+      // 按双换行分割段落
+      const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim());
+      
+      if (paragraphs.length > 3) {
+        // 每3-4个段落组成一个场景
+        const paragraphsPerScene = Math.ceil(paragraphs.length / Math.ceil(paragraphs.length / 4));
+        segments = [];
+        for (let i = 0; i < paragraphs.length; i += paragraphsPerScene) {
+          segments.push(paragraphs.slice(i, i + paragraphsPerScene).join('\n\n'));
+        }
+      } else {
+        segments = [content];
+      }
+    }
+    
+    // 为每个片段创建场景
+    segments.forEach((segment, index) => {
+      const sceneNumber = index + 1;
+      const sceneTitle = this.generateSceneTitle(segment, chapter.title, sceneNumber);
+      const setting = this.inferSetting(segment);
+      const characters = this.extractCharactersFromText(segment);
+      
+      scenes.push({
+        id: `${chapter.id}_scene_${sceneNumber}`,
+        chapterId: chapter.id,
+        sceneNumber,
+        content: segment.trim(),
+        title: sceneTitle,
+        setting,
+        characters
+      });
+    });
+    
+    console.log(`📖 章节 "${chapter.title}" 分割为 ${scenes.length} 个场景`);
+    return scenes;
+  }
+
+  /**
+   * 生成场景标题
+   */
+  generateSceneTitle(content, chapterTitle, sceneNumber) {
+    // 尝试从内容中提取关键信息作为标题
+    const firstLine = content.split('\n')[0]?.trim() || '';
+    
+    // 如果第一行像是标题（短且不是对话）
+    if (firstLine.length > 0 && firstLine.length < 30 && !firstLine.includes('"') && !firstLine.includes('「')) {
+      return firstLine;
+    }
+    
+    // 尝试提取场景关键词
+    const locationKeywords = this.extractLocationKeywords(content);
+    if (locationKeywords) {
+      return `${locationKeywords}`;
+    }
+    
+    // 默认标题
+    return `${chapterTitle || '章节'} - 场景${sceneNumber}`;
+  }
+
+  /**
+   * 从文本推断场景设定/地点
+   */
+  inferSetting(content) {
+    if (!content) return '未知场景';
+    
+    // 常见地点关键词
+    const locationPatterns = [
+      { pattern: /(?:在|到|来到|走进|进入|回到)([^，。！？\n]{2,10}(?:里|中|内|上|下|前|后|旁))/, group: 1 },
+      { pattern: /([^，。！？\n]{2,8}(?:房间|客厅|卧室|厨房|书房|办公室|教室|医院|学校|公司|街道|公园|广场|车站|机场|酒店|餐厅|咖啡厅|商场|超市|银行|图书馆))/, group: 1 },
+      { pattern: /([^，。！？\n]{2,6}(?:山|河|湖|海|森林|草原|沙漠|城市|村庄|小镇))/, group: 1 },
+      { pattern: /(?:夜晚|清晨|黄昏|傍晚|午后|深夜)的([^，。！？\n]{2,10})/, group: 1 },
+    ];
+    
+    for (const { pattern, group } of locationPatterns) {
+      const match = content.match(pattern);
+      if (match && match[group]) {
+        return match[group].trim();
+      }
+    }
+    
+    // 尝试提取时间设定
+    const timePatterns = [
+      /(?:那天|这天|当天|第二天|次日|翌日)/,
+      /(?:早上|上午|中午|下午|傍晚|晚上|深夜|凌晨)/,
+      /(?:春天|夏天|秋天|冬天|春日|夏日|秋日|冬日)/
+    ];
+    
+    for (const pattern of timePatterns) {
+      const match = content.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+    
+    return '场景';
+  }
+
+  /**
+   * 提取地点关键词
+   */
+  extractLocationKeywords(content) {
+    const locationMatch = content.match(/(?:在|到|来到|走进|进入|回到)([^，。！？\n]{2,15})/);
+    if (locationMatch) {
+      return locationMatch[1].trim();
+    }
+    return null;
+  }
+
+  /**
+   * 从文本中提取角色名
+   */
+  extractCharactersFromText(content) {
+    const characters = new Set();
+    
+    // 常见的角色引用模式
+    const patterns = [
+      // 对话前的角色名：张三说、李四道
+      /([^\s，。！？""「」]{2,4})(?:说|道|问|答|喊|叫|笑|哭|叹)/g,
+      // 主语位置的角色名
+      /(?:^|[。！？\n])([^\s，。！？""「」]{2,4})(?:走|跑|站|坐|看|听|想|觉得|认为|知道|发现)/g,
+    ];
+    
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        const name = match[1].trim();
+        // 过滤掉常见的非人名词汇
+        if (!this.isCommonWord(name) && name.length >= 2) {
+          characters.add(name);
+        }
+      }
+    }
+    
+    return Array.from(characters).slice(0, 5); // 最多返回5个角色
+  }
+
+  /**
+   * 检查是否是常见词汇（非人名）
+   */
+  isCommonWord(word) {
+    const commonWords = [
+      '他们', '她们', '我们', '你们', '大家', '所有', '这个', '那个',
+      '什么', '怎么', '为什么', '哪里', '这里', '那里', '现在', '然后',
+      '但是', '因为', '所以', '如果', '虽然', '不过', '而且', '或者',
+      '一个', '两个', '几个', '很多', '一些', '这些', '那些', '自己',
+      '对方', '别人', '其他', '所有人', '没有人', '有人', '无人'
+    ];
+    return commonWords.includes(word);
   }
 }

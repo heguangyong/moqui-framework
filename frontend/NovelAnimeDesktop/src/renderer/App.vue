@@ -7,9 +7,14 @@
     
     <!-- 主应用布局 -->
     <template v-else>
+      <!-- Mobile Navigation (shown only on mobile) -->
+      <div class="mobile-nav-container show-on-mobile">
+        <MobileNav />
+      </div>
+      
       <div class="app-layout">
-        <!-- 左侧极窄侧边栏 -->
-        <aside class="narrow-sidebar">
+        <!-- 左侧极窄侧边栏 (hidden on mobile) -->
+        <aside class="narrow-sidebar hide-on-mobile">
           <!-- 上半部分：导航区域（占 3/4 空间） -->
           <div class="sidebar-section sidebar-section--nav">
             <!-- 黑色图标区域 -->
@@ -133,6 +138,21 @@
         </button>
       </div>
     </div>
+    
+    <!-- Tutorial Overlay -->
+    <TutorialOverlay />
+    
+    <!-- Error Dialog -->
+    <ErrorDialog
+      :visible="errorDialog.visible"
+      :title="errorDialog.title"
+      :message="errorDialog.message"
+      :solution="errorDialog.solution"
+      :details="errorDialog.details"
+      :severity="errorDialog.severity"
+      :actions="errorDialog.actions"
+      @close="closeError"
+    />
   </div>
 </template>
 
@@ -150,9 +170,15 @@ import { useProjectStore } from './stores/project.js';
 import { useTaskStore } from './stores/task.js';
 import { useFileStore } from './stores/file.js';
 import { useUserStore } from './stores/user';
+import { useTutorial } from './composables/useTutorial';
+import { useErrorReporting } from './composables/useErrorReporting';
+import { autoInitTheme } from './composables/useTheme';
 
 // 导入组件
 import ContextPanel from './components/panels/ContextPanel.vue';
+import TutorialOverlay from './components/tutorial/TutorialOverlay.vue';
+import ErrorDialog from './components/dialogs/ErrorDialog.vue';
+import MobileNav from './components/ui/MobileNav.vue';
 
 console.log('⚙️ Setting up router and stores...');
 const router = useRouter();
@@ -165,6 +191,8 @@ const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 const fileStore = useFileStore();
 const userStore = useUserStore();
+const { autoStartWelcomeTutorial } = useTutorial();
+const { errorDialog, closeError } = useErrorReporting();
 
 console.log('✅ App.vue setup completed');
 
@@ -411,6 +439,11 @@ onMounted(() => {
   console.log('🚀 App.vue onMounted started')
   
   try {
+    // Initialize theme system
+    console.log('🎨 Initializing theme system...')
+    autoInitTheme()
+    console.log('✅ Theme system initialized')
+    
     // 初始化UI状态
     console.log('📊 Initializing UI store...')
     uiStore.initializeFromStorage();
@@ -490,6 +523,11 @@ onMounted(() => {
     }
     
     console.log('🎉 App.vue onMounted completed successfully')
+    
+    // Auto-start welcome tutorial for first-time users
+    setTimeout(() => {
+      autoStartWelcomeTutorial()
+    }, 1000) // Delay to ensure UI is fully loaded
   } catch (error) {
     console.error('💥 Error in App.vue onMounted:', error)
   }
@@ -637,7 +675,7 @@ function generateAnimation() {
 .sidebar-section {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8);
+  background: #b0b0b0;
   border-radius: 12px;
   padding: 6px;
   gap: 0;
@@ -662,7 +700,7 @@ function generateAnimation() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  background: #222222;
   border-radius: 8px;
   padding: 8px 4px;
   gap: 2px;
@@ -706,7 +744,7 @@ function generateAnimation() {
 .sidebar-btn-divider {
   width: 16px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #404040, transparent);
+  background: #404040;
   margin: 18px 0;
 }
 
@@ -765,7 +803,7 @@ function generateAnimation() {
   justify-content: center;
   display: flex;
   align-items: center;
-  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+  background: #222222;
   border-radius: 8px;
   box-shadow: 
     0 3px 8px rgba(0, 0, 0, 0.4),
@@ -912,7 +950,7 @@ function generateAnimation() {
 }
 
 .nav-item--active {
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.8), rgba(200, 218, 212, 0.7));
+  background: rgba(190, 199, 196, 0.75);
   color: #2c2c2e;
 }
 
@@ -941,13 +979,14 @@ function generateAnimation() {
 
 /* 中间内容面板样式 */
 .middle-panel {
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: row !important;
-  background: linear-gradient(145deg, #b8b8b8, #a8a8a8) !important;
+  background: #b0b0b0 !important;
   border: none !important;
   border-radius: 12px !important;
   overflow: hidden !important;
+  min-width: 0 !important;
   box-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
@@ -957,9 +996,10 @@ function generateAnimation() {
 
 /* 左侧菜单列容器 */
 .menu-column {
-  flex: 0 0 280px;
-  width: 280px;
-  min-width: 280px;
+  flex: 0 0 200px;
+  width: 200px;
+  min-width: 160px;
+  max-width: 240px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -989,7 +1029,7 @@ function generateAnimation() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8a8a8a, #a0b0aa);
+  background: #959d9a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1178,7 +1218,7 @@ function generateAnimation() {
 }
 
 .section-item--active {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 211, 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: #2c2c2e;
@@ -1198,7 +1238,7 @@ function generateAnimation() {
   top: 3px;
   bottom: 3px;
   width: 5px;
-  background: linear-gradient(90deg, #8a8a8a, #b8b8b8);
+  background: #a1a1a1;
   border-radius: 3px;
   box-shadow: 
     0 1px 2px rgba(0, 0, 0, 0.15),
@@ -1207,7 +1247,7 @@ function generateAnimation() {
 }
 
 .section-item--active:hover {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.6), rgba(200, 218, 212, 0.5));
+  background: rgba(205, 214, 211, 0.55);
 }
 
 /* 选中状态的 badge - 接近白色的浅灰背景，与其他badge数字颜色一致 */
@@ -1267,18 +1307,19 @@ function generateAnimation() {
   border: none;
   border-radius: 8px;
   font-size: 12px;
-  background-color: rgba(160, 160, 160, 0.3);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.search-input:hover {
+  background-color: #d0d0d0;
 }
 
 .search-input:focus {
   outline: none;
-  background-color: #ffffff;
-  border-color: rgba(150, 150, 150, 0.5);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .search-input::placeholder {
@@ -1396,12 +1437,12 @@ function generateAnimation() {
 
 /* 主工作区样式 */
 .main-area {
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
   background-color: #a5a5a5 !important;
   overflow: hidden !important;
-  min-width: 0 !important;
+  min-width: 300px !important;
   border-radius: 8px !important;
   margin: 8px !important;
   margin-left: 0 !important;
@@ -1462,13 +1503,13 @@ function generateAnimation() {
 }
 
 .action-btn--primary {
-  background: linear-gradient(90deg, rgba(150, 150, 150, 0.9), rgba(180, 198, 192, 0.8));
+  background: rgba(165, 174, 171, 0.85);
   border-color: #8a8a8a;
   color: #2c2c2e;
 }
 
 .action-btn--primary:hover {
-  background: linear-gradient(90deg, rgba(130, 130, 130, 0.9), rgba(160, 178, 172, 0.8));
+  background: rgba(145, 154, 151, 0.85);
   border-color: #7a7a7a;
 }
 
@@ -1493,7 +1534,7 @@ function generateAnimation() {
 }
 
 .stat-card {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.5), rgba(200, 218, 212, 0.4));
+  background: rgba(205, 214, 211, 0.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.45);
@@ -1507,7 +1548,7 @@ function generateAnimation() {
 }
 
 .stat-card:hover {
-  background: linear-gradient(90deg, rgba(210, 210, 210, 0.6), rgba(200, 218, 212, 0.5));
+  background: rgba(205, 214, 211, 0.55);
 }
 
 .stat-header {
@@ -1647,22 +1688,26 @@ function generateAnimation() {
 .workspace-search .search-input {
   width: 100%;
   padding: 8px 32px 8px 32px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: none;
   border-radius: 6px;
   font-size: 12px;
-  background-color: rgba(165, 165, 165, 0.5);
+  background-color: #c8c8c8;
   color: #2c2c2e;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .workspace-search .search-input::placeholder {
   color: #7a7a7c;
 }
 
+.workspace-search .search-input:hover {
+  background-color: #d0d0d0;
+}
+
 .workspace-search .search-input:focus {
   outline: none;
-  border-color: rgba(0, 0, 0, 0.15);
-  background-color: rgba(180, 180, 180, 0.6);
+  background-color: #e8e8e8;
+  border: 1px solid rgba(122, 145, 136, 0.5);
 }
 
 .search-clear {
@@ -1778,7 +1823,7 @@ function generateAnimation() {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: linear-gradient(90deg, rgba(180, 180, 180, 0.7), rgba(200, 218, 212, 0.6));
+  background: rgba(190, 199, 196, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -1912,10 +1957,10 @@ function generateAnimation() {
 
 /* 响应式 */
 @media (max-width: 1024px) {
-  .middle-panel {
-    flex-basis: 320px;
-    min-width: 320px;
-    max-width: 320px;
+  .menu-column {
+    flex: 0 0 180px;
+    width: 180px;
+    min-width: 160px;
   }
   
   .workspace-content {
@@ -1951,10 +1996,24 @@ function generateAnimation() {
   }
   
   .middle-panel {
-    flex-basis: auto;
+    flex: 1 1 auto;
     min-width: 100%;
     max-width: 100%;
-    max-height: 300px;
+    flex-direction: column;
+    max-height: none;
+  }
+  
+  .menu-column {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .main-area {
+    flex: 1 1 auto;
+    min-width: 100% !important;
   }
   
   .main-workspace {

@@ -162,9 +162,8 @@ export class NovelApiService {
     message?: string
   }> {
     try {
-      const response = await apiService.axiosInstance.get('/novel', {
-        params: { novelId }
-      })
+      // 使用路径参数而不是查询参数
+      const response = await apiService.axiosInstance.get(`/novel/${novelId}`)
       
       return {
         success: true,

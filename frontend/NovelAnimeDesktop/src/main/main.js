@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
+const { fileAccessControl } = require('./security/FileAccessControl');
 
 class NovelAnimeApp {
   constructor() {
@@ -92,9 +93,156 @@ class NovelAnimeApp {
   }
 
   setupIPC() {
-    // 项目管理
+    const fs = require('fs').promises;
+    const os = require('os');
+    
+    // Try to load keytar for secure credential storage
+    let keytar = null;
+    try {
+      keytar = require('keytar');
+      console.log('✅ Keytar loaded successfully');
+    } catch (error) {
+      console.warn('⚠️ Keytar not available:', error.message);
+    }
+    
+    // Get projects directory
+    const getProjectsDir = () => {
+      return path.join(os.homedir(), 'NovelAnimeProjects');
+    };
+
+    // Ensure projects directory exists
+    const ensureProjectsDir = async () => {
+      const projectsDir = getProjectsDir();
+      try {
+        await fs.access(projectsDir);
+      } catch {
+        await fs.mkdir(projectsDir, { recursive: true });
+      }
+      return projectsDir;
+    };
+
+    // Keytar IPC Handlers - Requirements: 12.1
+    ipcMain.handle('keytar-test', async () => {
+      return { success: keytar !== null };
+    });
+
+    ipcMain.handle('keytar-get', async (_, service, account) => {
+      if (!keytar) {
+        throw new Error('Keytar not available');
+      }
+      try {
+        return await keytar.getPassword(service, account);
+      } catch (error) {
+        console.error('Keytar getPassword error:', error);
+        return null;
+      }
+    });
+
+    ipcMain.handle('keytar-set', async (_, service, account, password) => {
+      if (!keytar) {
+        throw new Error('Keytar not available');
+      }
+      try {
+        await keytar.setPassword(service, account, password);
+        return true;
+      } catch (error) {
+        console.error('Keytar setPassword error:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('keytar-delete', async (_, service, account) => {
+      if (!keytar) {
+        throw new Error('Keytar not available');
+      }
+      try {
+        return await keytar.deletePassword(service, account);
+      } catch (error) {
+        console.error('Keytar deletePassword error:', error);
+        return false;
+      }
+    });
+
+    // File System API - with access control
+    ipcMain.handle('fs:read-file', async (_, filePath) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, filePath);
+        // Use file access control
+        return await fileAccessControl.safeReadFile(fullPath);
+      } catch (error) {
+        throw new Error(`Failed to read file: ${error.message}`);
+      }
+    });
+
+    ipcMain.handle('fs:write-file', async (_, filePath, content) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, filePath);
+        // Use file access control
+        await fileAccessControl.safeWriteFile(fullPath, content);
+      } catch (error) {
+        throw new Error(`Failed to write file: ${error.message}`);
+      }
+    });
+
+    ipcMain.handle('fs:delete-file', async (_, filePath) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, filePath);
+        // Use file access control
+        await fileAccessControl.safeDeleteFile(fullPath);
+      } catch (error) {
+        throw new Error(`Failed to delete file: ${error.message}`);
+      }
+    });
+
+    ipcMain.handle('fs:read-dir', async (_, dirPath) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, dirPath);
+        // Use file access control
+        return await fileAccessControl.safeReadDir(fullPath);
+      } catch (error) {
+        throw new Error(`Failed to read directory: ${error.message}`);
+      }
+    });
+
+    ipcMain.handle('fs:create-dir', async (_, dirPath) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, dirPath);
+        // Use file access control
+        await fileAccessControl.safeCreateDir(fullPath);
+      } catch (error) {
+        throw new Error(`Failed to create directory: ${error.message}`);
+      }
+    });
+
+    ipcMain.handle('fs:exists', async (_, filePath) => {
+      try {
+        const projectsDir = await ensureProjectsDir();
+        const fullPath = path.join(projectsDir, filePath);
+        // Use file access control
+        return await fileAccessControl.safeExists(fullPath);
+      } catch {
+        return false;
+      }
+    });
+
+    ipcMain.handle('fs:select-directory', async () => {
+      const result = await dialog.showOpenDialog(this.mainWindow, {
+        properties: ['openDirectory', 'createDirectory']
+      });
+      return result.filePaths[0] || null;
+    });
+
+    ipcMain.handle('fs:get-projects-directory', async () => {
+      return await ensureProjectsDir();
+    });
+
+    // Legacy project management (keep for compatibility)
     ipcMain.handle('create-project', async (_, projectData) => {
-      // 实现项目创建逻辑
       return { success: true, project: projectData };
     });
 
@@ -105,7 +253,7 @@ class NovelAnimeApp {
       return result.filePaths[0];
     });
 
-    // 打开文件对话框
+    // Legacy file operations (keep for compatibility)
     ipcMain.handle('open-file', async (_, options) => {
       const result = await dialog.showOpenDialog(this.mainWindow, {
         properties: ['openFile'],
@@ -117,14 +265,11 @@ class NovelAnimeApp {
       return result.filePaths[0] || null;
     });
 
-    // 文件操作
     ipcMain.handle('read-file', async (_, filePath) => {
-      const fs = require('fs').promises;
       return await fs.readFile(filePath, 'utf8');
     });
 
     ipcMain.handle('write-file', async (_, filePath, content) => {
-      const fs = require('fs').promises;
       await fs.writeFile(filePath, content, 'utf8');
     });
   }

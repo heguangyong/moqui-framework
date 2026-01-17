@@ -1,21 +1,39 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 
-// 视图组件导入
+/**
+ * 路由懒加载配置
+ * 使用动态导入优化初始加载性能
+ * 
+ * Requirements: 9.2
+ * 
+ * 精简后的核心页面（10个）：
+ * - LoginView: 用户登录
+ * - DashboardView: 仪表盘（整合项目管理）
+ * - WorkflowEditor: 工作流编辑器
+ * - CharactersView: 角色列表
+ * - CharacterDetailView: 角色详情
+ * - AssetsView: 资源库
+ * - GeneratedContentView: 生成结果
+ * - PreviewView: 内容预览
+ * - Settings: 设置
+ * - ProfileView: 个人资料
+ */
+
+// 核心视图 - 立即加载（首屏需要）
 import DashboardView from '../views/DashboardView.vue';
 import LoginView from '../views/LoginView.vue';
-import TestView from '../views/TestView.vue';
-import Settings from '../views/Settings.vue';
-import MyProjectsView from '../views/MyProjectsView.vue';
-import WorkflowEditor from '../views/WorkflowEditor.vue';
-import AssetsView from '../views/AssetsView.vue';
-import CharactersView from '../views/CharactersView.vue';
-import CharacterDetailView from '../views/CharacterDetailView.vue';
-import ProfileView from '../views/ProfileView.vue';
-import NovelsView from '../views/NovelsView.vue';
-import ProjectDetailView from '../views/ProjectDetailView.vue';
-import GeneratedContentView from '../views/GeneratedContentView.vue';
 
-console.log('🛣️ Router configuration loading...');
+// 其他视图 - 懒加载（按需加载）
+const Settings = () => import('../views/Settings.vue');
+const WorkflowEditor = () => import('../views/WorkflowEditor.vue');
+const AssetsView = () => import('../views/AssetsView.vue');
+const CharactersView = () => import('../views/CharactersView.vue');
+const CharacterDetailView = () => import('../views/CharacterDetailView.vue');
+const ProfileView = () => import('../views/ProfileView.vue');
+const PreviewView = () => import('../views/PreviewView.vue');
+const GeneratedContentView = () => import('../views/GeneratedContentView.vue');
+
+console.log('🛣️ Router configuration loading with lazy loading...');
 
 const routes = [
   // 登录页面 - 访客可访问
@@ -30,25 +48,11 @@ const routes = [
     path: '/',
     redirect: '/dashboard'
   },
-  // 仪表盘
+  // 仪表盘（整合项目管理功能）
   {
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView,
-    meta: { requiresAuth: true }
-  },
-  // 我的项目
-  {
-    path: '/projects',
-    name: 'projects',
-    component: MyProjectsView,
-    meta: { requiresAuth: true }
-  },
-  // 项目详情
-  {
-    path: '/project/:id/detail',
-    name: 'project-detail',
-    component: ProjectDetailView,
     meta: { requiresAuth: true }
   },
   // 工作流编辑器
@@ -63,6 +67,13 @@ const routes = [
     path: '/generated',
     name: 'generated',
     component: GeneratedContentView,
+    meta: { requiresAuth: true }
+  },
+  // 内容预览
+  {
+    path: '/preview',
+    name: 'preview',
+    component: PreviewView,
     meta: { requiresAuth: true }
   },
   // 资源库
@@ -86,13 +97,6 @@ const routes = [
     component: CharacterDetailView,
     meta: { requiresAuth: true }
   },
-  // 小说管理
-  {
-    path: '/novels',
-    name: 'novels',
-    component: NovelsView,
-    meta: { requiresAuth: true }
-  },
   // 设置
   {
     path: '/settings',
@@ -106,13 +110,6 @@ const routes = [
     name: 'profile',
     component: ProfileView,
     meta: { requiresAuth: true }
-  },
-  // 测试页面
-  {
-    path: '/test',
-    name: 'test',
-    component: TestView,
-    meta: { requiresAuth: false }
   }
 ];
 
@@ -154,10 +151,10 @@ router.beforeEach(async (to, from, next) => {
   next();
 });
 
-// 检查认证状态
+// 检查认证状态 - 统一使用 novel_anime_* 前缀的 key
 function checkAuthStatus() {
   try {
-    // 检查 localStorage 中的 token - 使用统一的 key
+    // 检查 localStorage 中的 token
     const token = localStorage.getItem('novel_anime_access_token');
     const userData = localStorage.getItem('novel_anime_user_data');
     
@@ -166,11 +163,9 @@ function checkAuthStatus() {
       return true;
     }
     
-    // 兼容旧的 key
-    const oldToken = localStorage.getItem('auth_token');
-    const oldUser = localStorage.getItem('auth_user');
-    if (oldToken && oldUser) {
-      console.log('🔐 Found old auth token in localStorage');
+    // 只有 token 也算已认证（用户数据可能还未加载）
+    if (token) {
+      console.log('🔐 Found auth token (user data pending)');
       return true;
     }
     

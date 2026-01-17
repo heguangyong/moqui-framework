@@ -11,14 +11,27 @@
     "build:main": "echo 'Main process ready'",
     "build:renderer": "vite build",
     "dist": "npm run build && electron-builder",
-    "start": "electron ."
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:all": "npm run build && electron-builder -mwl",
+    "pack": "npm run build && electron-builder --dir",
+    "start": "electron .",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@vitejs/plugin-vue": "^4.0.0",
+    "@vue/test-utils": "^2.4.6",
     "concurrently": "^8.0.0",
     "electron": "^28.0.0",
     "electron-builder": "^24.0.0",
-    "vite": "^5.0.0"
+    "fast-check": "^3.15.0",
+    "jsdom": "^24.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -32,18 +45,106 @@
   "build": {
     "appId": "com.novelanime.desktop",
     "productName": "小说动漫生成器",
+    "copyright": "Copyright © 2025 Novel Anime Generator",
     "directories": {
-      "output": "dist"
+      "output": "dist-electron",
+      "buildResources": "build"
     },
     "files": [
       "src/main/**/*",
-      "dist-renderer/**/*"
+      "dist-renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": ["**/*"]
+      }
     ],
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "win": {
-      "target": "nsis"
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "publisherName": "Novel Anime Generator",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "小说动漫生成器",
+      "perMachine": false,
+      "runAfterFinish": true
+    },
+    "linux": {
+      "icon": "build/icons",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility",
+      "synopsis": "小说动漫生成器 - AI驱动的小说到动漫转换工具",
+      "description": "使用AI技术将小说文本转换为动漫分镜和场景的桌面应用程序"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://your-update-server.com/releases"
     }
   }
 }

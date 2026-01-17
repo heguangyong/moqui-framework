@@ -312,6 +312,14 @@ class ApiService {
       return storedUserId
     }
     
+    // 开发模式下使用默认用户 ID (john.doe 的 userId)
+    if (this.isDevelopment) {
+      const defaultUserId = 'EX_JOHN_DOE'
+      localStorage.setItem('novel_anime_user_id', defaultUserId)
+      console.log('🔧 Using default development userId:', defaultUserId)
+      return defaultUserId
+    }
+    
     // 如果没有登录用户，返回空字符串让后端处理
     console.warn('No valid userId found, user should login first')
     return ''
@@ -361,6 +369,650 @@ class ApiService {
       return {
         success: false,
         message: error.message || 'Failed to create project'
+      }
+    }
+  }
+
+  /**
+   * Update project status
+   */
+  async updateProject(projectId: string, data: {
+    name?: string
+    description?: string
+    status?: string
+  }): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.put(`/project/${projectId}`, data)
+      return {
+        success: response.data?.success !== false,
+        message: response.data?.message
+      }
+    } catch (error: any) {
+      console.error('Failed to update project:', error)
+      return {
+        success: false,
+        message: error.message || 'Failed to update project'
+      }
+    }
+  }
+
+  // ========== Workflow API ==========
+
+  /**
+   * Get workflows list
+   */
+  async getWorkflows(params?: {
+    projectId?: string
+    userId?: string
+    status?: string
+  }): Promise<{
+    success: boolean
+    workflows: Array<any>
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get('/workflows', { params })
+      return {
+        success: true,
+        workflows: response.data.workflows || []
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflows:', error)
+      return {
+        success: false,
+        workflows: [],
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Get single workflow
+   */
+  async getWorkflow(workflowId: string): Promise<{
+    success: boolean
+    workflow?: any
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get(`/workflow/${workflowId}`)
+      return {
+        success: true,
+        workflow: response.data.workflow
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflow:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Create workflow
+   */
+  async createWorkflow(data: {
+    projectId?: string
+    userId?: string
+    name: string
+    description?: string
+    status?: string
+    nodes?: Array<any>
+    connections?: Array<any>
+  }): Promise<{
+    success: boolean
+    workflowId?: string
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.post('/workflow', data)
+      return {
+        success: true,
+        workflowId: response.data.workflowId
+      }
+    } catch (error: any) {
+      console.error('Failed to create workflow:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Update workflow
+   */
+  async updateWorkflow(workflowId: string, data: {
+    name?: string
+    description?: string
+    status?: string
+    nodes?: Array<any>
+    connections?: Array<any>
+  }): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.put(`/workflow/${workflowId}`, data)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to update workflow:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Delete workflow
+   */
+  async deleteWorkflow(workflowId: string): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.delete(`/workflow/${workflowId}`)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to delete workflow:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  // ========== Workflow Execution API ==========
+
+  /**
+   * Get workflow executions
+   */
+  async getWorkflowExecutions(params?: {
+    workflowId?: string
+    status?: string
+  }): Promise<{
+    success: boolean
+    executions: Array<any>
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get('/workflow-executions', { params })
+      return {
+        success: true,
+        executions: response.data.executions || []
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflow executions:', error)
+      return {
+        success: false,
+        executions: [],
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Get single workflow execution
+   */
+  async getWorkflowExecution(executionId: string): Promise<{
+    success: boolean
+    execution?: any
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get(`/workflow-execution/${executionId}`)
+      return {
+        success: true,
+        execution: response.data.execution
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflow execution:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Create workflow execution
+   */
+  async createWorkflowExecution(data: {
+    workflowId: string
+    workflowName?: string
+    status?: string
+    nodeCount?: number
+    logs?: Array<any>
+  }): Promise<{
+    success: boolean
+    executionId?: string
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.post('/workflow-execution', data)
+      return {
+        success: true,
+        executionId: response.data.executionId
+      }
+    } catch (error: any) {
+      console.error('Failed to create workflow execution:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Update workflow execution
+   */
+  async updateWorkflowExecution(executionId: string, data: {
+    status?: string
+    endTime?: string
+    duration?: number
+    logs?: Array<any>
+  }): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.put(`/workflow-execution/${executionId}`, data)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to update workflow execution:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  // ========== Workflow Template API ==========
+
+  /**
+   * Get workflow templates
+   */
+  async getWorkflowTemplates(params?: {
+    userId?: string
+    isBuiltIn?: string
+  }): Promise<{
+    success: boolean
+    templates: Array<any>
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get('/workflow-templates', { params })
+      return {
+        success: true,
+        templates: response.data.templates || []
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflow templates:', error)
+      return {
+        success: false,
+        templates: [],
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Get single workflow template
+   */
+  async getWorkflowTemplate(templateId: string): Promise<{
+    success: boolean
+    template?: any
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get(`/workflow-template/${templateId}`)
+      return {
+        success: true,
+        template: response.data.template
+      }
+    } catch (error: any) {
+      console.error('Failed to get workflow template:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Create workflow template
+   */
+  async createWorkflowTemplate(data: {
+    userId?: string
+    name: string
+    description?: string
+    isBuiltIn?: string
+    nodeCount?: number
+    estimatedTime?: string
+    useCase?: string
+    nodes?: Array<any>
+    connections?: Array<any>
+  }): Promise<{
+    success: boolean
+    templateId?: string
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.post('/workflow-template', data)
+      return {
+        success: true,
+        templateId: response.data.templateId
+      }
+    } catch (error: any) {
+      console.error('Failed to create workflow template:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Update workflow template
+   */
+  async updateWorkflowTemplate(templateId: string, data: {
+    name?: string
+    description?: string
+    nodeCount?: number
+    estimatedTime?: string
+    useCase?: string
+    nodes?: Array<any>
+    connections?: Array<any>
+  }): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.put(`/workflow-template/${templateId}`, data)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to update workflow template:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Delete workflow template
+   */
+  async deleteWorkflowTemplate(templateId: string): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.delete(`/workflow-template/${templateId}`)
+      return {
+        success: response.data?.success !== false,
+        message: response.data?.message
+      }
+    } catch (error: any) {
+      console.error('Failed to delete workflow template:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  // ========== Asset API ==========
+
+  /**
+   * Get assets list
+   */
+  async getAssets(params?: {
+    projectId?: string
+    novelId?: string
+    userId?: string
+    assetType?: string
+  }): Promise<{
+    success: boolean
+    assets: Array<any>
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get('/assets', { params })
+      return {
+        success: true,
+        assets: response.data.assets || []
+      }
+    } catch (error: any) {
+      console.error('Failed to get assets:', error)
+      return {
+        success: false,
+        assets: [],
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Get single asset
+   */
+  async getAsset(assetId: string): Promise<{
+    success: boolean
+    asset?: any
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get(`/asset/${assetId}`)
+      return {
+        success: true,
+        asset: response.data.asset
+      }
+    } catch (error: any) {
+      console.error('Failed to get asset:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Create asset
+   */
+  async createAsset(data: {
+    projectId?: string
+    novelId?: string
+    userId?: string
+    assetType: string
+    name: string
+    description?: string
+    filePath?: string
+    fileSize?: number
+    metadata?: any
+    version?: string
+    isShared?: string
+  }): Promise<{
+    success: boolean
+    assetId?: string
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.post('/asset', data)
+      return {
+        success: true,
+        assetId: response.data.assetId
+      }
+    } catch (error: any) {
+      console.error('Failed to create asset:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Update asset
+   */
+  async updateAsset(assetId: string, data: {
+    name?: string
+    description?: string
+    filePath?: string
+    fileSize?: number
+    metadata?: any
+    version?: string
+    isShared?: string
+  }): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.put(`/asset/${assetId}`, data)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to update asset:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Delete asset
+   */
+  async deleteAsset(assetId: string): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      await this.axiosInstance.delete(`/asset/${assetId}`)
+      return { success: true }
+    } catch (error: any) {
+      console.error('Failed to delete asset:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  // ========== Novel API ==========
+
+  /**
+   * Get single novel with chapters
+   */
+  async getNovel(novelId: string): Promise<{
+    success: boolean
+    novel?: any
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get(`/novel/${novelId}`)
+      return {
+        success: true,
+        novel: response.data.novel || response.data
+      }
+    } catch (error: any) {
+      console.error('Failed to get novel:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Get novels list
+   */
+  async getNovels(projectId?: string): Promise<{
+    success: boolean
+    novels: Array<any>
+    message?: string
+  }> {
+    try {
+      const response = await this.axiosInstance.get('/novels', {
+        params: projectId ? { projectId } : undefined
+      })
+      return {
+        success: true,
+        novels: response.data.novels || []
+      }
+    } catch (error: any) {
+      console.error('Failed to get novels:', error)
+      return {
+        success: false,
+        novels: [],
+        message: error.message
+      }
+    }
+  }
+
+  // ========== User Settings API ==========
+
+  /**
+   * Get user settings
+   */
+  async getUserSettings(userId?: string): Promise<{
+    success: boolean
+    settings?: any
+    message?: string
+  }> {
+    try {
+      const effectiveUserId = userId || await this.getOrCreateDefaultUser()
+      const response = await this.axiosInstance.get('/user-settings', {
+        params: { userId: effectiveUserId }
+      })
+      return {
+        success: true,
+        settings: response.data.settings
+      }
+    } catch (error: any) {
+      console.error('Failed to get user settings:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  /**
+   * Update user settings
+   */
+  async updateUserSettings(data: {
+    userId?: string
+    theme?: string
+    language?: string
+    notifications?: {
+      email?: boolean
+      push?: boolean
+    }
+    defaultWorkflowTemplate?: string
+    autoSave?: boolean
+  }): Promise<{
+    success: boolean
+    settings?: any
+    message?: string
+  }> {
+    try {
+      const effectiveUserId = data.userId || await this.getOrCreateDefaultUser()
+      const response = await this.axiosInstance.put('/user-settings', {
+        ...data,
+        userId: effectiveUserId
+      })
+      return {
+        success: true,
+        settings: response.data.settings
+      }
+    } catch (error: any) {
+      console.error('Failed to update user settings:', error)
+      return {
+        success: false,
+        message: error.message
       }
     }
   }
