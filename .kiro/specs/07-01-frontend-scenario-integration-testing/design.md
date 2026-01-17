@@ -114,135 +114,39 @@ Playwright执行场景脚本
 
 ## Components and Interfaces
 
-### 1. 测试夹具系统 (Test Fixtures)
+### 核心测试组件
 
-**职责**: 提供可复用的测试数据生成器（生成真实的测试数据）
-
-**接口**:
+**1. 测试夹具系统**
 ```typescript
-// fixtures/user.fixture.ts
-export interface UserFixture {
-  createTestUser: () => {
-    username: string
-    password: string
-    email: string
-  }
-  createRandomUsers: (count: number) => User[]
-}
-
-// fixtures/order.fixture.ts
-export interface OrderFixture {
-  createSupplyOrder: () => Order
-  createDemandOrder: () => Order
-  createRandomOrder: (type: 'supply' | 'demand') => Order
-  createOrderList: (count: number) => Order[]
-}
-
-// fixtures/project.fixture.ts
-export interface ProjectFixture {
-  createBasicProject: () => Project
-  createProjectWithCharacters: () => Project
-  createRandomProject: () => Project
+export interface TestFixtures {
+  createTestUser: () => { username: string, password: string, email: string }
+  createTestProject: () => { name: string, description: string }
+  loadTestNovel: () => string
 }
 ```
 
-### 2. 测试工具函数 (Test Utilities)
-
-**职责**: 提供通用的测试辅助功能
-
-**接口**:
+**2. 测试工具函数**
 ```typescript
-// utils/test-helpers.ts
 export interface TestHelpers {
-  // 等待元素出现
-  waitForElement: (selector: string, timeout?: number) => Promise<void>
-  
-  // 等待API请求完成
-  waitForAPIResponse: (urlPattern: string) => Promise<Response>
-  
-  // 填写表单
+  waitForElement: (selector: string) => Promise<void>
   fillForm: (formData: Record<string, string>) => Promise<void>
-  
-  // 截图
   takeScreenshot: (name: string) => Promise<void>
-  
-  // 人工检查点
   manualCheckpoint: (message: string) => Promise<boolean>
 }
-
-// utils/assertions.ts
-export interface CustomAssertions {
-  // 断言路由
-  expectCurrentRoute: (routeName: string) => void
-  
-  // 断言元素可见
-  expectElementVisible: (selector: string) => void
-  
-  // 断言API调用
-  expectAPICallMade: (url: string, method: string) => void
-  
-  // 断言数据存在
-  expectDataInDatabase: (table: string, condition: any) => Promise<void>
-}
 ```
 
-### 3. 场景测试套件 (Scenario Test Suites)
-
-**职责**: 组织和执行场景化测试用例
-
-**接口**:
+**3. 场景测试套件**
 ```typescript
-// scenarios/moqui-ai-mobile/marketplace-flow.spec.ts
-export interface MarketplaceFlowTests {
-  testPublishOrderFlow: () => Promise<void>
-  testSearchAndFilterFlow: () => Promise<void>
-  testMatchingFlow: () => Promise<void>
-  testContactFlow: () => Promise<void>
-}
-
-// scenarios/moqui-ai-mobile/auth-flow.spec.ts
-export interface AuthFlowTests {
-  testLoginFlow: () => Promise<void>
-  testLogoutFlow: () => Promise<void>
-  testProtectedRouteFlow: () => Promise<void>
-}
-
-// scenarios/NovelAnimeDesktop/workflow-execution.spec.ts
-export interface WorkflowExecutionTests {
-  testBasicWorkflowExecution: () => Promise<void>
-  testWorkflowWithAINodes: () => Promise<void>
-  testWorkflowErrorHandling: () => Promise<void>
-}
-```
-
-### 4. 测试报告生成器 (Test Reporter)
-
-**职责**: 生成详细的测试报告
-
-**接口**:
-```typescript
-// utils/reporter.ts
-export interface TestReporter {
-  // 开始测试
-  startTest: (testName: string) => void
-  
-  // 记录步骤
-  logStep: (step: string, status: 'pass' | 'fail' | 'skip') => void
-  
-  // 记录截图
-  attachScreenshot: (path: string) => void
-  
-  // 记录视频
-  attachVideo: (path: string) => void
-  
-  // 生成报告
-  generateReport: () => Promise<void>
+export interface ScenarioTests {
+  testAuthFlow: () => Promise<void>
+  testMarketplaceFlow: () => Promise<void>
+  testWorkflowExecution: () => Promise<void>
 }
 ```
 
 ## Data Models
 
-### 测试配置模型
+### 核心测试数据模型
 
 ```typescript
 // 测试环境配置
@@ -250,134 +154,30 @@ interface TestConfig {
   apiBaseUrl: string
   timeout: number
   retries: number
-  mockEnabled: boolean
-  coverageThreshold: {
-    statements: number
-    branches: number
-    functions: number
-    lines: number
-  }
 }
 
-// 测试场景配置
-interface ScenarioConfig {
-  name: string
-  description: string
-  setup: () => Promise<void>
-  teardown: () => Promise<void>
-  steps: TestStep[]
-}
-
-interface TestStep {
-  name: string
-  action: () => Promise<void>
-  assertions: Assertion[]
-}
-
-interface Assertion {
-  type: 'element' | 'api' | 'state' | 'route'
-  condition: () => boolean | Promise<boolean>
-  message: string
-}
-```
-
-### 测试数据模型
-
-```typescript
-// 用户测试数据
+// 测试用户数据
 interface TestUser {
-  id: string
   username: string
   password: string
   email: string
   token?: string
-  refreshToken?: string
 }
 
-// 订单测试数据
-interface TestOrder {
-  id: string
-  type: 'supply' | 'demand'
-  title: string
-  description: string
-  category: string
-  location: string
-  tags: string[]
-  contactInfo: ContactInfo
-  publishTime: Date
-  status: OrderStatus
-}
-
-// 项目测试数据
+// 测试项目数据
 interface TestProject {
-  id: string
   name: string
   description: string
   characters: TestCharacter[]
-  workflows: TestWorkflow[]
-  assets: TestAsset[]
   createdAt: Date
-  updatedAt: Date
 }
 
-// 工作流测试数据
-interface TestWorkflow {
-  id: string
-  name: string
-  nodes: WorkflowNode[]
-  connections: WorkflowConnection[]
-  status: 'idle' | 'running' | 'paused' | 'completed' | 'failed'
-}
-```
-
-### 测试结果模型
-
-```typescript
-// 测试执行结果
+// 测试结果
 interface TestResult {
-  suiteName: string
   testName: string
   status: 'passed' | 'failed' | 'skipped'
   duration: number
   error?: Error
-  screenshots?: string[]
-  logs?: string[]
-}
-
-// 测试报告
-interface TestReport {
-  timestamp: Date
-  totalTests: number
-  passed: number
-  failed: number
-  skipped: number
-  duration: number
-  coverage: CoverageReport
-  results: TestResult[]
-}
-
-// 覆盖率报告
-interface CoverageReport {
-  statements: {
-    total: number
-    covered: number
-    percentage: number
-  }
-  branches: {
-    total: number
-    covered: number
-    percentage: number
-  }
-  functions: {
-    total: number
-    covered: number
-    percentage: number
-  }
-  lines: {
-    total: number
-    covered: number
-    percentage: number
-  }
 }
 ```
 
@@ -496,98 +296,21 @@ interface CoverageReport {
 
 ## Error Handling
 
-### 错误分类
+### 核心错误处理策略
 
-**1. 网络错误**
-- 连接超时
-- 网络中断
-- DNS解析失败
-- 处理策略：显示离线提示、自动重试、缓存请求
+**测试中的错误处理**:
+- **网络错误**: 显示离线提示、自动重试
+- **API错误**: 显示友好提示、提供重试选项
+- **AI服务错误**: 降级方案、提示用户稍后重试
+- **验证错误**: 显示具体错误信息、阻止提交
 
-**2. API错误**
-- 4xx客户端错误（400、401、403、404）
-- 5xx服务器错误（500、502、503）
-- 处理策略：显示友好提示、提供重试选项、记录错误日志
-
-**3. AI服务错误**
-- 服务不可用
-- 响应超时
-- 返回结果格式错误
-- 处理策略：降级方案、使用缓存结果、提示用户稍后重试
-
-**4. 数据验证错误**
-- 必填字段缺失
-- 格式不正确
-- 数据范围超限
-- 处理策略：前端验证、显示具体错误信息、阻止提交
-
-**5. 系统错误**
-- 内存不足
-- 存储空间不足
-- 应用崩溃
-- 处理策略：自动清理缓存、保存未保存数据、崩溃恢复
-
-### 错误处理策略
-
+**错误恢复**:
 ```typescript
-// 统一错误处理器
+// 简化的错误处理
 interface ErrorHandler {
-  // 处理网络错误
-  handleNetworkError(error: NetworkError): void
-  
-  // 处理API错误
   handleAPIError(error: APIError): void
-  
-  // 处理AI服务错误
   handleAIServiceError(error: AIServiceError): void
-  
-  // 处理验证错误
   handleValidationError(error: ValidationError): void
-  
-  // 处理系统错误
-  handleSystemError(error: SystemError): void
-}
-
-// 错误恢复策略
-interface RecoveryStrategy {
-  // 自动重试
-  autoRetry(maxRetries: number, backoff: number): Promise<void>
-  
-  // 降级方案
-  fallback(fallbackFn: () => any): any
-  
-  // 缓存恢复
-  recoverFromCache(cacheKey: string): any
-  
-  // 用户确认
-  askUserConfirmation(message: string): Promise<boolean>
-}
-```
-
-### 错误日志记录
-
-```typescript
-interface ErrorLogger {
-  // 记录错误
-  logError(error: Error, context: ErrorContext): void
-  
-  // 记录警告
-  logWarning(message: string, context: any): void
-  
-  // 记录信息
-  logInfo(message: string, context: any): void
-  
-  // 上报错误到监控系统
-  reportError(error: Error, severity: 'low' | 'medium' | 'high'): void
-}
-
-interface ErrorContext {
-  userId?: string
-  route: string
-  action: string
-  timestamp: Date
-  userAgent: string
-  additionalInfo?: any
 }
 ```
 
@@ -716,6 +439,54 @@ export const generateTestProject = () => ({
   name: faker.company.name(),
   description: faker.lorem.paragraph()
 })
+```
+
+**使用测试小说文件进行真实内容测试**:
+
+```typescript
+// 测试小说内容加载器
+export const loadTestNovel = () => {
+  const novelPath = '.kiro/specs/07-01-frontend-scenario-integration-testing/test-novel.txt'
+  return fs.readFileSync(novelPath, 'utf-8')
+}
+
+// 基于测试小说的角色数据生成器
+export const generateCharactersFromNovel = () => [
+  {
+    name: '艾莉娅·陈',
+    role: '舰长',
+    description: '年轻的舰长，企业号NCC-1701-F的指挥官',
+    traits: ['勇敢', '智慧', '仁慈']
+  },
+  {
+    name: '马克·雷诺兹',
+    role: '副舰长',
+    description: '经验丰富的副舰长，艾莉娅的得力助手',
+    traits: ['忠诚', '专业', '谨慎']
+  },
+  {
+    name: '苏菲亚·瓦西里耶夫',
+    role: '科学官',
+    description: '才华横溢的科学官，负责分析和研究',
+    traits: ['聪明', '好奇', '分析能力强']
+  }
+]
+
+// 基于测试小说的场景数据生成器
+export const generateScenesFromNovel = () => [
+  {
+    title: '启程',
+    location: '企业号舰桥',
+    characters: ['艾莉娅·陈', '马克·雷诺兹'],
+    description: '企业号准备进行跃迁，开始探索任务'
+  },
+  {
+    title: '异象',
+    location: '塞拉星系',
+    characters: ['艾莉娅·陈', '苏菲亚·瓦西里耶夫'],
+    description: '发现奇异的能量读数和巨大结构体'
+  }
+]
 ```
 
 **数据清理策略**:

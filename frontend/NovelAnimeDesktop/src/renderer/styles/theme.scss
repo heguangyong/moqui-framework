@@ -447,10 +447,10 @@ input[type="search"] {
 }
 
 // ============================================================================
-// Global Button Styles - 统一按钮风格
+// Global Button Styles - 完全统一按钮风格
 // ============================================================================
 
-// 基础按钮样式
+// 基础按钮样式 - 所有按钮统一使用主色调
 .btn {
   display: inline-flex;
   align-items: center;
@@ -465,14 +465,7 @@ input[type="search"] {
   transition: all 0.15s ease;
   white-space: nowrap;
   
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-// 主要按钮 - 绿灰色主题色
-.btn--primary {
+  // 统一样式：所有按钮都使用主色调
   background-color: #7a9188;
   color: #ffffff;
   
@@ -483,79 +476,30 @@ input[type="search"] {
   &:active:not(:disabled) {
     background-color: #5a7168;
   }
-}
-
-// 次要按钮 - 浅灰色背景
-.btn--secondary {
-  background-color: #c8c8c8;
-  color: #2c2c2e;
   
-  &:hover:not(:disabled) {
-    background-color: #d8d8d8;
-  }
-  
-  &:active:not(:disabled) {
-    background-color: #b8b8b8;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-// 轮廓按钮 - 透明背景带边框
-.btn--outline {
-  background-color: transparent;
-  color: #5a5a5c;
-  border: 1px solid #c8c8c8;
-  
-  &:hover:not(:disabled) {
-    background-color: rgba(200, 200, 200, 0.3);
-    border-color: #b8b8b8;
-  }
-  
-  &:active:not(:disabled) {
-    background-color: rgba(200, 200, 200, 0.5);
-  }
-}
-
-// 文本按钮 - 无背景
-.btn--text {
-  background-color: transparent;
-  color: #5a5a5c;
-  padding: 8px 12px;
-  
-  &:hover:not(:disabled) {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: #2c2c2e;
-  }
-  
-  &:active:not(:disabled) {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-}
-
-// 危险按钮 - 红色
-.btn--danger {
-  background-color: #e53e3e;
-  color: #ffffff;
-  
-  &:hover:not(:disabled) {
-    background-color: #c53030;
-  }
-  
-  &:active:not(:disabled) {
-    background-color: #9b2c2c;
-  }
-}
-
-// 成功按钮 - 绿色
+// 所有按钮变体都使用相同的颜色
+.btn--primary,
+.btn--secondary,
+.btn--outline,
+.btn--text,
+.btn--danger,
 .btn--success {
-  background-color: #5ab05e;
+  background-color: #7a9188;
   color: #ffffff;
+  border: none;
   
   &:hover:not(:disabled) {
-    background-color: #4a9a4e;
+    background-color: #6a8178;
   }
   
   &:active:not(:disabled) {
-    background-color: #3a8a3e;
+    background-color: #5a7168;
   }
 }
 
@@ -588,11 +532,19 @@ input[type="search"] {
   }
 }
 
-// 深色主题按钮样式
+// 深色主题按钮样式 - 统一颜色
 :root.dark,
 [data-theme="dark"] {
-  .btn--primary {
+  .btn,
+  .btn--primary,
+  .btn--secondary,
+  .btn--outline,
+  .btn--text,
+  .btn--danger,
+  .btn--success {
     background-color: #8aa898;
+    color: #ffffff;
+    border: none;
     
     &:hover:not(:disabled) {
       background-color: #7a9888;
@@ -600,38 +552,6 @@ input[type="search"] {
     
     &:active:not(:disabled) {
       background-color: #6a8878;
-    }
-  }
-  
-  .btn--secondary {
-    background-color: #4a4a4a;
-    color: #e8e8e8;
-    
-    &:hover:not(:disabled) {
-      background-color: #5a5a5a;
-    }
-    
-    &:active:not(:disabled) {
-      background-color: #3a3a3a;
-    }
-  }
-  
-  .btn--outline {
-    color: #b0b0b0;
-    border-color: #5a5a5a;
-    
-    &:hover:not(:disabled) {
-      background-color: rgba(100, 100, 100, 0.3);
-      border-color: #6a6a6a;
-    }
-  }
-  
-  .btn--text {
-    color: #b0b0b0;
-    
-    &:hover:not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: #e8e8e8;
     }
   }
 }
