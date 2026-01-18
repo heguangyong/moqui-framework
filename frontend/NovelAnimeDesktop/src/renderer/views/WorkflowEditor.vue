@@ -2335,7 +2335,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 0.5px solid rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: auto; /* 支持上下左右滚动 */
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
