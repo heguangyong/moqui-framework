@@ -326,93 +326,93 @@
       
       <!-- 默认工作流编辑器视图 -->
       <template v-else>
-        <div class="node-palette">
-        <h3>节点库</h3>
-        
-        <!-- 节点搜索 -->
-        <div class="node-search">
-          <component :is="icons.search" :size="14" class="search-icon" />
-          <input 
-            type="text" 
-            v-model="nodeSearchQuery"
-            placeholder="搜索节点..."
-            class="search-input"
-            @keydown.esc="nodeSearchQuery = ''"
-          />
-          <button v-if="nodeSearchQuery" @click="nodeSearchQuery = ''" class="search-clear">
-            <component :is="icons.x" :size="12" />
-          </button>
-        </div>
-        
-        <div class="node-categories">
-          <div class="category" v-for="category in filteredNodeCategories" :key="category.name">
-            <h4>{{ category.name }}</h4>
-            <div 
-              v-for="node in category.nodes" 
-              :key="node.type"
-              class="node-item" 
-              draggable="true" 
-              @dragstart="startDrag($event, node.type)"
-            >
-              <span class="node-item-icon">{{ node.icon }}</span>
-              <span class="node-item-divider"></span>
-              <span class="node-item-text">{{ node.title }}</span>
+        <div class="editor-layout">
+          <div class="node-palette">
+            <h3>节点库</h3>
+            
+            <!-- 节点搜索 -->
+            <div class="node-search">
+              <component :is="icons.search" :size="14" class="search-icon" />
+              <input 
+                type="text" 
+                v-model="nodeSearchQuery"
+                placeholder="搜索节点..."
+                class="search-input"
+                @keydown.esc="nodeSearchQuery = ''"
+              />
+              <button v-if="nodeSearchQuery" @click="nodeSearchQuery = ''" class="search-clear">
+                <component :is="icons.x" :size="12" />
+              </button>
             </div>
-          </div>
-          
-          <div v-if="filteredNodeCategories.length === 0" class="no-results">
-            <component :is="icons.search" :size="32" />
-            <p>未找到匹配的节点</p>
-          </div>
-        </div>
+            
+            <div class="node-categories">
+              <div class="category" v-for="category in filteredNodeCategories" :key="category.name">
+                <h4>{{ category.name }}</h4>
+                <div 
+                  v-for="node in category.nodes" 
+                  :key="node.type"
+                  class="node-item" 
+                  draggable="true" 
+                  @dragstart="startDrag($event, node.type)"
+                >
+                  <span class="node-item-icon">{{ node.icon }}</span>
+                  <span class="node-item-divider"></span>
+                  <span class="node-item-text">{{ node.title }}</span>
+                </div>
+              </div>
+              
+              <div v-if="filteredNodeCategories.length === 0" class="no-results">
+                <component :is="icons.search" :size="32" />
+                <p>未找到匹配的节点</p>
+              </div>
+            </div>
 
-        <!-- Workflow validation -->
-        <div class="validation-section" v-if="currentWorkflow">
-          <h4>工作流验证</h4>
-          <button @click="validateWorkflow" class="btn btn-small">验证工作流</button>
-          <div v-if="validationResult" class="validation-result">
-            <div v-if="validationResult.isValid" class="validation-success">
-              ✅ 工作流验证通过
-            </div>
-            <div v-else class="validation-errors">
-              <div v-for="error in validationResult.errors" :key="error.message" class="error-item">
-                ❌ {{ error.message }}
-              </div>
-            </div>
-            <div v-if="validationResult.warnings.length > 0" class="validation-warnings">
-              <div v-for="warning in validationResult.warnings" :key="warning.message" class="warning-item">
-                ⚠️ {{ warning.message }}
+            <!-- Workflow validation -->
+            <div class="validation-section" v-if="currentWorkflow">
+              <h4>工作流验证</h4>
+              <button @click="validateWorkflow" class="btn btn-small">验证工作流</button>
+              <div v-if="validationResult" class="validation-result">
+                <div v-if="validationResult.isValid" class="validation-success">
+                  ✅ 工作流验证通过
+                </div>
+                <div v-else class="validation-errors">
+                  <div v-for="error in validationResult.errors" :key="error.message" class="error-item">
+                    ❌ {{ error.message }}
+                  </div>
+                </div>
+                <div v-if="validationResult.warnings.length > 0" class="validation-warnings">
+                  <div v-for="warning in validationResult.warnings" :key="warning.message" class="warning-item">
+                    ⚠️ {{ warning.message }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div class="workflow-canvas-wrapper">
-        <!-- 缩放控制 - 固定在画布外部 -->
-        <div class="canvas-controls-fixed">
-          <button @click="zoomOut" class="control-btn" title="缩小">
-            <component :is="icons.minus" :size="14" />
-          </button>
-          <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
-          <button @click="zoomIn" class="control-btn" title="放大">
-            <component :is="icons.plus" :size="14" />
-          </button>
-          <button @click="resetZoom" class="control-btn" title="重置">
-            <component :is="icons.maximize" :size="14" />
-          </button>
-        </div>
         
-        <div class="workflow-canvas" @drop="dropNode" @dragover.prevent @wheel="handleCanvasWheel" @mousedown="handleCanvasMouseDown" @mousemove="handleCanvasMouseMove" @mouseup="handleCanvasMouseUp">
-        
-        <div v-if="!currentWorkflow" class="empty-canvas">
-          <div class="empty-message">
-            <h3>请选择或创建一个工作流</h3>
-            <p>从上方选择现有工作流，或创建新的工作流开始编辑</p>
-          </div>
-        </div>
-        
-        <div v-else class="canvas-grid" :style="canvasTransformStyle">
+          <div class="workflow-canvas-wrapper">
+            <div class="workflow-canvas" @drop="dropNode" @dragover.prevent @wheel="handleCanvasWheel" @mousedown="handleCanvasMouseDown" @mousemove="handleCanvasMouseMove" @mouseup="handleCanvasMouseUp">
+              <!-- 缩放控制 - 固定在画布内部右上角 -->
+              <div class="canvas-controls-fixed">
+                <button @click="zoomIn" class="control-btn" title="放大">
+                  <component :is="icons.plus" :size="14" />
+                </button>
+                <button @click="zoomOut" class="control-btn" title="缩小">
+                  <component :is="icons.minus" :size="14" />
+                </button>
+                <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
+                <button @click="resetZoom" class="control-btn" title="重置">
+                  <component :is="icons.maximize" :size="14" />
+                </button>
+              </div>
+              
+              <div v-if="!currentWorkflow" class="empty-canvas">
+                <div class="empty-message">
+                  <h3>请选择或创建一个工作流</h3>
+                  <p>从上方选择现有工作流，或创建新的工作流开始编辑</p>
+                </div>
+              </div>
+              
+              <div v-else class="canvas-grid" :style="canvasTransformStyle">
           <div 
             v-for="node in currentWorkflowNodes" 
             :key="node.id"
@@ -504,79 +504,80 @@
               stroke-width="2"
             />
           </svg>
-        </div>
-      </div>
-      
-      <!-- 节点属性面板 -->
-      <div v-if="selectedNode && currentWorkflow" class="node-properties-panel">
-        <div class="properties-header">
-          <h4>节点属性</h4>
-          <button class="close-btn" @click="selectedNodeId = ''" title="关闭">×</button>
-        </div>
-        <div class="properties-content">
-          <div class="property-group">
-            <label>节点名称</label>
-            <input 
-              type="text" 
-              :value="selectedNode.name" 
-              @change="updateSelectedNodeName($event.target.value)"
-              class="property-input"
-            />
-          </div>
-          <div class="property-group">
-            <label>节点类型</label>
-            <div class="property-value">{{ getNodeTitle(selectedNode.type) }}</div>
-          </div>
-          <div class="property-group">
-            <label>位置</label>
-            <div class="property-row">
-              <span>X: {{ Math.round(selectedNode.position.x) }}</span>
-              <span>Y: {{ Math.round(selectedNode.position.y) }}</span>
-            </div>
-          </div>
-          <div class="property-group">
-            <label>状态</label>
-            <div class="property-value status-tag" :class="`status-${selectedNode.status || 'idle'}`">
-              {{ selectedNode.status || 'idle' }}
-            </div>
-          </div>
-          
-          <!-- 节点特定配置 -->
-          <div class="property-group" v-if="selectedNode.type === 'novel-parser'">
-            <label>解析模式</label>
-            <select class="property-input" @change="updateNodeConfig('parseMode', $event.target.value)">
-              <option value="auto">自动检测</option>
-              <option value="chapter">按章节</option>
-              <option value="paragraph">按段落</option>
-            </select>
-          </div>
-          
-          <div class="property-group" v-if="selectedNode.type === 'character-analyzer'">
-            <label>分析深度</label>
-            <select class="property-input" @change="updateNodeConfig('depth', $event.target.value)">
-              <option value="basic">基础</option>
-              <option value="detailed">详细</option>
-              <option value="comprehensive">全面</option>
-            </select>
-          </div>
-          
-          <div class="property-group" v-if="selectedNode.type === 'scene-generator'">
-            <label>场景风格</label>
-            <select class="property-input" @change="updateNodeConfig('style', $event.target.value)">
-              <option value="anime">动漫风格</option>
-              <option value="realistic">写实风格</option>
-              <option value="cartoon">卡通风格</option>
-            </select>
-          </div>
-          
-          <div class="property-actions">
-            <button class="btn btn-small btn-danger" @click="removeNode(selectedNode.id)">
-              删除节点
-            </button>
-          </div>
-        </div>
-      </div>
-      </div> <!-- workflow-canvas-wrapper 结束 -->
+              </div> <!-- canvas-grid 结束 -->
+              
+              <!-- 节点属性面板 -->
+              <div v-if="selectedNode && currentWorkflow" class="node-properties-panel">
+                <div class="properties-header">
+                  <h4>节点属性</h4>
+                  <button class="close-btn" @click="selectedNodeId = ''" title="关闭">×</button>
+                </div>
+                <div class="properties-content">
+                  <div class="property-group">
+                    <label>节点名称</label>
+                    <input 
+                      type="text" 
+                      :value="selectedNode.name" 
+                      @change="updateSelectedNodeName($event.target.value)"
+                      class="property-input"
+                    />
+                  </div>
+                  <div class="property-group">
+                    <label>节点类型</label>
+                    <div class="property-value">{{ getNodeTitle(selectedNode.type) }}</div>
+                  </div>
+                  <div class="property-group">
+                    <label>位置</label>
+                    <div class="property-row">
+                      <span>X: {{ Math.round(selectedNode.position.x) }}</span>
+                      <span>Y: {{ Math.round(selectedNode.position.y) }}</span>
+                    </div>
+                  </div>
+                  <div class="property-group">
+                    <label>状态</label>
+                    <div class="property-value status-tag" :class="`status-${selectedNode.status || 'idle'}`">
+                      {{ selectedNode.status || 'idle' }}
+                    </div>
+                  </div>
+                  
+                  <!-- 节点特定配置 -->
+                  <div class="property-group" v-if="selectedNode.type === 'novel-parser'">
+                    <label>解析模式</label>
+                    <select class="property-input" @change="updateNodeConfig('parseMode', $event.target.value)">
+                      <option value="auto">自动检测</option>
+                      <option value="chapter">按章节</option>
+                      <option value="paragraph">按段落</option>
+                    </select>
+                  </div>
+                  
+                  <div class="property-group" v-if="selectedNode.type === 'character-analyzer'">
+                    <label>分析深度</label>
+                    <select class="property-input" @change="updateNodeConfig('depth', $event.target.value)">
+                      <option value="basic">基础</option>
+                      <option value="detailed">详细</option>
+                      <option value="comprehensive">全面</option>
+                    </select>
+                  </div>
+                  
+                  <div class="property-group" v-if="selectedNode.type === 'scene-generator'">
+                    <label>场景风格</label>
+                    <select class="property-input" @change="updateNodeConfig('style', $event.target.value)">
+                      <option value="anime">动漫风格</option>
+                      <option value="realistic">写实风格</option>
+                      <option value="cartoon">卡通风格</option>
+                    </select>
+                  </div>
+                  
+                  <div class="property-actions">
+                    <button class="btn btn-small btn-danger" @click="removeNode(selectedNode.id)">
+                      删除节点
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- workflow-canvas 结束 -->
+          </div> <!-- workflow-canvas-wrapper 结束 -->
+        </div> <!-- editor-layout 结束 -->
       </template>
     </div>
     
@@ -2239,27 +2240,31 @@ function getConnectionY2(connection: WorkflowConnection): number {
   min-height: 0;
 }
 
-/* 固定的缩放控制 - 在画布外部 */
+/* 固定的缩放控制 - 在画布内部右上角 */
 .canvas-controls-fixed {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  align-self: flex-end;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 100;
 }
 
 .canvas-controls-fixed .control-btn {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: transparent;
-  color: #6a6a6c;
+  color: #4a4a4c;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2267,17 +2272,45 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .canvas-controls-fixed .control-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.08);
   color: #2c2c2e;
 }
 
 .canvas-controls-fixed .zoom-level {
-  font-size: 12px;
-  color: #6c6c6e;
-  font-weight: 600;
-  min-width: 42px;
+  font-size: 11px;
+  color: #5a5a5c;
+  font-weight: 500;
+  min-width: 36px;
   text-align: center;
-  padding: 0 6px;
+  padding: 0 4px;
+}
+
+/* 编辑器内容区域 */
+.editor-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 编辑器布局 - 节点面板 + 画布 */
+.editor-layout {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
+  padding: 12px;
+  min-height: 0;
+}
+
+.workflow-canvas-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .node-palette {
@@ -2408,12 +2441,13 @@ function getConnectionY2(connection: WorkflowConnection): number {
   position: relative;
   overflow: auto;
   box-shadow: none;
+  min-height: 0;
 }
 
 /* 极简滚动条 */
 .workflow-canvas::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 .workflow-canvas::-webkit-scrollbar-track {
@@ -2421,12 +2455,12 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 3px;
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .workflow-canvas::-webkit-scrollbar-corner {
