@@ -5,67 +5,67 @@
       <div class="loading-spinner">正在加载工作流编辑器...</div>
     </div>
 
-    <!-- 视图头部 -->
-    <ViewHeader 
-      :title="viewTitle" 
-      :subtitle="viewSubtitle"
-    >
-      <template #actions>
-        <template v-if="currentViewType === 'workflow-detail' || currentViewType === 'new' || !currentViewType">
-          <div class="custom-select" :class="{ open: dropdownOpen }">
-            <div class="select-trigger" @click="toggleDropdown">
-              <span>{{ selectedWorkflowName }}</span>
-              <span class="arrow">▼</span>
+    <!-- 工作流控制栏 - 替代原来的ViewHeader -->
+    <div class="workflow-control-bar">
+      <template v-if="currentViewType === 'workflow-detail' || currentViewType === 'new' || !currentViewType">
+        <div class="custom-select" :class="{ open: dropdownOpen }">
+          <div class="select-trigger" @click="toggleDropdown">
+            <span>{{ selectedWorkflowName }}</span>
+            <span class="arrow">▼</span>
+          </div>
+          <button 
+            v-if="selectedWorkflowId" 
+            @click.stop="renameCurrentWorkflow" 
+            class="icon-btn"
+            title="重命名"
+          >✏️</button>
+          <button 
+            v-if="selectedWorkflowId" 
+            @click.stop="deleteCurrentWorkflow" 
+            class="icon-btn icon-btn-danger"
+            title="删除"
+          >🗑️</button>
+          <span v-if="selectedWorkflowId" class="control-divider"></span>
+          <div class="select-dropdown" v-if="dropdownOpen">
+            <div 
+              class="select-option" 
+              :class="{ selected: selectedWorkflowId === '' }"
+              @click="handleSelectWorkflow('')"
+            >
+              选择工作流
             </div>
-            <button 
-              v-if="selectedWorkflowId" 
-              @click.stop="renameCurrentWorkflow" 
-              class="icon-btn"
-              title="重命名"
-            >✏️</button>
-            <button 
-              v-if="selectedWorkflowId" 
-              @click.stop="deleteCurrentWorkflow" 
-              class="icon-btn icon-btn-danger"
-              title="删除"
-            >🗑️</button>
-            <span v-if="selectedWorkflowId" class="header-divider"></span>
-            <div class="select-dropdown" v-if="dropdownOpen">
-              <div 
-                class="select-option" 
-                :class="{ selected: selectedWorkflowId === '' }"
-                @click="handleSelectWorkflow('')"
-              >
-                选择工作流
-              </div>
-              <div 
-                v-for="workflow in workflows" 
-                :key="workflow.id"
-                class="select-option"
-                :class="{ selected: selectedWorkflowId === workflow.id }"
-                @click="handleSelectWorkflow(workflow.id)"
-              >
-                {{ workflow.name }}
-              </div>
+            <div 
+              v-for="workflow in workflows" 
+              :key="workflow.id"
+              class="select-option"
+              :class="{ selected: selectedWorkflowId === workflow.id }"
+              @click="handleSelectWorkflow(workflow.id)"
+            >
+              {{ workflow.name }}
             </div>
           </div>
-          <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
-          <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
-          <button @click="saveWorkflow" class="btn btn-primary" :disabled="!selectedWorkflowId">
-            保存工作流
-          </button>
-          <button @click="runWorkflow" class="btn btn-success" :disabled="!selectedWorkflowId || isExecuting">
-            {{ isExecuting ? '执行中...' : '运行工作流' }}
-          </button>
-        </template>
-        <template v-else-if="currentViewType === 'status'">
-          <button class="btn btn-secondary" @click="refreshStatus">刷新状态</button>
-        </template>
-        <template v-else-if="currentViewType === 'template'">
-          <button class="btn btn-primary" @click="useTemplate">使用此模板</button>
-        </template>
+        </div>
+        <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
+        <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
+        <button @click="saveWorkflow" class="btn btn-primary" :disabled="!selectedWorkflowId">
+          保存工作流
+        </button>
+        <button @click="runWorkflow" class="btn btn-success" :disabled="!selectedWorkflowId || isExecuting">
+          {{ isExecuting ? '执行中...' : '运行工作流' }}
+        </button>
       </template>
-    </ViewHeader>
+      <template v-else-if="currentViewType === 'status'">
+        <div class="view-title">{{ statusTitle }}</div>
+        <button class="btn btn-secondary" @click="refreshStatus">刷新状态</button>
+      </template>
+      <template v-else-if="currentViewType === 'template'">
+        <div class="view-title">{{ selectedTemplate?.name || '模板详情' }}</div>
+        <button class="btn btn-primary" @click="useTemplate">使用此模板</button>
+      </template>
+      <template v-else-if="currentViewType === 'execution'">
+        <div class="view-title">{{ selectedExecutionName || '执行记录' }}</div>
+      </template>
+    </div>
 
     <!-- Execution Progress - Enhanced -->
     <div v-if="isExecuting" class="execution-progress-panel">
@@ -608,7 +608,6 @@ import { useUIStore } from '../stores/ui.js';
 import { useNavigationStore } from '../stores/navigation.js';
 import { useAppInit } from '../composables/useAppInit';
 import { icons } from '../utils/icons.js';
-import ViewHeader from '../components/ui/ViewHeader.vue';
 import InputDialog from '../components/dialogs/InputDialog.vue';
 import type { Workflow, WorkflowNode, WorkflowConnection, WorkflowNodeType, ValidationResult } from '../types/workflow';
 
@@ -1904,6 +1903,31 @@ function getConnectionY2(connection: WorkflowConnection): number {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+/* 工作流控制栏 - 替代ViewHeader */
+.workflow-control-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.view-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin-right: auto;
+}
+
+.control-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.15);
+  margin: 0 4px;
 }
 
 /* 加载状态覆盖层 */
@@ -3667,63 +3691,77 @@ function getConnectionY2(connection: WorkflowConnection): number {
   font-size: 13px;
 }
 
-/* 画布控制样式 */
+/* 画布控制样式 - 优化为更融入画布的设计 */
 .canvas-controls {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-end;
 }
 
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .control-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
-  color: #4a4a4c;
+  color: #5a5a5c;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .control-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.06);
+  color: #2c2c2e;
+}
+
+.control-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(0.95);
 }
 
 .zoom-level {
-  font-size: 12px;
+  font-size: 13px;
   color: #6c6c6e;
-  font-weight: 500;
-  min-width: 45px;
+  font-weight: 600;
+  min-width: 50px;
   text-align: center;
+  padding: 0 4px;
 }
 
 .pan-hint {
-  font-size: 11px;
-  color: #9a9a9c;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  padding: 4px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  color: #8a8a8c;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+  font-weight: 500;
 }
 
 /* 画布变换 */
