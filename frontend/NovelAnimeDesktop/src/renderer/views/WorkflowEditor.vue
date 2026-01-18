@@ -388,23 +388,22 @@
         </div>
       </div>
       
-      <div class="workflow-canvas" @drop="dropNode" @dragover.prevent @wheel="handleCanvasWheel" @mousedown="handleCanvasMouseDown" @mousemove="handleCanvasMouseMove" @mouseup="handleCanvasMouseUp">
-        <!-- 缩放和平移控制 -->
-        <div class="canvas-controls">
-          <div class="zoom-controls">
-            <button @click="zoomIn" class="control-btn" title="放大 (Ctrl/Cmd + +)">
-              <component :is="icons.plus" :size="16" />
-            </button>
-            <button @click="zoomOut" class="control-btn" title="缩小 (Ctrl/Cmd + -)">
-              <component :is="icons.minus" :size="16" />
-            </button>
-            <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
-            <button @click="resetZoom" class="control-btn" title="重置 (Ctrl/Cmd + 0)">
-              <component :is="icons.maximize" :size="16" />
-            </button>
-          </div>
-          <div class="pan-hint" v-if="!isPanning">按住空格键拖拽画布</div>
+      <div class="workflow-canvas-wrapper">
+        <!-- 缩放控制 - 固定在画布外部 -->
+        <div class="canvas-controls-fixed">
+          <button @click="zoomOut" class="control-btn" title="缩小">
+            <component :is="icons.minus" :size="14" />
+          </button>
+          <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
+          <button @click="zoomIn" class="control-btn" title="放大">
+            <component :is="icons.plus" :size="14" />
+          </button>
+          <button @click="resetZoom" class="control-btn" title="重置">
+            <component :is="icons.maximize" :size="14" />
+          </button>
         </div>
+        
+        <div class="workflow-canvas" @drop="dropNode" @dragover.prevent @wheel="handleCanvasWheel" @mousedown="handleCanvasMouseDown" @mousemove="handleCanvasMouseMove" @mouseup="handleCanvasMouseUp">
         
         <div v-if="!currentWorkflow" class="empty-canvas">
           <div class="empty-message">
@@ -577,6 +576,7 @@
           </div>
         </div>
       </div>
+      </div> <!-- workflow-canvas-wrapper 结束 -->
       </template>
     </div>
     
@@ -2231,15 +2231,83 @@ function getConnectionY2(connection: WorkflowConnection): number {
   min-height: 0;
 }
 
+.workflow-canvas-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* 固定的缩放控制 - 在画布外部 */
+.canvas-controls-fixed {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  align-self: flex-end;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.canvas-controls-fixed .control-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: #6a6a6c;
+  cursor: pointer;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.canvas-controls-fixed .control-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #2c2c2e;
+}
+
+.canvas-controls-fixed .zoom-level {
+  font-size: 12px;
+  color: #6c6c6e;
+  font-weight: 600;
+  min-width: 42px;
+  text-align: center;
+  padding: 0 6px;
+}
+
 .node-palette {
   width: 180px;
   min-width: 180px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  border: none;
   padding: 0.875rem;
   backdrop-filter: blur(10px);
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* node-palette滚动条 */
+.node-palette::-webkit-scrollbar {
+  width: 4px;
+}
+
+.node-palette::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.node-palette::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 2px;
+}
+
+.node-palette::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .node-palette h3 {
@@ -2336,16 +2404,16 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  border: none;
   position: relative;
-  overflow: auto; /* 支持上下左右滚动 */
+  overflow: auto;
   box-shadow: none;
 }
 
-/* 自定义滚动条样式 */
+/* 极简滚动条 */
 .workflow-canvas::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .workflow-canvas::-webkit-scrollbar-track {
@@ -2353,12 +2421,12 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.10);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .workflow-canvas::-webkit-scrollbar-corner {
@@ -2366,19 +2434,15 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .canvas-grid {
-  min-width: 2000px; /* 最小宽度，支持左右滚动 */
-  min-height: 1500px; /* 最小高度，支持上下滚动 */
+  min-width: 1200px; /* 减小画布宽度 */
+  min-height: 800px; /* 减小画布高度 */
   width: max-content; /* 根据内容自动扩展 */
   height: max-content;
   padding: 40px;
   position: relative;
   background-image: 
-    radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    radial-gradient(circle, rgba(0,0,0,0.03) 1px, transparent 1px);
   background-size: 20px 20px;
-  /* 添加边界指示 */
-  box-shadow: 
-    inset 0 0 0 1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(0, 0, 0, 0.02);
 }
 
 .workflow-node {
@@ -3618,87 +3682,6 @@ function getConnectionY2(connection: WorkflowConnection): number {
 .no-results p {
   margin-top: 12px;
   font-size: 13px;
-}
-
-/* 画布控制样式 - 固定在画布容器上，不随滚动移动 */
-.canvas-controls {
-  position: sticky;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-  pointer-events: none; /* 让控制区域不阻挡画布交互 */
-  float: right;
-  margin: 20px 20px 0 0;
-}
-
-.canvas-controls > * {
-  pointer-events: auto; /* 恢复子元素的交互 */
-}
-
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  padding: 6px;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.control-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #5a5a5c;
-  cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.control-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #2c2c2e;
-}
-
-.control-btn:active {
-  background: rgba(0, 0, 0, 0.1);
-  transform: scale(0.95);
-}
-
-.zoom-level {
-  font-size: 13px;
-  color: #6c6c6e;
-  font-weight: 600;
-  min-width: 50px;
-  text-align: center;
-  padding: 0 4px;
-}
-
-.pan-hint {
-  font-size: 11px;
-  color: #6a6a6c;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 6px;
-  padding: 4px 10px;
-  box-shadow: 
-    0 1px 4px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.04);
-  font-weight: 500;
-  letter-spacing: 0.2px;
 }
 
 /* 画布变换 */
