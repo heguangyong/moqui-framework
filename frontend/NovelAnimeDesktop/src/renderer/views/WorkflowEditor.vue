@@ -9,50 +9,39 @@
     <div class="view-header">
       <template v-if="currentViewType === 'workflow-detail' || currentViewType === 'new' || !currentViewType">
         <div class="header-content">
-          <div class="custom-select" :class="{ open: dropdownOpen }">
-            <div class="select-trigger" @click="toggleDropdown">
-              <span>{{ selectedWorkflowName }}</span>
-              <span class="arrow">▼</span>
-            </div>
-            <button 
-              v-if="selectedWorkflowId" 
-              @click.stop="renameCurrentWorkflow" 
-              class="icon-btn"
-              title="重命名"
-            >✏️</button>
-            <button 
-              v-if="selectedWorkflowId" 
-              @click.stop="deleteCurrentWorkflow" 
-              class="icon-btn icon-btn-danger"
-              title="删除"
-            >🗑️</button>
-            <div class="select-dropdown" v-if="dropdownOpen">
-              <div 
-                class="select-option" 
-                :class="{ selected: selectedWorkflowId === '' }"
-                @click="handleSelectWorkflow('')"
+          <div class="workflow-title-group">
+            <h2 v-if="selectedWorkflowId">{{ selectedWorkflowName }}</h2>
+            <h2 v-else>选择或创建工作流</h2>
+            <div v-if="selectedWorkflowId" class="workflow-actions">
+              <button 
+                @click="renameCurrentWorkflow" 
+                class="icon-btn"
+                title="重命名工作流"
               >
-                选择工作流
-              </div>
-              <div 
-                v-for="workflow in workflows" 
-                :key="workflow.id"
-                class="select-option"
-                :class="{ selected: selectedWorkflowId === workflow.id }"
-                @click="handleSelectWorkflow(workflow.id)"
+                <component :is="icons.edit" :size="16" />
+              </button>
+              <button 
+                @click="deleteCurrentWorkflow" 
+                class="icon-btn icon-btn-danger"
+                title="删除工作流"
               >
-                {{ workflow.name }}
-              </div>
+                <component :is="icons.trash" :size="16" />
+              </button>
             </div>
           </div>
           <div class="header-actions">
-            <button @click="createNewWorkflow" class="btn btn-secondary">新建工作流</button>
+            <button @click="createNewWorkflow" class="btn btn-secondary">
+              <component :is="icons.plus" :size="16" />
+              <span>新建工作流</span>
+            </button>
             <button @click="createDefaultWorkflow" class="btn btn-secondary">默认工作流</button>
             <button @click="saveWorkflow" class="btn btn-primary" :disabled="!selectedWorkflowId">
-              保存工作流
+              <component :is="icons.save" :size="16" />
+              <span>保存</span>
             </button>
             <button @click="runWorkflow" class="btn btn-success" :disabled="!selectedWorkflowId || isExecuting">
-              {{ isExecuting ? '执行中...' : '运行工作流' }}
+              <component :is="isExecuting ? icons.refresh : icons.play" :size="16" />
+              <span>{{ isExecuting ? '执行中...' : '运行' }}</span>
             </button>
           </div>
         </div>
@@ -639,7 +628,6 @@ const validationResult = ref<ValidationResult | null>(null);
 const currentExecutionId = ref<string | null>(null);
 const executionResults = ref<any>(null);
 const showResultsPanel = ref(false);
-const dropdownOpen = ref(false);
 const showNodeEditor = ref(false);
 const editingNode = ref<WorkflowNode | null>(null);
 
@@ -1014,25 +1002,6 @@ const selectedWorkflowName = computed((): string => {
 });
 
 // Custom dropdown functions
-function toggleDropdown(): void {
-  dropdownOpen.value = !dropdownOpen.value;
-}
-
-// 重命名为 handleSelectWorkflow 避免与 store 方法冲突
-function handleSelectWorkflow(id: string): void {
-  selectedWorkflowId.value = id;
-  dropdownOpen.value = false;
-  switchWorkflow();
-}
-
-// Close dropdown when clicking outside
-function handleClickOutside(event: MouseEvent): void {
-  const customSelect = document.querySelector('.custom-select');
-  if (customSelect && !customSelect.contains(event.target as Node)) {
-    dropdownOpen.value = false;
-  }
-}
-
 // 初始化函数 - Requirements: 3.4, 3.5
 async function initializeEditor(): Promise<void> {
   try {
@@ -1182,7 +1151,6 @@ function handleKeyUp(event: KeyboardEvent): void {
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
   initializeEditor();
@@ -1248,7 +1216,6 @@ async function autoApplyTemplate(context: any): Promise<void> {
 }
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
 });
@@ -1476,9 +1443,6 @@ async function deleteWorkflow(workflowId: string): Promise<void> {
   const workflow = workflows.value.find(w => w.id === workflowId);
   if (!workflow) return;
   
-  // 先关闭下拉菜单
-  dropdownOpen.value = false;
-  
   setTimeout(async () => {
     if (confirm(`确定要删除工作流 "${workflow.name}" 吗？`)) {
       const success = await workflowStore.deleteWorkflow(workflowId);
@@ -1510,9 +1474,6 @@ function renameWorkflow(workflowId: string): void {
   }
   
   console.log('✅ Found workflow:', workflow.name);
-  
-  // 先关闭下拉菜单
-  dropdownOpen.value = false;
   
   // 使用自定义对话框
   setTimeout(() => {
@@ -1978,9 +1939,18 @@ function getConnectionY2(connection: WorkflowConnection): number {
   align-items: center;
 }
 
-/* Custom Select Dropdown */
-.custom-select {
-  position: relative;
+/* 工作流标题组 */
+.workflow-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workflow-title-group h2 {
+  margin: 0;
+}
+
+.workflow-actions {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1988,14 +1958,13 @@ function getConnectionY2(connection: WorkflowConnection): number {
 
 /* 图标按钮样式 */
 .icon-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
-  color: #888;
-  font-size: 16px;
+  color: #8a8a8c;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2004,111 +1973,14 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-  color: #555;
-}
-
-.icon-btn-danger:hover {
-  background: rgba(200, 100, 100, 0.15);
-  color: #a55;
-}
-
-/* 头部分割线 */
-.header-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.15);
-  margin: 0 8px;
-}
-
-/* 头部分割线 */
-.header-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(0, 0, 0, 0.15);
-  margin: 0 8px;
-}
-
-.select-trigger {
-  height: 28px;
-  padding: 0 10px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: #6a6a6a;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  box-sizing: border-box;
-}
-
-.select-trigger:hover {
-  color: #4a4a4a;
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* 选中状态 - 简洁风格 */
-.custom-select.open .select-trigger {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.06);
   color: #2c2c2e;
 }
 
-.select-trigger .arrow {
-  font-size: 0.5rem;
-  opacity: 0.6;
-  transition: transform 0.2s;
+.icon-btn-danger:hover {
+  background: rgba(220, 100, 100, 0.12);
+  color: #c55;
 }
-
-.custom-select.open .select-trigger .arrow {
-  transform: rotate(180deg);
-}
-
-.select-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 100%;
-  width: max-content;
-  margin-top: 2px;
-  background: rgba(250, 250, 250, 0.98);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.select-option {
-  padding: 6px 12px;
-  color: #4a4a4c;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-
-.select-option:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.select-option.selected {
-  background: rgba(120, 140, 130, 0.2);
-  color: #3a4a42;
-}
-
-.select-option-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px 4px 12px;
-  color: #4a4a4c;
-  font-size: 12px;
   transition: background 0.15s;
   white-space: nowrap;
 }
