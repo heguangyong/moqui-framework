@@ -1943,26 +1943,29 @@ function getConnectionY2(connection: WorkflowConnection): number {
 .workflow-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .workflow-title-group h2 {
   margin: 0;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .workflow-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  margin-left: 4px;
 }
 
 /* 图标按钮样式 */
 .icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: transparent;
-  color: #8a8a8c;
+  background: rgba(0, 0, 0, 0.04);
+  color: #6a6a6c;
   cursor: pointer;
   border-radius: 6px;
   display: flex;
@@ -1973,7 +1976,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.08);
   color: #2c2c2e;
 }
 
@@ -3644,17 +3647,18 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .pan-hint {
-  font-size: 12px;
-  color: #8a8a8c;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 8px;
-  padding: 6px 12px;
+  font-size: 11px;
+  color: #6a6a6c;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 4px 10px;
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
   font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 /* 画布变换 */
