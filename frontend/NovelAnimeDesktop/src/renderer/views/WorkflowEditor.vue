@@ -1984,6 +1984,8 @@ function getConnectionY2(connection: WorkflowConnection): number {
   background: rgba(220, 100, 100, 0.12);
   color: #c55;
 }
+
+.select-option-row {
   transition: background 0.15s;
   white-space: nowrap;
 }
