@@ -2335,37 +2335,37 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 0.5px solid rgba(0, 0, 0, 0.03);
   position: relative;
   overflow: auto; /* 支持上下左右滚动 */
-  box-shadow: inset 0 0.5px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 0.5px 1px rgba(0, 0, 0, 0.02);
 }
 
 /* 自定义滚动条样式 */
 .workflow-canvas::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .workflow-canvas::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.01);
+  border-radius: 4px;
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 5px;
-  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 .workflow-canvas::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.12);
   background-clip: padding-box;
 }
 
 .workflow-canvas::-webkit-scrollbar-corner {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.01);
 }
 
 .canvas-grid {
