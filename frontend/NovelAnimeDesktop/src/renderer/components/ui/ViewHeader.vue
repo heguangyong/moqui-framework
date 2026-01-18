@@ -63,8 +63,10 @@ defineEmits(['new', 'refresh']);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: 24px 28px 18px;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
 }
 
 .header-info {
@@ -73,16 +75,18 @@ defineEmits(['new', 'refresh']);
 }
 
 .header-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  color: #2c2c2e;
-  margin: 0 0 3px 0;
+  color: #1c1c1e;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
 }
 
 .header-subtitle {
   font-size: 13px;
-  color: #6c6c6e;
+  color: #8a8a8c;
   margin: 0;
+  font-weight: 400;
 }
 
 .header-actions {

@@ -440,18 +440,21 @@ function handleStatusClick(statusType: string): void {
   cursor: pointer;
   transition: all 0.15s ease;
   gap: 8px;
-  font-size: 13px;
-  color: #2c2c2e;
+  font-size: 12px;
+  color: #6a6a6c;
+  font-weight: 400;
 }
 
 .section-item:hover {
   background-color: rgba(255, 255, 255, 0.15);
+  color: #2c2c2e;
 }
 
 .section-item--active {
   background: rgba(205, 214, 210, 0.45);
   backdrop-filter: blur(10px);
   color: #2c2c2e;
+  font-weight: 500;
   position: relative;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.45);
