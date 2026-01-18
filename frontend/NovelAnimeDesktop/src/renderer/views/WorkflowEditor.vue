@@ -2335,7 +2335,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: auto; /* 支持上下左右滚动 */
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -3623,7 +3623,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
 
 /* 画布控制样式 - 固定在画布容器上，不随滚动移动 */
 .canvas-controls {
-  position: absolute;
+  position: sticky;
   top: 20px;
   right: 20px;
   z-index: 100;
@@ -3632,6 +3632,8 @@ function getConnectionY2(connection: WorkflowConnection): number {
   gap: 10px;
   align-items: flex-end;
   pointer-events: none; /* 让控制区域不阻挡画布交互 */
+  float: right;
+  margin: 20px 20px 0 0;
 }
 
 .canvas-controls > * {
