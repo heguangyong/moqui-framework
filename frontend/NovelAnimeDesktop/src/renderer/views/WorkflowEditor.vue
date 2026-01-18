@@ -706,7 +706,8 @@ const viewTitle = computed(() => {
     case 'new':
       return '新建工作流';
     case 'workflow-detail':
-      return currentWorkflow.value?.name || '工作流编辑器';
+      // 不显示工作流名称，因为下拉选择器已经显示了
+      return '工作流编辑器';
     default:
       return '工作流编辑器';
   }
@@ -723,9 +724,10 @@ const viewSubtitle = computed(() => {
     case 'new':
       return '创建新的工作流';
     case 'workflow-detail':
-      return currentWorkflow.value?.description || '编辑工作流节点和连接';
+      // 显示工作流描述，如果没有描述则显示通用提示
+      return currentWorkflow.value?.description || '设计和编辑工作流节点';
     default:
-      return currentWorkflow.value ? `当前: ${currentWorkflow.value.name}` : '设计和执行工作流程';
+      return '设计和执行工作流程';
   }
 });
 
