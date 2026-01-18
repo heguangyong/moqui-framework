@@ -57,6 +57,8 @@ test_endpoint "GET" "/user-settings?userId=EX_JOHN_DOE" "" "获取用户设置"
 echo "📁 项目端点:"
 test_endpoint "GET" "/projects?userId=EX_JOHN_DOE" "" "获取项目列表"
 test_endpoint "POST" "/projects" '{"name":"测试项目","description":"这是一个测试项目","userId":"EX_JOHN_DOE"}' "创建项目"
+test_endpoint "GET" "/project?projectId=100204" "" "获取单个项目"
+test_endpoint "PUT" "/project" '{"projectId":"100204","status":"active"}' "更新项目"
 
 echo "📚 小说端点:"
 test_endpoint "GET" "/novels" "" "获取小说列表"
