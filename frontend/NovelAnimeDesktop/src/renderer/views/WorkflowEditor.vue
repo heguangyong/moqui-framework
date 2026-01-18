@@ -395,10 +395,10 @@
             <button @click="zoomIn" class="control-btn" title="放大 (Ctrl/Cmd + +)">
               <component :is="icons.plus" :size="16" />
             </button>
-            <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
             <button @click="zoomOut" class="control-btn" title="缩小 (Ctrl/Cmd + -)">
               <component :is="icons.minus" :size="16" />
             </button>
+            <span class="zoom-level">{{ Math.round(canvasZoom * 100) }}%</span>
             <button @click="resetZoom" class="control-btn" title="重置 (Ctrl/Cmd + 0)">
               <component :is="icons.maximize" :size="16" />
             </button>
@@ -1086,8 +1086,11 @@ function handleKeyDown(event: KeyboardEvent): void {
   
   // 空格键 - 平移模式
   if (event.code === 'Space' && !event.repeat) {
+    // 阻止空格键的所有默认行为，包括滚动和输入
     event.preventDefault();
+    event.stopPropagation();
     isSpacePressed.value = true;
+    return; // 立即返回，不执行其他操作
   }
   
   // Ctrl/Cmd + S - 保存
@@ -1870,10 +1873,11 @@ function getConnectionY2(connection: WorkflowConnection): number {
 
 <style scoped>
 .workflow-editor {
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 /* 标准view-header样式 - 与其他页面统一 */
@@ -2223,6 +2227,8 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex: 1;
   display: flex;
   gap: 1rem;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .node-palette {
