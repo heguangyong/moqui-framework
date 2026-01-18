@@ -100,16 +100,31 @@ class ApiService {
    */
   async testAIService(): Promise<boolean> {
     try {
-      const response = await this.axiosInstance.get('/ai/status', {
-        timeout: 3000
+      // 调用MCP后端检查AI配置状态
+      const response = await fetch('http://localhost:8080/rest/s1/mcp/user/ai-config', {
+        method: 'GET'
       })
-      return response.data?.available === true || response.data?.success === true
-    } catch (error: any) {
-      // 如果后端返回了响应，检查 AI 配置状态
-      if (error.response?.data) {
-        return error.response.data.available === true
+      
+      if (response.ok) {
+        const data = await response.json()
+        // 检查是否有AI配置，特别是API密钥
+        const hasApiKey = data.aiConfig && data.aiConfig['ai.api.key']
+        const hasProvider = data.aiConfig && data.aiConfig['ai.provider']
+        const hasModel = data.aiConfig && data.aiConfig['ai.model']
+        
+        console.log('🤖 MCP AI Config check:', {
+          hasApiKey: !!hasApiKey,
+          hasProvider: !!hasProvider, 
+          hasModel: !!hasModel,
+          provider: data.aiConfig?.['ai.provider'],
+          model: data.aiConfig?.['ai.model']
+        })
+        
+        return !!(hasApiKey && hasProvider && hasModel)
       }
-      // AI 服务可能未配置，但这不是错误
+      
+      return false
+    } catch (error: any) {
       console.warn('AI service status check failed:', error.message)
       return false
     }
@@ -385,7 +400,10 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.put(`/project/${projectId}`, data)
+      const response = await this.axiosInstance.put('/project', {
+        projectId,
+        ...data
+      })
       return {
         success: response.data?.success !== false,
         message: response.data?.message
@@ -438,7 +456,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.get(`/workflow/${workflowId}`)
+      const response = await this.axiosInstance.get('/workflow', {
+        params: { workflowId }
+      })
       return {
         success: true,
         workflow: response.data.workflow
@@ -469,7 +489,7 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.post('/workflow', data)
+      const response = await this.axiosInstance.post('/workflows', data)
       return {
         success: true,
         workflowId: response.data.workflowId
@@ -497,7 +517,10 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.put(`/workflow/${workflowId}`, data)
+      await this.axiosInstance.put('/workflow', {
+        workflowId,
+        ...data
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to update workflow:', error)
@@ -516,7 +539,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.delete(`/workflow/${workflowId}`)
+      await this.axiosInstance.delete('/workflow', {
+        params: { workflowId }
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to delete workflow:', error)
@@ -565,7 +590,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.get(`/workflow-execution/${executionId}`)
+      const response = await this.axiosInstance.get('/workflow-execution', {
+        params: { executionId }
+      })
       return {
         success: true,
         execution: response.data.execution
@@ -594,7 +621,7 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.post('/workflow-execution', data)
+      const response = await this.axiosInstance.post('/workflow-executions', data)
       return {
         success: true,
         executionId: response.data.executionId
@@ -621,7 +648,10 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.put(`/workflow-execution/${executionId}`, data)
+      await this.axiosInstance.put('/workflow-execution', {
+        executionId,
+        ...data
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to update workflow execution:', error)
@@ -670,7 +700,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.get(`/workflow-template/${templateId}`)
+      const response = await this.axiosInstance.get('/workflow-template', {
+        params: { templateId }
+      })
       return {
         success: true,
         template: response.data.template
@@ -703,7 +735,7 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.post('/workflow-template', data)
+      const response = await this.axiosInstance.post('/workflow-templates', data)
       return {
         success: true,
         templateId: response.data.templateId
@@ -733,7 +765,10 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.put(`/workflow-template/${templateId}`, data)
+      await this.axiosInstance.put('/workflow-template', {
+        templateId,
+        ...data
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to update workflow template:', error)
@@ -752,7 +787,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.delete(`/workflow-template/${templateId}`)
+      const response = await this.axiosInstance.delete('/workflow-template', {
+        params: { templateId }
+      })
       return {
         success: response.data?.success !== false,
         message: response.data?.message
@@ -806,7 +843,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.get(`/asset/${assetId}`)
+      const response = await this.axiosInstance.get('/asset', {
+        params: { assetId }
+      })
       return {
         success: true,
         asset: response.data.asset
@@ -841,7 +880,7 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.post('/asset', data)
+      const response = await this.axiosInstance.post('/assets', data)
       return {
         success: true,
         assetId: response.data.assetId
@@ -871,7 +910,10 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.put(`/asset/${assetId}`, data)
+      await this.axiosInstance.put('/asset', {
+        assetId,
+        ...data
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to update asset:', error)
@@ -890,7 +932,9 @@ class ApiService {
     message?: string
   }> {
     try {
-      await this.axiosInstance.delete(`/asset/${assetId}`)
+      await this.axiosInstance.delete('/asset', {
+        params: { assetId }
+      })
       return { success: true }
     } catch (error: any) {
       console.error('Failed to delete asset:', error)
@@ -912,7 +956,7 @@ class ApiService {
     message?: string
   }> {
     try {
-      const response = await this.axiosInstance.get(`/novel/${novelId}`)
+      const response = await this.axiosInstance.get(`/novel?novelId=${novelId}`)
       return {
         success: true,
         novel: response.data.novel || response.data

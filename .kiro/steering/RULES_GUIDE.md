@@ -25,8 +25,9 @@
 **读取**: `.kiro/rules/scenarios/frontend-development.md`
 
 #### 故障排查相关
-**关键词**: `错误`, `报错`, `问题`, `故障`, `排查`, `调试`, `不工作`
+**关键词**: `错误`, `报错`, `问题`, `故障`, `排查`, `调试`, `不工作`, `配置错误`, `经验教训`
 **读取**: `.kiro/rules/scenarios/troubleshooting.md`
+**错误教训**: 根据具体错误类型读取对应的教训文档
 
 ## 📋 标准工作流程
 
@@ -73,6 +74,10 @@ readFile('.kiro/rules/standards/moqui/entity.md')
 - `standards/general/code-quality.md` - 代码质量
 - `standards/general/testing.md` - 测试规范
 - `standards/general/design-patterns.md` - 设计模式
+
+### 错误教训规则
+**框架配置**:
+- `lessons-learned/moqui-rest-api-configuration-errors.md` - Moqui REST API配置错误教训
 
 ## 💡 核心原则
 

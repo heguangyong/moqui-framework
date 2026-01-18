@@ -126,3 +126,16 @@ target/
 *.zip
 *.tar.gz
 *.rar
+
+# Process ID files
+*.pid
+.*.pid
+
+# Kiro specs temporary files (but keep essential test scripts)
+.kiro/specs/**/ai-test.md
+.kiro/specs/**/api-integration-test.md
+.kiro/specs/**/api-key-test.md
+.kiro/specs/**/debug-*.sh
+.kiro/specs/**/test-*.sh
+.kiro/specs/**/*-summary.md
+.kiro/specs/**/*-analysis.md

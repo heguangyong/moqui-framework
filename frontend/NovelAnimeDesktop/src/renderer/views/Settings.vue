@@ -825,23 +825,30 @@ async function testConnection() {
     // 先保存设置到本地
     localStorage.setItem('novel-anime-settings', JSON.stringify(settings));
     
-    // 调用后端 API 测试 AI 服务
-    const response = await apiService.axiosInstance.post('/ai/test', {
-      provider: settings.ai.provider,
-      apiKey: settings.ai.apiKey,
-      endpoint: settings.ai.endpoint || undefined,
-      model: settings.ai.model
+    // 调用MCP后端测试AI服务连接
+    const mcpResponse = await fetch('http://localhost:8080/rest/s1/mcp/user/ai-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: settings.ai.provider.toUpperCase(),
+        model: settings.ai.model,
+        apiBase: settings.ai.endpoint || undefined,
+        apiKey: settings.ai.apiKey
+      })
     });
     
-    if (response.data?.success) {
+    const mcpResult = await mcpResponse.json();
+    if (mcpResult.success) {
       uiStore.addNotification({ 
         type: 'success', 
         title: '连接成功', 
-        message: response.data.message || 'AI服务连接正常', 
+        message: mcpResult.message || 'AI配置已保存到MCP后端', 
         timeout: 3000 
       });
     } else {
-      throw new Error(response.data?.message || '连接测试失败');
+      throw new Error(mcpResult.error || '连接测试失败');
     }
   } catch (error) {
     console.error('AI connection test failed:', error);
@@ -919,17 +926,31 @@ async function saveSettings() {
       console.warn('Failed to sync user settings to backend:', syncError);
     }
     
-    // 如果有 AI 配置，尝试同步到后端
+    // 如果有 AI 配置，尝试同步到MCP后端
     if (settings.ai.apiKey) {
       try {
-        await apiService.axiosInstance.post('/settings/ai', {
-          provider: settings.ai.provider,
-          apiKey: settings.ai.apiKey,
-          endpoint: settings.ai.endpoint || undefined,
-          model: settings.ai.model
+        // 调用MCP后端的AI配置接口
+        const mcpResponse = await fetch('http://localhost:8080/rest/s1/mcp/user/ai-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            provider: settings.ai.provider.toUpperCase(), // MCP期望大写
+            model: settings.ai.model,
+            apiBase: settings.ai.endpoint || undefined,
+            apiKey: settings.ai.apiKey
+          })
         });
+        
+        const mcpResult = await mcpResponse.json();
+        if (mcpResult.success) {
+          console.log('✅ AI配置已同步到MCP后端:', mcpResult.message);
+        } else {
+          console.warn('⚠️ MCP后端同步失败:', mcpResult.error);
+        }
       } catch (syncError) {
-        console.warn('Failed to sync AI settings to backend:', syncError);
+        console.warn('Failed to sync AI settings to MCP backend:', syncError);
         // 不阻止本地保存成功
       }
     }
