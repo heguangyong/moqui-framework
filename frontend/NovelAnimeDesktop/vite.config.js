@@ -13,9 +13,13 @@ export default defineConfig({
   build: {
     outDir: '../../dist-renderer',
     emptyOutDir: true,
+    target: 'esnext', // Support top-level await
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html')
+      },
+      output: {
+        format: 'es' // Use ES modules format
       }
     }
   },

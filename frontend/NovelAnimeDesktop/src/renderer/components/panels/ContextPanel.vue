@@ -69,7 +69,7 @@
 <script setup>
 import { computed, defineAsyncComponent, ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNavigationStore } from '../../stores/navigation.js';
+import { useNavigationStore } from '../../stores/navigation';
 import { useUserStore } from '../../stores/user';
 import { useUIStore } from '../../stores/ui';
 import { icons } from '../../utils/icons.js';

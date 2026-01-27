@@ -172,7 +172,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useProjectStore } from '../../stores/project.js';
+import { useProjectStore } from '../../stores/project';
 import { useNovelStore } from '../../stores/novel.js';
 import { useUIStore } from '../../stores/ui.js';
 import { icons } from '../../utils/icons.js';
@@ -368,6 +368,7 @@ async function handleCreate() {
     }
     
     // 创建项目
+    console.log('📝 ImportNovelDialog: Creating project:', projectName.value);
     const project = await projectStore.createProject({
       name: projectName.value.trim(),
       description: parseResult.value.description || `从 ${selectedFile.value.name} 导入`,
@@ -392,6 +393,7 @@ async function handleCreate() {
     });
     
     if (project) {
+      console.log('✅ ImportNovelDialog: Project created successfully:', project);
       uiStore.addNotification({
         type: 'success',
         title: '项目创建成功',
@@ -399,16 +401,28 @@ async function handleCreate() {
         timeout: 3000
       });
       
+      // Note: projectStore.createProject() now automatically calls fetchProjects()
+      // So the project list will be refreshed automatically
+      
       emit('success', project);
       emit('close');
       
-      router.push(`/project/${project.id}`);
+      router.push(`/project/${project.id || project.projectId}`);
+    } else {
+      console.error('❌ ImportNovelDialog: Project creation failed');
+      uiStore.addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: projectStore.error || '无法创建项目，请重试',
+        timeout: 5000
+      });
     }
   } catch (error) {
+    console.error('❌ ImportNovelDialog: Exception during project creation:', error);
     uiStore.addNotification({
       type: 'error',
       title: '创建失败',
-      message: error.message,
+      message: error.message || '发生未知错误',
       timeout: 5000
     });
   }

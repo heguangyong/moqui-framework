@@ -165,14 +165,15 @@ import { icons } from './utils/icons.js';
 
 // 导入真正的 Pinia stores
 import { useUIStore } from './stores/ui.js';
-import { useNavigationStore } from './stores/navigation.js';
-import { useProjectStore } from './stores/project.js';
+import { useNavigationStore } from './stores/navigation';
+import { useProjectStore } from './stores/project';
 import { useTaskStore } from './stores/task.js';
 import { useFileStore } from './stores/file.js';
 import { useUserStore } from './stores/user';
 import { useTutorial } from './composables/useTutorial';
 import { useErrorReporting } from './composables/useErrorReporting';
 import { autoInitTheme } from './composables/useTheme';
+import { checkVersionAndClearCache, getVersionInfo } from './utils/versionManager.js';
 
 // 导入组件
 import ContextPanel from './components/panels/ContextPanel.vue';
@@ -439,6 +440,25 @@ onMounted(() => {
   console.log('🚀 App.vue onMounted started')
   
   try {
+    // 🔄 检查版本并清理缓存（如果版本变更）
+    console.log('🔍 Checking app version...')
+    const versionChanged = checkVersionAndClearCache()
+    const versionInfo = getVersionInfo()
+    console.log('📊 Version info:', versionInfo)
+    
+    if (versionChanged) {
+      console.log('✨ Cache cleared due to version change')
+      // 显示通知告知用户
+      setTimeout(() => {
+        uiStore.addNotification({
+          type: 'info',
+          title: '应用已更新',
+          message: `版本 ${versionInfo.currentVersion} - 缓存已自动清理`,
+          timeout: 4000
+        })
+      }, 1500)
+    }
+    
     // Initialize theme system
     console.log('🎨 Initializing theme system...')
     autoInitTheme()
@@ -550,27 +570,43 @@ watch(() => route.path, (newPath) => {
 
 async function createProject() {
   const name = prompt('请输入项目名称:');
-  if (name) {
+  if (name && name.trim()) {
     try {
+      console.log('📝 App: Creating project via menu:', name);
       const project = await projectStore.createProject({ 
-        name,
+        name: name.trim(),
         description: '新建的小说动漫项目',
         type: 'novel-to-anime'
       });
       
       if (project) {
+        console.log('✅ App: Project created successfully:', project);
         uiStore.addNotification({
           type: 'success',
           title: '项目创建成功',
-          message: `项目 "${name}" 已创建`
+          message: `项目 "${name}" 已创建`,
+          timeout: 2000
         });
-        router.push(`/project/${project.id}`);
+        
+        // Note: projectStore.createProject() now automatically calls fetchProjects()
+        // Navigate to dashboard to see the new project
+        router.push('/dashboard');
+      } else {
+        console.error('❌ App: Project creation failed');
+        uiStore.addNotification({
+          type: 'error',
+          title: '创建项目失败',
+          message: projectStore.error || '无法创建项目，请重试',
+          timeout: 5000
+        });
       }
     } catch (error) {
+      console.error('❌ App: Exception during project creation:', error);
       uiStore.addNotification({
         type: 'error',
         title: '创建项目失败',
-        message: error.message
+        message: error.message || '发生未知错误',
+        timeout: 5000
       });
     }
   }

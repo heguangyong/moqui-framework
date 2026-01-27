@@ -121,7 +121,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUIStore } from '../../stores/ui.js';
-import { useNavigationStore } from '../../stores/navigation.js';
+import { useNavigationStore } from '../../stores/navigation';
 import { useWorkflowStore } from '../../stores/workflowStore';
 import { icons } from '../../utils/icons.js';
 import type { Workflow } from '../../types/workflow';
@@ -443,6 +443,8 @@ function handleStatusClick(statusType: string): void {
   font-size: 12px;
   color: #6a6a6c;
   font-weight: 400;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .section-item:hover {
@@ -484,15 +486,22 @@ function handleStatusClick(statusType: string): void {
   min-width: 0;
 }
 
+.section-item > :first-child {
+  flex-shrink: 0;
+}
+
 .workflow-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .section-items--scrollable {
   max-height: 180px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .section-items--scrollable::-webkit-scrollbar {

@@ -419,6 +419,13 @@ export const useAuthStore = defineStore('auth', {
       if (this.refreshToken) {
         localStorage.setItem('novel_anime_refresh_token', this.refreshToken)
       }
+      // Store user ID and user data for API calls
+      if (this.user) {
+        if (this.user.userId) {
+          localStorage.setItem('novel_anime_user_id', this.user.userId)
+        }
+        localStorage.setItem('novel_anime_user_data', JSON.stringify(this.user))
+      }
     },
 
     clearAuthState() {
@@ -436,6 +443,114 @@ export const useAuthStore = defineStore('auth', {
 
     clearError() {
       this.error = null
+    },
+
+    /**
+     * Validate token expiration (Requirements: 2.5)
+     * Feature: 08-02-auth-diagnosis-fix
+     */
+    validateTokenExpiration(): boolean {
+      if (!this.accessToken) {
+        console.warn('[Auth] No access token to validate')
+        return false
+      }
+
+      try {
+        // Decode JWT token (simple base64 decode)
+        const parts = this.accessToken.split('.')
+        if (parts.length !== 3) {
+          console.error('[Auth] Invalid token format')
+          return false
+        }
+
+        const payload = JSON.parse(atob(parts[1]))
+        const exp = payload.exp
+
+        if (!exp) {
+          console.warn('[Auth] Token has no expiration time')
+          return true // Assume valid if no expiration
+        }
+
+        const isExpired = Date.now() >= exp * 1000
+        if (isExpired) {
+          console.warn('[Auth] Token is expired')
+        }
+
+        return !isExpired
+      } catch (error) {
+        console.error('[Auth] Failed to validate token:', error)
+        return false
+      }
+    },
+
+    /**
+     * Get auth state for diagnostics (Requirements: 6.1)
+     * Feature: 08-02-auth-diagnosis-fix
+     */
+    getAuthState() {
+      return {
+        isAuthenticated: this.isAuthenticated,
+        hasAccessToken: !!this.accessToken,
+        hasRefreshToken: !!this.refreshToken,
+        hasUser: !!this.user,
+        userId: this.user?.userId || null,
+        username: this.user?.username || null,
+        authProvider: this.oauthProvider,
+        isTokenValid: this.validateTokenExpiration()
+      }
+    },
+
+    /**
+     * Debug auth state to console (Requirements: 6.4)
+     * Feature: 08-02-auth-diagnosis-fix
+     */
+    debugAuthState() {
+      console.log('=== Auth Store State ===')
+      console.log('Authenticated:', this.isAuthenticated)
+      console.log('Access Token:', this.accessToken ? '✓ Present' : '✗ Missing')
+      console.log('Refresh Token:', this.refreshToken ? '✓ Present' : '✗ Missing')
+      console.log('User:', this.user ? '✓ Present' : '✗ Missing')
+      if (this.user) {
+        console.log('  User ID:', this.user.userId)
+        console.log('  Username:', this.user.username)
+        console.log('  Email:', this.user.email)
+      }
+      console.log('Token Valid:', this.validateTokenExpiration() ? '✓ Yes' : '✗ No')
+      console.log('OAuth Provider:', this.oauthProvider || 'None')
+      console.log('========================')
+    },
+
+    /**
+     * Load tokens from localStorage (Requirements: 2.4)
+     * Feature: 08-02-auth-diagnosis-fix
+     */
+    loadTokens() {
+      const accessToken = localStorage.getItem('novel_anime_access_token')
+      const refreshToken = localStorage.getItem('novel_anime_refresh_token')
+      const userId = localStorage.getItem('novel_anime_user_id')
+      const userData = localStorage.getItem('novel_anime_user_data')
+
+      if (accessToken) {
+        this.accessToken = accessToken
+      }
+      if (refreshToken) {
+        this.refreshToken = refreshToken
+      }
+      if (userData) {
+        try {
+          this.user = JSON.parse(userData) as NovelAnimeUser
+        } catch (error) {
+          console.error('[Auth] Failed to parse user data:', error)
+        }
+      }
+
+      // Validate loaded tokens
+      if (this.accessToken && this.validateTokenExpiration()) {
+        this.isAuthenticated = true
+      } else if (this.accessToken) {
+        console.warn('[Auth] Loaded token is expired, clearing auth state')
+        this.clearAuthState()
+      }
     }
   }
 })

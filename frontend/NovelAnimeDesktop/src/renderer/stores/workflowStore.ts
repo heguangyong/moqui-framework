@@ -47,6 +47,10 @@ export interface WorkflowState {
   
   // 错误状态
   error: ApiError | null;
+  
+  // 项目-工作流映射 (Requirements: 5.1, 5.2, 8.1, 8.2)
+  projectWorkflowMap: Map<string, string>;  // projectId -> workflowId
+  isCreatingWorkflowForProject: string | null;  // projectId currently being created
 }
 
 // ============================================================================
@@ -72,6 +76,10 @@ export const useWorkflowStore = defineStore('workflow', {
     
     // 错误状态
     error: null,
+    
+    // 项目-工作流映射 (Requirements: 5.1, 5.2, 8.1, 8.2)
+    projectWorkflowMap: new Map<string, string>(),
+    isCreatingWorkflowForProject: null,
   }),
 
   getters: {
@@ -125,10 +133,13 @@ export const useWorkflowStore = defineStore('workflow', {
     // ========================================================================
 
     /**
-     * 初始化 Store
+     * 初始化 Store (Requirements: 5.5)
      */
     async initialize(): Promise<void> {
       if (this.isInitialized) return;
+      
+      // Load project-workflow mappings from localStorage
+      this.loadProjectWorkflowMap();
       
       await this.loadWorkflows();
       this.isInitialized = true;
@@ -148,17 +159,19 @@ export const useWorkflowStore = defineStore('workflow', {
 
     /**
      * 加载所有工作流
+     * @param projectId - 可选的项目ID，用于过滤工作流
      */
-    async loadWorkflows(): Promise<void> {
+    async loadWorkflows(projectId?: string): Promise<void> {
       this.isLoading = true;
       this.error = null;
       
       try {
-        const result = await workflowService.getWorkflows();
+        const result = await workflowService.getWorkflows(projectId ? { projectId } : undefined);
         
         if (result.success && result.data) {
           this.workflows = result.data.workflows;
-          console.log('📂 loadWorkflows: loaded', this.workflows.length, 'workflows');
+          console.log('📂 loadWorkflows: loaded', this.workflows.length, 'workflows', 
+                      projectId ? `for project ${projectId}` : '(all projects)');
         } else {
           this.error = {
             code: 'API_ERROR' as any,
@@ -188,13 +201,14 @@ export const useWorkflowStore = defineStore('workflow', {
         return true;
       }
       console.warn('⚠️ selectWorkflow: workflow not found:', workflowId);
+      console.log('📋 Available workflows:', this.workflows.map(w => ({ id: w.id, name: w.name })));
       return false;
     },
 
     /**
-     * 创建工作流
+     * 创建工作流 (Requirements: 8.1, 8.3)
      */
-    async createWorkflow(data: { name: string; description?: string }): Promise<Workflow | null> {
+    async createWorkflow(data: { name: string; description?: string; projectId?: string }): Promise<Workflow | null> {
       this.isLoading = true;
       this.error = null;
       
@@ -206,12 +220,19 @@ export const useWorkflowStore = defineStore('workflow', {
         const result = await workflowService.createWorkflow({
           name: uniqueName,
           description: data.description,
+          projectId: data.projectId,
         });
         
         if (result.success && result.data?.workflow) {
           const workflow = result.data.workflow;
           this.workflows.push(workflow);
-          console.log('✅ createWorkflow:', workflow.name);
+          
+          // If projectId is provided, set the mapping
+          if (data.projectId) {
+            this.setProjectWorkflowMapping(data.projectId, workflow.id);
+          }
+          
+          console.log('✅ createWorkflow:', workflow.name, data.projectId ? `(projectId: ${data.projectId})` : '');
           return workflow;
         } else {
           this.error = {
@@ -341,6 +362,242 @@ export const useWorkflowStore = defineStore('workflow', {
     // ========================================================================
     // 节点管理 (Task 3.2)
     // ========================================================================
+
+    /**
+     * 获取指定项目的工作流 (Requirements: 6.1, 6.2, 6.3, 6.5)
+     * @param projectId - 项目ID
+     * @returns 工作流或null
+     */
+    getWorkflowByProjectId(projectId: string): Workflow | null {
+      // 1. 检查映射缓存
+      const workflowId = this.projectWorkflowMap.get(projectId);
+      if (workflowId) {
+        const workflow = this.workflows.find(w => w.id === workflowId);
+        if (workflow) {
+          console.log('✅ getWorkflowByProjectId: found in cache:', projectId, '->', workflowId);
+          return workflow;
+        }
+        
+        // 映射存在但工作流不存在 - 清理过期映射
+        console.log('⚠️ getWorkflowByProjectId: stale mapping detected, cleaning up');
+        this.projectWorkflowMap.delete(projectId);
+        this.persistProjectWorkflowMap();
+      }
+      
+      // 2. 搜索所有工作流
+      const workflow = this.workflows.find(w => w.projectId === projectId);
+      if (workflow) {
+        // 更新缓存
+        console.log('✅ getWorkflowByProjectId: found by search:', projectId, '->', workflow.id);
+        this.projectWorkflowMap.set(projectId, workflow.id);
+        this.persistProjectWorkflowMap();
+        return workflow;
+      }
+      
+      console.log('⚠️ getWorkflowByProjectId: not found for project:', projectId);
+      return null;
+    },
+
+    /**
+     * 设置项目-工作流映射 (Requirements: 5.2)
+     * @param projectId - 项目ID
+     * @param workflowId - 工作流ID
+     */
+    setProjectWorkflowMapping(projectId: string, workflowId: string): void {
+      this.projectWorkflowMap.set(projectId, workflowId);
+      this.persistProjectWorkflowMap();
+      console.log('📌 setProjectWorkflowMapping:', projectId, '->', workflowId);
+    },
+
+    /**
+     * 清除项目-工作流映射 (Requirements: 5.4)
+     * @param projectId - 项目ID
+     */
+    clearProjectWorkflowMapping(projectId: string): void {
+      this.projectWorkflowMap.delete(projectId);
+      this.persistProjectWorkflowMap();
+      console.log('🗑️ clearProjectWorkflowMapping:', projectId);
+    },
+
+    /**
+     * 持久化项目-工作流映射到localStorage (Requirements: 5.5)
+     */
+    persistProjectWorkflowMap(): void {
+      try {
+        const mapObject = Object.fromEntries(this.projectWorkflowMap);
+        localStorage.setItem('novel_anime_project_workflow_map', JSON.stringify(mapObject));
+        console.log('💾 persistProjectWorkflowMap: saved', Object.keys(mapObject).length, 'mappings');
+      } catch (e) {
+        console.error('❌ persistProjectWorkflowMap failed:', e);
+      }
+    },
+
+    /**
+     * 从localStorage加载项目-工作流映射 (Requirements: 5.5)
+     */
+    loadProjectWorkflowMap(): void {
+      try {
+        const stored = localStorage.getItem('novel_anime_project_workflow_map');
+        if (stored) {
+          const mapObject = JSON.parse(stored);
+          this.projectWorkflowMap = new Map(Object.entries(mapObject));
+          console.log('📂 loadProjectWorkflowMap: loaded', this.projectWorkflowMap.size, 'mappings');
+        } else {
+          console.log('📂 loadProjectWorkflowMap: no stored mappings found');
+        }
+      } catch (e) {
+        console.error('❌ loadProjectWorkflowMap failed:', e);
+        this.projectWorkflowMap = new Map();
+      }
+    },
+
+    /**
+     * 获取节点类型的显示标题 (Requirements: 1.1)
+     * @param type - 节点类型
+     * @returns 显示标题
+     */
+    getNodeTitle(type: string): string {
+      const titles: Record<string, string> = {
+        'novel-parser': '小说解析器',
+        'character-analyzer': '角色分析器',
+        'scene-generator': '场景生成器',
+        'script-converter': '脚本转换器',
+        'video-generator': '视频生成器'
+      };
+      return titles[type] || type;
+    },
+
+    /**
+     * 向工作流添加模板节点 (Requirements: 1.1)
+     * @param workflowId - 工作流ID
+     * @param template - 模板配置
+     */
+    async addTemplateNodesToWorkflow(
+      workflowId: string,
+      template: { nodes: string[] }
+    ): Promise<void> {
+      const nodeIds: string[] = [];
+      
+      // 添加节点
+      template.nodes.forEach((nodeType: string, index: number) => {
+        const node = this.addNode(
+          workflowId,
+          nodeType as WorkflowNodeType,
+          this.getNodeTitle(nodeType),
+          { x: 100 + index * 220, y: 100 }
+        );
+        if (node) {
+          nodeIds.push(node.id);
+        }
+      });
+      
+      // 连接节点
+      for (let i = 0; i < nodeIds.length - 1; i++) {
+        this.addConnection(workflowId, nodeIds[i], nodeIds[i + 1]);
+      }
+      
+      console.log('📋 addTemplateNodesToWorkflow: added', nodeIds.length, 'nodes to workflow:', workflowId);
+    },
+
+    /**
+     * 清理空工作流 (Requirements: 4.1, 4.2, 4.3, 4.4)
+     * @param projectId - 可选的项目ID，用于限制清理范围
+     * @returns 删除的工作流数量
+     */
+    async cleanupEmptyWorkflows(projectId?: string): Promise<number> {
+      const emptyWorkflows = this.workflows.filter(w => {
+        const isEmpty = !w.nodes || w.nodes.length === 0;
+        const matchesProject = !projectId || w.projectId === projectId;
+        return isEmpty && matchesProject;
+      });
+      
+      let deletedCount = 0;
+      for (const workflow of emptyWorkflows) {
+        const success = await this.deleteWorkflow(workflow.id);
+        if (success) {
+          deletedCount++;
+          console.log('🗑️ cleanupEmptyWorkflows: deleted empty workflow:', workflow.name);
+        }
+      }
+      
+      if (deletedCount > 0) {
+        console.log('✅ cleanupEmptyWorkflows: cleaned up', deletedCount, 'empty workflow(s)');
+      }
+      
+      return deletedCount;
+    },
+
+    /**
+     * 为项目创建工作流 (Requirements: 1.1, 1.5, 7.1, 7.2, 7.3, 7.4, 7.5)
+     * @param projectId - 项目ID
+     * @param template - 模板配置
+     * @param projectName - 项目名称
+     * @returns 创建的或已存在的工作流
+     */
+    async createWorkflowForProject(
+      projectId: string,
+      template: { id: string; name: string; description: string; nodes: string[] },
+      projectName: string
+    ): Promise<Workflow | null> {
+      // 1. 检查是否正在为此项目创建工作流
+      if (this.isCreatingWorkflowForProject === projectId) {
+        console.log('⏳ createWorkflowForProject: already creating for project:', projectId);
+        return null;
+      }
+      
+      // 2. 检查工作流是否已存在
+      const existingWorkflow = this.getWorkflowByProjectId(projectId);
+      if (existingWorkflow) {
+        console.log('✅ createWorkflowForProject: workflow already exists for project:', projectId);
+        
+        // 如果是空的，添加节点
+        if (!existingWorkflow.nodes || existingWorkflow.nodes.length === 0) {
+          console.log('📋 createWorkflowForProject: adding template nodes to existing empty workflow');
+          await this.addTemplateNodesToWorkflow(existingWorkflow.id, template);
+          await this.saveWorkflow(existingWorkflow.id);
+        }
+        
+        return existingWorkflow;
+      }
+      
+      // 3. 设置创建标志
+      this.isCreatingWorkflowForProject = projectId;
+      
+      try {
+        // 4. 创建工作流
+        const workflowName = `${projectName} - ${template.name}`;
+        const workflow = await this.createWorkflow({
+          name: workflowName,
+          description: template.description,
+        });
+        
+        if (!workflow) {
+          throw new Error('Failed to create workflow');
+        }
+        
+        // 设置projectId
+        workflow.projectId = projectId;
+        
+        // 5. 添加模板节点
+        await this.addTemplateNodesToWorkflow(workflow.id, template);
+        
+        // 6. 设置映射
+        this.setProjectWorkflowMapping(projectId, workflow.id);
+        
+        // 7. 保存到后端
+        await this.saveWorkflow(workflow.id);
+        
+        console.log('✅ createWorkflowForProject: created workflow for project:', projectId, workflow.name);
+        return workflow;
+        
+      } catch (error) {
+        console.error('❌ createWorkflowForProject failed:', error);
+        throw error;
+      } finally {
+        // 8. 清除创建标志
+        this.isCreatingWorkflowForProject = null;
+      }
+    },
 
     /**
      * 添加节点

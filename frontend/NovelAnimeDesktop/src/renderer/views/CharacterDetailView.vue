@@ -152,7 +152,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
-import { useProjectStore } from '../stores/project.js';
+import { useProjectStore } from '../stores/project';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 import EmptyState from '../components/ui/EmptyState.vue';

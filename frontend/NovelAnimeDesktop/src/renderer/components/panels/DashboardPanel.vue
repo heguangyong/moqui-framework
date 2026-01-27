@@ -87,24 +87,80 @@
         @select="handleDocumentSelect"
         @open="handleDocumentOpen"
         @create="handleDocumentCreate"
+        @rename="handleDocumentRename"
         @delete="handleDocumentDelete"
       />
     </div>
+    
+    <!-- 创建项目对话框 -->
+    <InputDialog
+      v-model:visible="showCreateProjectDialog"
+      title="创建新项目"
+      message="请输入项目名称"
+      placeholder="例如：我的小说项目"
+      :default-value="projectNameInput"
+      @confirm="confirmCreateProject"
+    />
+    
+    <!-- 创建文件夹对话框 -->
+    <InputDialog
+      v-model:visible="showCreateFolderDialog"
+      title="创建文件夹"
+      message="请输入文件夹名称"
+      placeholder="例如：我的文件夹"
+      :default-value="folderNameInput"
+      @confirm="confirmCreateFolder"
+    />
+    
+    <!-- 创建文件对话框 -->
+    <InputDialog
+      v-model:visible="showCreateFileDialog"
+      title="创建文件"
+      message="请输入文件名称"
+      placeholder="例如：我的文件.txt"
+      :default-value="fileNameInput"
+      @confirm="confirmCreateFile"
+    />
+    
+    <!-- 重命名对话框 -->
+    <InputDialog
+      v-model:visible="showRenameDialog"
+      title="重命名"
+      message="请输入新名称"
+      :placeholder="renameInput"
+      :default-value="renameInput"
+      @confirm="confirmRename"
+    />
+    
+    <!-- 删除确认对话框 -->
+    <ConfirmDialog
+      v-if="showDeleteConfirmDialog"
+      title="确认删除"
+      :message="`确定要删除 &quot;${deleteNodeName}&quot; 吗？此操作无法撤销。`"
+      :confirm-text="'删除'"
+      :cancel-text="'取消'"
+      confirm-type="danger"
+      @confirm="confirmDelete"
+      @cancel="showDeleteConfirmDialog = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useProjectStore } from '../../stores/project.js';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useProjectStore } from '../../stores/project';
 import { useTaskStore } from '../../stores/task.js';
 import { useFileStore } from '../../stores/file.js';
 import { useUIStore } from '../../stores/ui.js';
-import { useNavigationStore } from '../../stores/navigation.js';
+import { useNavigationStore } from '../../stores/navigation';
 import { icons } from '../../utils/icons.js';
 import DocumentTree from '../explorer/DocumentTree.vue';
+import InputDialog from '../dialogs/InputDialog.vue';
+import ConfirmDialog from '../ui/ConfirmDialog.vue';
 
 const router = useRouter();
+const route = useRoute();
 const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 const fileStore = useFileStore();
@@ -113,6 +169,21 @@ const navigationStore = useNavigationStore();
 
 // 统一的激活状态 - 同一时间只有一个按钮被高亮
 const activeView = ref('project-dashboard');
+
+// 输入对话框状态
+const showCreateProjectDialog = ref(false);
+const projectNameInput = ref('');
+const showCreateFolderDialog = ref(false);
+const folderNameInput = ref('');
+const showCreateFileDialog = ref(false);
+const fileNameInput = ref('');
+const showRenameDialog = ref(false);
+const renameInput = ref('');
+const showDeleteConfirmDialog = ref(false);
+const deleteNodeName = ref('');
+const currentParentId = ref(null);
+const currentNodeToRename = ref(null);
+const currentNodeToDelete = ref(null);
 
 // 计算属性
 const projectCounts = computed(() => projectStore.projectCounts);
@@ -125,25 +196,57 @@ onMounted(async () => {
   console.log('📊 Projects loaded, count:', projectStore.projects.length);
 });
 
+// 🔧 FIX: 监听路由变化，当切换到 dashboard 时刷新项目列表
+watch(() => route.path, async (newPath, oldPath) => {
+  if (newPath === '/dashboard' && oldPath && oldPath !== '/dashboard') {
+    console.log('🔄 Switched to dashboard from', oldPath, ', refreshing projects...');
+    await projectStore.fetchProjects();
+    console.log('✅ Projects refreshed, count:', projectStore.projects.length);
+  }
+}, { immediate: false });
+
 // 创建项目
 function handleCreateProject() {
-  const name = prompt('请输入项目名称:');
+  projectNameInput.value = '';
+  showCreateProjectDialog.value = true;
+}
+
+// 确认创建项目
+async function confirmCreateProject(name) {
   if (name && name.trim()) {
-    projectStore.createProject({ 
+    console.log('📝 DashboardPanel: Creating project:', name);
+    const project = await projectStore.createProject({ 
       name: name.trim(),
       description: '新建的小说动漫项目',
       type: 'novel-to-anime'
-    }).then(project => {
-      if (project) {
-        uiStore.addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: `项目 "${name}" 已创建`,
-          timeout: 2000
-        });
-      }
     });
+    
+    if (project) {
+      console.log('✅ DashboardPanel: Project created successfully:', project);
+      uiStore.addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: `项目 "${name}" 已创建`,
+        timeout: 2000
+      });
+      
+      // Note: projectStore.createProject() now automatically calls fetchProjects()
+      // No need to manually refresh here
+      
+      // 切换到项目库视图以显示新项目
+      activeView.value = 'project-library';
+      handleProjectClick('library');
+    } else {
+      console.error('❌ DashboardPanel: Project creation failed');
+      uiStore.addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: projectStore.error || '无法创建项目，请重试',
+        timeout: 5000
+      });
+    }
   }
+  showCreateProjectDialog.value = false;
 }
 
 // 项目点击处理
@@ -161,6 +264,12 @@ function handleProjectClick(projectType) {
   console.log('📤 Updating panelContext:', context);
   navigationStore.updatePanelContext('dashboard', context);
   console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
+  
+  // 确保导航到 dashboard 页面
+  if (router.currentRoute.value.path !== '/dashboard') {
+    console.log('🔄 Navigating to /dashboard');
+    router.push('/dashboard');
+  }
 }
 
 // 状态点击处理
@@ -178,6 +287,12 @@ function handleStatusClick(statusType) {
   console.log('📤 Updating panelContext:', context);
   navigationStore.updatePanelContext('dashboard', context);
   console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
+  
+  // 确保导航到 dashboard 页面
+  if (router.currentRoute.value.path !== '/dashboard') {
+    console.log('🔄 Navigating to /dashboard');
+    router.push('/dashboard');
+  }
 }
 
 // 快捷入口点击处理
@@ -195,13 +310,24 @@ function handleShortcutClick(shortcutType) {
   console.log('📤 Updating panelContext:', context);
   navigationStore.updatePanelContext('dashboard', context);
   console.log('✅ panelContext updated, current state:', navigationStore.panelContext.dashboard);
+  
+  // 确保导航到 dashboard 页面
+  if (router.currentRoute.value.path !== '/dashboard') {
+    console.log('🔄 Navigating to /dashboard');
+    router.push('/dashboard');
+  }
 }
 
 // 文档操作
 function handleCreateDocument() {
-  const name = prompt('请输入文件夹名称:');
+  currentParentId.value = null;
+  folderNameInput.value = '';
+  showCreateFolderDialog.value = true;
+}
+
+function confirmCreateFolder(name) {
   if (name && name.trim()) {
-    fileStore.addFolder(null, { name: name.trim() });
+    fileStore.addFolder(currentParentId.value, { name: name.trim() });
     uiStore.addNotification({
       type: 'success',
       title: '创建成功',
@@ -209,6 +335,20 @@ function handleCreateDocument() {
       timeout: 2000
     });
   }
+  showCreateFolderDialog.value = false;
+}
+
+function confirmCreateFile(name) {
+  if (name && name.trim()) {
+    fileStore.addFile(currentParentId.value, { name: name.trim() });
+    uiStore.addNotification({
+      type: 'success',
+      title: '创建成功',
+      message: `文件 "${name}" 已创建`,
+      timeout: 2000
+    });
+  }
+  showCreateFileDialog.value = false;
 }
 
 function handleDocumentSelect(node) {
@@ -237,38 +377,54 @@ function handleDocumentOpen(node) {
 }
 
 function handleDocumentCreate({ type, parentId }) {
+  currentParentId.value = parentId;
   if (type === 'folder') {
-    const name = prompt('请输入文件夹名称:');
-    if (name && name.trim()) {
-      fileStore.addFolder(parentId, { name: name.trim() });
-      uiStore.addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: `文件夹 "${name}" 已创建`,
-        timeout: 2000
-      });
-    }
+    folderNameInput.value = '';
+    showCreateFolderDialog.value = true;
   } else {
-    const name = prompt('请输入文件名称:');
-    if (name && name.trim()) {
-      fileStore.addFile(parentId, { name: name.trim() });
-      uiStore.addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: `文件 "${name}" 已创建`,
-        timeout: 2000
-      });
-    }
+    fileNameInput.value = '';
+    showCreateFileDialog.value = true;
   }
 }
 
+function handleDocumentRename(node) {
+  currentNodeToRename.value = node;
+  renameInput.value = node.name;
+  showRenameDialog.value = true;
+}
+
+function confirmRename(newName) {
+  if (newName && newName.trim() && currentNodeToRename.value) {
+    fileStore.renameNode(currentNodeToRename.value.id, newName.trim());
+    uiStore.addNotification({
+      type: 'success',
+      title: '重命名成功',
+      message: `已重命名为 "${newName}"`,
+      timeout: 2000
+    });
+  }
+  showRenameDialog.value = false;
+  currentNodeToRename.value = null;
+}
+
 function handleDocumentDelete(node) {
-  uiStore.addNotification({
-    type: 'success',
-    title: '删除成功',
-    message: `"${node.name}" 已删除`,
-    timeout: 2000
-  });
+  currentNodeToDelete.value = node;
+  deleteNodeName.value = node.name;
+  showDeleteConfirmDialog.value = true;
+}
+
+function confirmDelete() {
+  if (currentNodeToDelete.value) {
+    fileStore.deleteNode(currentNodeToDelete.value.id);
+    uiStore.addNotification({
+      type: 'success',
+      title: '删除成功',
+      message: `"${deleteNodeName.value}" 已删除`,
+      timeout: 2000
+    });
+  }
+  showDeleteConfirmDialog.value = false;
+  currentNodeToDelete.value = null;
 }
 </script>
 

@@ -310,17 +310,29 @@ export class PipelineOrchestrator {
         };
       }
       
-      // 如果有novelId，尝试多种方式加载数据
-      if (data.novelId) {
-        console.log('📂 [PipelineOrchestrator] 尝试加载小说数据, novelId:', data.novelId);
+      // 🔧 快速修复：优先从 localStorage 查找最新的 novelId
+      console.log('📂 [PipelineOrchestrator] 尝试加载小说数据');
+      
+      // 方式0: 如果没有提供 novelId，尝试从 localStorage 获取最新的
+      let targetNovelId = data.novelId;
+      if (!targetNovelId) {
+        const storedNovelId = localStorage.getItem('novel_anime_current_novel_id');
+        if (storedNovelId) {
+          targetNovelId = storedNovelId;
+          console.log('📦 [方式0] 从 localStorage 获取到最新 novelId:', targetNovelId);
+        }
+      }
+      
+      if (targetNovelId) {
+        console.log('📂 [PipelineOrchestrator] 使用 novelId:', targetNovelId);
         
         // 方式1: 从 localStorage 加载 (使用 NovelParser)
         console.log('📦 [方式1] 尝试从 NovelParser localStorage 加载...');
-        const novelStructure = await NovelParser.retrieveNovelStructure(data.novelId);
+        const novelStructure = await NovelParser.retrieveNovelStructure(targetNovelId);
         if (novelStructure && novelStructure.chapters && novelStructure.chapters.length > 0) {
           console.log('✅ 从 NovelParser localStorage 加载成功:', novelStructure.chapters.length, '章');
           return {
-            novelId: data.novelId,
+            novelId: targetNovelId,
             title: novelStructure.title,
             author: novelStructure.author,
             chapters: novelStructure.chapters,
@@ -337,13 +349,13 @@ export class PipelineOrchestrator {
         // 方式2: 直接从 localStorage 加载 (使用 novel_ 前缀)
         console.log('📦 [方式2] 尝试从 localStorage (novel_ 前缀) 加载...');
         try {
-          const cachedData = localStorage.getItem(`novel_${data.novelId}`);
+          const cachedData = localStorage.getItem(`novel_${targetNovelId}`);
           if (cachedData) {
             const novelData = JSON.parse(cachedData);
             if (novelData.chapters && novelData.chapters.length > 0) {
               console.log('✅ 从 localStorage (novel_ 前缀) 加载成功:', novelData.chapters.length, '章');
               return {
-                novelId: data.novelId,
+                novelId: targetNovelId,
                 title: novelData.title,
                 author: novelData.author,
                 chapters: novelData.chapters,
@@ -362,9 +374,9 @@ export class PipelineOrchestrator {
         console.log('⚠️ localStorage (novel_ 前缀) 无数据');
         
         // 方式3: 从后端 API 加载
-        console.log('📡 [方式3] 尝试从后端 API 加载... URL: /novel/' + data.novelId);
+        console.log('📡 [方式3] 尝试从后端 API 加载... URL: /novel/' + targetNovelId);
         try {
-          const response = await apiService.getNovel(data.novelId);
+          const response = await apiService.getNovel(targetNovelId);
           console.log('📡 后端 API 响应:', { success: response.success, hasNovel: !!response.novel, message: response.message });
           
           if (response.success && response.novel) {
@@ -376,20 +388,20 @@ export class PipelineOrchestrator {
               console.log('📊 小说没有章节数据，尝试调用结构分析 API...');
               try {
                 const analyzeResponse = await apiService.axiosInstance.post('/novels/analyze-structure', {
-                  novelId: data.novelId
+                  novelId: targetNovelId
                 });
                 console.log('📊 结构分析响应:', analyzeResponse.data);
                 
                 if (analyzeResponse.data.success || analyzeResponse.data.chaptersCreated > 0) {
                   // 重新获取小说数据（现在应该有章节了）
                   console.log('🔄 重新获取小说数据...');
-                  const refreshResponse = await apiService.getNovel(data.novelId);
+                  const refreshResponse = await apiService.getNovel(targetNovelId);
                   if (refreshResponse.success && refreshResponse.novel?.chapters?.length > 0) {
                     const refreshedNovel = refreshResponse.novel;
                     console.log('✅ 结构分析后获取到章节:', refreshedNovel.chapters.length, '章');
                     
                     const novelData = {
-                      id: data.novelId,
+                      id: targetNovelId,
                       title: refreshedNovel.title,
                       author: refreshedNovel.author,
                       chapters: refreshedNovel.chapters,
@@ -402,14 +414,14 @@ export class PipelineOrchestrator {
                     
                     // 存储到 localStorage
                     try {
-                      localStorage.setItem(`novel_${data.novelId}`, JSON.stringify(novelData));
+                      localStorage.setItem(`novel_${targetNovelId}`, JSON.stringify(novelData));
                       console.log('💾 已将小说数据缓存到 localStorage');
                     } catch (e) {
                       console.warn('⚠️ 缓存到 localStorage 失败:', e);
                     }
                     
                     return {
-                      novelId: data.novelId,
+                      novelId: targetNovelId,
                       title: refreshedNovel.title,
                       author: refreshedNovel.author,
                       chapters: refreshedNovel.chapters,
@@ -430,7 +442,7 @@ export class PipelineOrchestrator {
             // 将后端数据存储到 localStorage 以便后续使用
             if (novel.chapters && novel.chapters.length > 0) {
               const novelData = {
-                id: data.novelId,
+                id: targetNovelId,
                 title: novel.title,
                 author: novel.author,
                 chapters: novel.chapters,
@@ -443,14 +455,14 @@ export class PipelineOrchestrator {
               
               // 存储到 localStorage
               try {
-                localStorage.setItem(`novel_${data.novelId}`, JSON.stringify(novelData));
+                localStorage.setItem(`novel_${targetNovelId}`, JSON.stringify(novelData));
                 console.log('💾 已将小说数据缓存到 localStorage');
               } catch (e) {
                 console.warn('⚠️ 缓存到 localStorage 失败:', e);
               }
               
               return {
-                novelId: data.novelId,
+                novelId: targetNovelId,
                 title: novel.title,
                 author: novel.author,
                 chapters: novel.chapters,
@@ -720,6 +732,88 @@ export class PipelineOrchestrator {
         }
       };
     });
+
+    // Image Generator - 图片生成节点（新增）
+    this.nodeProcessors.set('image-generator', async (context, node) => {
+      const previousResults = this.getPreviousNodeResults(context, node);
+      const scenes = previousResults?.scenes || [];
+      const scripts = previousResults?.scripts || [];
+      const chapters = previousResults?.chapters || [];
+      const characters = previousResults?.characters || [];
+      
+      console.log('🎨 图片生成器 - 收到场景数据:', scenes.length, '个场景');
+      
+      // 动态导入 ImageGenerationService
+      const { imageGenerationService } = await import('./ImageGenerationService.ts');
+      
+      // 为每个场景生成分镜图片
+      const storyboards = [];
+      
+      for (let i = 0; i < scenes.length; i++) {
+        const scene = scenes[i];
+        
+        try {
+          // 构建图片生成提示词
+          const prompt = this.buildImagePrompt(scene, characters);
+          
+          console.log(`🎨 生成分镜 ${i + 1}/${scenes.length}:`, prompt.substring(0, 50) + '...');
+          
+          // 生成图片
+          const result = await imageGenerationService.generateImage({
+            prompt,
+            width: 800,
+            height: 450
+          });
+          
+          storyboards.push({
+            id: `storyboard_${i + 1}`,
+            sceneId: scene.id,
+            description: scene.content?.substring(0, 200) || scene.description || '',
+            imageUrl: result.imageUrl,
+            thumbnailUrl: result.thumbnailUrl,
+            dialogue: this.extractFirstDialogue(scene.content || ''),
+            speaker: this.extractSpeaker(scene.content || ''),
+            duration: 3000,
+            prompt: prompt,
+            generatedAt: result.generatedAt
+          });
+          
+          console.log(`✅ 分镜 ${i + 1} 生成完成`);
+        } catch (error) {
+          console.error(`❌ 分镜 ${i + 1} 生成失败:`, error);
+          
+          // 失败时使用占位符
+          storyboards.push({
+            id: `storyboard_${i + 1}`,
+            sceneId: scene.id,
+            description: scene.content?.substring(0, 200) || scene.description || '',
+            imageUrl: undefined, // 将显示占位符
+            thumbnailUrl: undefined,
+            dialogue: this.extractFirstDialogue(scene.content || ''),
+            speaker: this.extractSpeaker(scene.content || ''),
+            duration: 3000
+          });
+        }
+      }
+      
+      console.log('✅ 生成了', storyboards.length, '个分镜图片');
+      
+      return {
+        // 传递所有上游数据
+        chapters,
+        characters,
+        scenes,
+        scripts,
+        // 分镜数据（包含图片）
+        storyboards,
+        totalStoryboards: storyboards.length,
+        metadata: {
+          status: 'images_generated',
+          message: `成功生成 ${storyboards.length} 个分镜图片`,
+          provider: imageGenerationService.getConfig().provider
+        }
+      };
+    });
   }
 
   // 获取前置节点的结果
@@ -957,4 +1051,146 @@ export class PipelineOrchestrator {
     ];
     return commonWords.includes(word);
   }
+
+  /**
+   * 构建图片生成提示词
+   * 🔥 FIX: 增强场景唯一性，确保每个场景生成不同的图片
+   */
+  buildImagePrompt(scene, characters, sceneIndex = 0, chapterTitle = '') {
+    const parts = [];
+    
+    // 1. 添加章节和场景标识（确保唯一性）
+    if (chapterTitle) {
+      parts.push(`Chapter: ${chapterTitle}`);
+    }
+    parts.push(`Scene ${sceneIndex + 1}`);
+    
+    // 2. 场景标题（最重要的区分因素）
+    if (scene.title && scene.title !== '未命名场景') {
+      parts.push(scene.title);
+    }
+    
+    // 3. 场景内容（提取更多字符，增加独特性）
+    const content = scene.content || scene.description || '';
+    if (content) {
+      // 🔥 FIX: 提取前200个字符（而不是100），增加独特性
+      const visualElements = this.extractVisualElements(content, 200);
+      if (visualElements) {
+        parts.push(visualElements);
+      }
+    }
+    
+    // 4. 场景设定
+    if (scene.setting && scene.setting !== '未知场景') {
+      parts.push(`Setting: ${scene.setting}`);
+    }
+    
+    // 5. 角色信息
+    if (scene.characters && scene.characters.length > 0) {
+      const characterNames = scene.characters.slice(0, 3).join(', ');
+      parts.push(`Characters: ${characterNames}`);
+    }
+    
+    // 6. 添加场景ID作为最后的保障
+    if (scene.id || scene.sceneId) {
+      parts.push(`ID: ${scene.id || scene.sceneId}`);
+    }
+    
+    // 7. 如果还是没有内容，使用默认值 + 索引
+    if (parts.length === 0) {
+      parts.push(`anime scene ${sceneIndex + 1}`);
+    }
+    
+    const prompt = parts.join(', ');
+    console.log(`🎨 Scene ${sceneIndex + 1} prompt:`, prompt.substring(0, 100) + '...');
+    
+    return prompt;
+  }
+
+  /**
+   * 从文本中提取视觉元素
+   * 🔥 FIX: 支持自定义长度，增加场景区分度
+   */
+  extractVisualElements(text, maxLength = 100) {
+    if (!text) return '';
+    
+    // 提取指定长度的文本
+    const shortText = text.substring(0, maxLength).trim();
+    
+    // 移除对话（引号内的内容）
+    const withoutDialogue = shortText.replace(/"[^"]*"/g, '').trim();
+    
+    return withoutDialogue || shortText;
+  }
+  
+  /**
+   * 从场景ID生成唯一的 seed
+   * 🔥 FIX: 确保相同场景总是生成相同的seed，不同场景生成不同的seed
+   */
+  generateSeedFromSceneId(sceneId, sceneIndex = 0) {
+    // 如果有场景ID，使用ID生成seed
+    if (sceneId) {
+      if (typeof sceneId === 'number') {
+        return sceneId;
+      }
+      
+      // 如果是字符串，计算哈希值
+      let hash = 0;
+      for (let i = 0; i < sceneId.length; i++) {
+        const char = sceneId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return Math.abs(hash);
+    }
+    
+    // 如果没有场景ID，使用场景索引生成seed
+    return 1000 + sceneIndex;
+  }
+
+  /**
+   * 提取第一句对话
+   */
+  extractFirstDialogue(text) {
+    if (!text) return undefined;
+    
+    const dialoguePatterns = [
+      /"([^"]+)"/,
+      /「([^」]+)」/,
+      /"([^"]+)"/
+    ];
+    
+    for (const pattern of dialoguePatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * 提取说话者
+   */
+  extractSpeaker(text) {
+    if (!text) return undefined;
+    
+    // 查找"XXX说"、"XXX道"等模式
+    const speakerPatterns = [
+      /([^\s，。！？""「」]{2,4})(?:说|道|问|答|喊|叫)[:：]?"([^"]+)"/,
+      /([^\s，。！？""「」]{2,4})(?:说|道|问|答|喊|叫)[:：]?「([^」]+)」/
+    ];
+    
+    for (const pattern of speakerPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return undefined;
+  }
 }
+
+export default PipelineOrchestrator;

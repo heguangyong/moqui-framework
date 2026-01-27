@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JWT Frontend Fix - Manual Token Injection</title>
+</head>
+<body>
+    <h1>JWT Token Manual Injection for Frontend Fix</h1>
+    <button onclick="injectJWT()">Inject JWT Tokens</button>
+    <button onclick="testAPI()">Test API Access</button>
+    <button onclick="openApp()">Open Moqui App</button>
+    <div id="status"></div>
+
+    <script>
+    function updateStatus(message) {
+        document.getElementById('status').innerHTML += '<br>' + message;
+    }
+
+    async function injectJWT() {
+        try {
+            updateStatus('🔐 Getting JWT token...');
+
+            // Get JWT token from login API
+            const loginResponse = await fetch('http://localhost:8080/rest/s1/moqui/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'john.doe', password: 'moqui' })
+            });
+
+            const loginData = await loginResponse.json();
+            updateStatus('✅ JWT Token received: ' + loginData.accessToken.substring(0, 20) + '...');
+
+            // Store tokens in localStorage
+            localStorage.setItem('jwt_access_token', loginData.accessToken);
+            localStorage.setItem('jwt_refresh_token', loginData.refreshToken);
+            sessionStorage.setItem('jwt_access_token', loginData.accessToken);
+
+            // Also set as cookie for backend compatibility
+            document.cookie = `jwt_access_token=${loginData.accessToken}; path=/; max-age=7200`;
+
+            updateStatus('✅ JWT tokens stored in localStorage, sessionStorage, and cookie');
+
+        } catch (error) {
+            updateStatus('❌ Error injecting JWT: ' + error.message);
+        }
+    }
+
+    async function testAPI() {
+        try {
+            const token = localStorage.getItem('jwt_access_token');
+            if (!token) {
+                updateStatus('❌ No JWT token found. Run injection first.');
+                return;
+            }
+
+            updateStatus('🧪 Testing API with JWT token...');
+
+            const response = await fetch('http://localhost:8080/qapps/menuData', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                updateStatus('✅ API test successful - received ' + data.length + ' menu items');
+            } else {
+                updateStatus('❌ API test failed: ' + response.status);
+            }
+
+        } catch (error) {
+            updateStatus('❌ API test error: ' + error.message);
+        }
+    }
+
+    function openApp() {
+        updateStatus('🚀 Opening Moqui app...');
+        window.open('http://localhost:8080/qapps', '_blank');
+    }
+    </script>
+</body>
+</html>

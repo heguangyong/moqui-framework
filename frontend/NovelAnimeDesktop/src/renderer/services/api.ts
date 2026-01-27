@@ -44,28 +44,66 @@ class ApiService {
     })
 
     // Add request interceptor for authentication
+    // Feature: 08-02-auth-diagnosis-fix - Enhanced authentication logging
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
         // Add auth token if available
         const token = localStorage.getItem('novel_anime_access_token')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
+          console.debug('[API Request]', config.method?.toUpperCase(), config.url, '- Auth: ✓')
+        } else {
+          console.debug('[API Request]', config.method?.toUpperCase(), config.url, '- Auth: ✗')
         }
         return config
       },
-      (error: any) => Promise.reject(error)
+      (error: any) => {
+        console.error('[API Request Error]', error)
+        return Promise.reject(error)
+      }
     )
 
     // Add response interceptor for error handling
+    // Feature: 08-02-auth-diagnosis-fix - Enhanced error handling
     this.axiosInstance.interceptors.response.use(
-      (response: any) => response,
+      (response: any) => {
+        console.debug('[API Response]', response.config.method?.toUpperCase(), response.config.url, '- Status:', response.status)
+        return response
+      },
       (error: any) => {
-        console.error('API Error:', error)
+        const status = error.response?.status
+        const url = error.config?.url
+        const method = error.config?.method?.toUpperCase()
         
-        // Handle authentication errors
-        if (error.response?.status === 401) {
+        console.error('[API Error]', {
+          method,
+          url,
+          status,
+          statusText: error.response?.statusText,
+          message: error.message
+        })
+        
+        // Handle authentication errors - ONLY for 401
+        if (status === 401) {
+          console.warn('🚫 401 Unauthorized - Token invalid or expired')
+          console.warn('   Clearing auth tokens and redirecting to login')
           localStorage.removeItem('novel_anime_access_token')
           localStorage.removeItem('novel_anime_refresh_token')
+          localStorage.removeItem('novel_anime_user_id')
+          localStorage.removeItem('novel_anime_user_data')
+          // Optionally redirect to login
+          // window.location.href = '/#/login'
+        }
+        
+        // Handle forbidden errors
+        if (status === 403) {
+          console.warn('🚫 403 Forbidden - Insufficient permissions')
+          console.warn('   User:', localStorage.getItem('novel_anime_user_id') || 'Unknown')
+        }
+        
+        // For 404 errors, just log - don't clear auth
+        if (status === 404) {
+          console.warn('⚠️ 404 Not Found:', url)
         }
         
         return Promise.reject(error)
@@ -417,6 +455,30 @@ class ApiService {
     }
   }
 
+  /**
+   * Delete project
+   */
+  async deleteProject(projectId: string): Promise<{
+    success: boolean
+    message?: string
+  }> {
+    try {
+      console.log('🗑️ Deleting project:', projectId);
+      const response = await this.axiosInstance.delete(`/project/${projectId}`);
+      console.log('🗑️ Delete response:', response.data);
+      return {
+        success: response.data?.success !== false,
+        message: response.data?.message
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to delete project:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || 'Failed to delete project'
+      };
+    }
+  }
+
   // ========== Workflow API ==========
 
   /**
@@ -455,16 +517,24 @@ class ApiService {
     workflow?: any
     message?: string
   }> {
+    console.log('🔍 API: Getting workflow:', workflowId);
     try {
       const response = await this.axiosInstance.get('/workflow', {
         params: { workflowId }
       })
+      console.log('✅ API: Workflow response:', response.data);
       return {
         success: true,
         workflow: response.data.workflow
       }
     } catch (error: any) {
-      console.error('Failed to get workflow:', error)
+      console.error('❌ API: Failed to get workflow:', {
+        workflowId,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       return {
         success: false,
         message: error.message

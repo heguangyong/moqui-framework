@@ -142,7 +142,7 @@
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/ui.js';
-import { useProjectStore } from '@/stores/project.js';
+import { useProjectStore } from '@/stores/project';
 import { icons } from '@/utils/icons.js';
 
 // Props

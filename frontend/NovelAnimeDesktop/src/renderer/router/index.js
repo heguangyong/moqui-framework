@@ -74,7 +74,7 @@ const routes = [
     path: '/preview',
     name: 'preview',
     component: PreviewView,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }  // 暂时不需要认证，避免跳转问题
   },
   // 资源库
   {

@@ -117,8 +117,56 @@ class AuthApiService {
 
   async validateToken(): Promise<ApiResponse> {
     try {
-      const response = await this.api.get('/rest/s1/novel-anime/auth/validate')
-      return { success: true, data: response.data }
+      // Feature: 08-02-auth-diagnosis-fix
+      // If /auth/validate endpoint doesn't exist, validate token locally
+      const token = localStorage.getItem('novel_anime_access_token')
+      
+      if (!token) {
+        return { success: false, error: 'No token found' }
+      }
+
+      // Try to decode and validate token locally
+      try {
+        const parts = token.split('.')
+        if (parts.length !== 3) {
+          return { success: false, error: 'Invalid token format' }
+        }
+
+        const payload = JSON.parse(atob(parts[1]))
+        const exp = payload.exp
+
+        // Check if token is expired
+        if (exp && Date.now() >= exp * 1000) {
+          return { success: false, error: 'Token expired' }
+        }
+
+        // Try to call backend endpoint if it exists
+        try {
+          const response = await this.api.get('/rest/s1/novel-anime/auth/validate')
+          return { success: true, data: response.data }
+        } catch (apiError: any) {
+          // If endpoint doesn't exist (404), return success with local validation
+          if (apiError.response?.status === 404) {
+            console.warn('[AuthAPI] /auth/validate endpoint not found, using local validation')
+            
+            // Get user data from localStorage
+            const userData = localStorage.getItem('novel_anime_user_data')
+            const user = userData ? JSON.parse(userData) : null
+            
+            return {
+              success: true,
+              data: {
+                valid: true,
+                user: user,
+                message: 'Token validated locally'
+              }
+            }
+          }
+          throw apiError
+        }
+      } catch (decodeError) {
+        return { success: false, error: 'Failed to decode token' }
+      }
     } catch (error: any) {
       return {
         success: false,

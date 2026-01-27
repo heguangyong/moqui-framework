@@ -50,7 +50,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useNavigationStore } from '../../stores/navigation.js';
+import { useNavigationStore } from '../../stores/navigation';
 import { useUIStore } from '../../stores/ui.js';
 import { icons } from '../../utils/icons.js';
 
@@ -58,7 +58,7 @@ const navigationStore = useNavigationStore();
 const uiStore = useUIStore();
 
 // 应用版本
-const appVersion = ref('1.0.0');
+const appVersion = ref('1.0.3');
 
 // 设置分类 - 精简为核心设置项
 const categories = ref([

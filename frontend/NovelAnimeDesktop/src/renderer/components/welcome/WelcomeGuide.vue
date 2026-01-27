@@ -70,7 +70,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useProjectStore } from '../../stores/project.js';
+import { useProjectStore } from '../../stores/project';
 import { useUIStore } from '../../stores/ui.js';
 import { icons } from '../../utils/icons.js';
 
@@ -180,7 +180,8 @@ async function importNovel() {
 // 打开项目
 function openProject(project) {
   projectStore.setCurrentProject(project);
-  router.push(`/project/${project.id}`);
+  const projectId = project.id || project.projectId;
+  router.push(`/project/${projectId}`);
 }
 
 // 格式化日期

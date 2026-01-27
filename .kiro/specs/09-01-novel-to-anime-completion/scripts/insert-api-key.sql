@@ -1,0 +1,25 @@
+-- 配置 GLM-4 API Key
+-- 删除旧配置(如果存在)
+DELETE FROM MCP_SYSTEM_CONFIG WHERE CONFIG_KEY = 'ai.api.key';
+
+-- 插入新配置
+INSERT INTO MCP_SYSTEM_CONFIG (
+    CONFIG_ID,
+    CONFIG_KEY,
+    CONFIG_VALUE,
+    CONFIG_TYPE,
+    CATEGORY,
+    DESCRIPTION,
+    IS_USER_CONFIGURABLE
+) VALUES (
+    'AI_API_KEY',
+    'ai.api.key',
+    '7b547bec7286432186eb77a477e10c33.XtHQWZS5PoGKAkg0',
+    'STRING',
+    'AI',
+    'GLM-4 API Key',
+    'Y'
+);
+
+-- 验证插入
+SELECT * FROM MCP_SYSTEM_CONFIG WHERE CONFIG_KEY = 'ai.api.key';

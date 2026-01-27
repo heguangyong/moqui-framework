@@ -106,7 +106,7 @@ import { useFileStore } from '../../stores/file.js';
 import { icons } from '../../utils/icons.js';
 import DocumentTreeNode from './DocumentTreeNode.vue';
 
-const emit = defineEmits(['select', 'open', 'create', 'delete']);
+const emit = defineEmits(['select', 'open', 'create', 'delete', 'rename']);
 
 const fileStore = useFileStore();
 
@@ -189,21 +189,14 @@ function handleNewFolder() {
 
 function handleRename() {
   if (contextMenu.value.node) {
-    const newName = prompt('请输入新名称:', contextMenu.value.node.name);
-    if (newName && newName.trim()) {
-      fileStore.renameNode(contextMenu.value.node.id, newName.trim());
-    }
+    emit('rename', contextMenu.value.node);
   }
   hideContextMenu();
 }
 
 function handleDelete() {
   if (contextMenu.value.node) {
-    const confirmed = confirm(`确定要删除 "${contextMenu.value.node.name}" 吗？`);
-    if (confirmed) {
-      fileStore.deleteNode(contextMenu.value.node.id);
-      emit('delete', contextMenu.value.node);
-    }
+    emit('delete', contextMenu.value.node);
   }
   hideContextMenu();
 }

@@ -162,8 +162,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNavigationStore } from '../stores/navigation.js';
-import { useProjectStore } from '../stores/project.js';
+import { useNavigationStore } from '../stores/navigation';
+import { useProjectStore } from '../stores/project';
 import { icons } from '../utils/icons.js';
 import AssetGrid from '../components/assets/AssetGrid.vue';
 import AssetDetail from '../components/assets/AssetDetail.vue';

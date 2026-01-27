@@ -114,8 +114,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useProjectStore } from '../stores/project.js';
-import { useNavigationStore } from '../stores/navigation.js';
+import { useProjectStore } from '../stores/project';
+import { useNavigationStore } from '../stores/navigation';
 import { useUIStore } from '../stores/ui.js';
 
 const router = useRouter();
@@ -141,11 +141,29 @@ const stats = ref({
 // 生成的章节数据
 const generatedChapters = ref([]);
 
+// 数据去重辅助函数
+function deduplicateChapters(chapters) {
+  const seen = new Set();
+  return chapters.filter(chapter => {
+    const id = chapter.id || chapter.chapterId;
+    if (seen.has(id)) {
+      console.warn('⚠️ 发现重复章节:', id, chapter.title);
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+}
+
 onMounted(async () => {
-  // 从执行结果中获取实际数据
-  const result = navigationStore.workflowState.executionResult;
-  console.log('📋 Execution result:', result);
-  console.log('📋 Execution result keys:', result ? Object.keys(result) : 'null');
+  // 防止重复加载
+  if (generatedChapters.value.length > 0) {
+    console.log('⚠️ 数据已加载，跳过重复加载');
+    return;
+  }
+  
+  // 🔥 REFACTOR: Load data from localStorage or backend instead of workflowState
+  // workflowState has been removed as part of architecture cleanup
   
   // 获取项目 ID（从 store 或 localStorage）
   let projectId = projectStore.currentProject?.id || projectStore.currentProject?.projectId;
@@ -160,135 +178,7 @@ onMounted(async () => {
                 localStorage.getItem('novel_anime_current_novel_id');
   console.log('📦 novelId:', novelId);
   
-  // 首先尝试从工作流执行结果中获取数据（最新的数据）
-  if (result) {
-    console.log('📊 尝试从工作流执行结果中获取数据...');
-    console.log('📊 nodeResultsData:', result.nodeResultsData);
-    console.log('📊 nodeResults type:', result.nodeResults ? result.nodeResults.constructor.name : 'null');
-    
-    let chapters = [];
-    let scenes = [];
-    let characters = [];
-    let scripts = [];
-    
-    // 处理函数：从节点结果中提取数据
-    const processNodeResult = (nodeResult, nodeId) => {
-      console.log(`📦 处理节点 ${nodeId}:`, {
-        hasChapters: !!(nodeResult.chapters?.length),
-        hasScenes: !!(nodeResult.scenes?.length),
-        hasCharacters: !!(nodeResult.characters?.length),
-        hasScripts: !!(nodeResult.scripts?.length)
-      });
-      
-      if (nodeResult.chapters && nodeResult.chapters.length > 0) {
-        chapters = nodeResult.chapters;
-      }
-      if (nodeResult.scenes && nodeResult.scenes.length > 0) {
-        scenes = nodeResult.scenes;
-      }
-      if (nodeResult.characters && nodeResult.characters.length > 0) {
-        characters = nodeResult.characters;
-      }
-      if (nodeResult.scripts && nodeResult.scripts.length > 0) {
-        scripts = nodeResult.scripts;
-      }
-    };
-    
-    // 尝试从 nodeResultsData (普通对象) 获取数据
-    const nodeResultsData = result.nodeResultsData || {};
-    if (Object.keys(nodeResultsData).length > 0) {
-      console.log('📦 使用 nodeResultsData (普通对象), keys:', Object.keys(nodeResultsData));
-      Object.entries(nodeResultsData).forEach(([nodeId, nodeResult]) => {
-        processNodeResult(nodeResult, nodeId);
-      });
-    } 
-    // 如果没有 nodeResultsData，尝试使用 nodeResults (Map)
-    else if (result.nodeResults) {
-      const nodeResultsMap = result.nodeResults;
-      if (typeof nodeResultsMap.forEach === 'function') {
-        console.log('📦 使用 nodeResults (Map), size:', nodeResultsMap.size);
-        nodeResultsMap.forEach((nodeResult, nodeId) => {
-          processNodeResult(nodeResult, nodeId);
-        });
-      } else if (typeof nodeResultsMap === 'object') {
-        // 可能是从 localStorage 恢复的普通对象
-        console.log('📦 使用 nodeResults (Object), keys:', Object.keys(nodeResultsMap));
-        Object.entries(nodeResultsMap).forEach(([nodeId, nodeResult]) => {
-          processNodeResult(nodeResult, nodeId);
-        });
-      }
-    }
-    
-    console.log('📊 从执行结果获取到:', {
-      chapters: chapters.length,
-      scenes: scenes.length,
-      characters: characters.length,
-      scripts: scripts.length
-    });
-    
-    // 如果有章节数据，构建显示数据
-    if (chapters.length > 0) {
-      generatedChapters.value = chapters.map((chapter, index) => {
-        // 查找属于这个章节的场景
-        const chapterScenes = scenes.filter(s => 
-          s.chapterId === chapter.id || 
-          s.chapterId === chapter.chapterId
-        );
-        
-        // 如果章节自带场景数据，使用它；否则使用匹配的场景
-        const scenesToUse = chapter.scenes && chapter.scenes.length > 0 
-          ? chapter.scenes 
-          : chapterScenes;
-        
-        return {
-          id: chapter.id || chapter.chapterId || `ch${index + 1}`,
-          number: chapter.chapterNumber || index + 1,
-          title: chapter.title || `第${index + 1}章`,
-          scenes: scenesToUse.map((scene, sIndex) => {
-            // 构建场景标题：优先使用 title，其次使用 setting，最后使用默认格式
-            let sceneTitle = scene.title;
-            if (!sceneTitle || sceneTitle === 'Unknown' || sceneTitle.includes('未知')) {
-              // 尝试从 setting 构建标题
-              const setting = scene.setting && scene.setting !== 'Unknown' && scene.setting !== '未知场景' 
-                ? scene.setting 
-                : null;
-              if (setting) {
-                sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${setting}`;
-              } else {
-                // 尝试从内容提取简短描述
-                const contentPreview = (scene.content || scene.description || '').substring(0, 20).trim();
-                if (contentPreview) {
-                  sceneTitle = `场景${scene.sceneNumber || sIndex + 1}: ${contentPreview}...`;
-                } else {
-                  sceneTitle = `场景${scene.sceneNumber || sIndex + 1}`;
-                }
-              }
-            }
-            
-            return {
-              id: scene.id || scene.sceneId || `s${sIndex + 1}`,
-              title: sceneTitle,
-              description: scene.description || scene.visualDescription || scene.content?.substring(0, 100) || '',
-              characters: scene.characters || []
-            };
-          })
-        };
-      });
-      
-      // 更新统计数据
-      stats.value = {
-        chapters: chapters.length,
-        scenes: scenes.length || chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0),
-        characters: characters.length,
-        videos: scripts.length || scenes.length
-      };
-      
-      console.log('✅ 从工作流执行结果构建了显示数据:', generatedChapters.value.length, '章');
-      return; // 成功获取数据
-    }
-  }
-  
-  // 如果执行结果没有数据，尝试从 localStorage 加载缓存的小说数据
+  // 尝试从 localStorage 加载缓存的小说数据
   if (novelId) {
     console.log('📚 尝试从 localStorage 加载小说数据, novelId:', novelId);
     try {
@@ -298,7 +188,7 @@ onMounted(async () => {
         console.log('📚 从 localStorage 加载到小说数据:', novelData.title, '章节数:', novelData.chapters?.length);
         
         if (novelData.chapters && novelData.chapters.length > 0) {
-          generatedChapters.value = novelData.chapters.map((chapter, index) => ({
+          const chaptersData = novelData.chapters.map((chapter, index) => ({
             id: chapter.id || chapter.chapterId || `ch${index + 1}`,
             number: chapter.chapterNumber || index + 1,
             title: chapter.title || `第${index + 1}章`,
@@ -329,6 +219,10 @@ onMounted(async () => {
             })
           }));
           
+          // 应用去重
+          generatedChapters.value = deduplicateChapters(chaptersData);
+          console.log('✅ 去重后章节数:', generatedChapters.value.length);
+          
           const totalScenes = novelData.chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0);
           stats.value = {
             chapters: novelData.chapters.length,
@@ -338,6 +232,13 @@ onMounted(async () => {
           };
           
           console.log('✅ 从 localStorage 构建了显示数据:', generatedChapters.value.length, '章');
+          
+          // 🔥 DELETED: Removed navigationStore.setExecutionResult() call
+          // This method was deleted in Phase 1 refactoring
+          // Data is already stored in generatedChapters.value for this component
+          // PreviewView will load data independently from localStorage/backend
+          console.log('📊 数据已加载到 generatedChapters，PreviewView 将独立加载数据');
+          
           return;
         }
       }
@@ -368,7 +269,7 @@ onMounted(async () => {
           console.log('📚 从后端获取到小说数据:', novel.title, '章节数:', novel.chapters?.length);
           
           if (novel.chapters && novel.chapters.length > 0) {
-            generatedChapters.value = novel.chapters.map((chapter, index) => ({
+            const chaptersData = novel.chapters.map((chapter, index) => ({
               id: chapter.chapterId || chapter.id || `ch${index + 1}`,
               number: chapter.chapterNumber || index + 1,
               title: chapter.title || `第${index + 1}章`,
@@ -399,6 +300,10 @@ onMounted(async () => {
               })
             }));
             
+            // 应用去重
+            generatedChapters.value = deduplicateChapters(chaptersData);
+            console.log('✅ 去重后章节数:', generatedChapters.value.length);
+            
             const totalScenes = novel.scenes?.length || novel.chapters.reduce((sum, ch) => sum + (ch.scenes?.length || 0), 0);
             stats.value = {
               chapters: novel.chapters.length,
@@ -408,6 +313,13 @@ onMounted(async () => {
             };
             
             console.log('✅ 从后端构建了显示数据:', generatedChapters.value.length, '章,', totalScenes, '个场景');
+            
+            // 🔥 DELETED: Removed navigationStore.setExecutionResult() call
+            // This method was deleted in Phase 1 refactoring
+            // Data is already stored in generatedChapters.value for this component
+            // PreviewView will load data independently from localStorage/backend
+            console.log('📊 数据已加载到 generatedChapters，PreviewView 将独立加载数据');
+            
             return;
           }
         }
@@ -432,12 +344,12 @@ function toggleChapter(chapterId) {
 }
 
 function previewScene(scene) {
-  uiStore.addNotification({
-    type: 'info',
-    title: '场景预览',
-    message: `正在预览: ${scene.title}`,
-    timeout: 2000
-  });
+  console.log('🎬 预览场景:', scene);
+  
+  // 🔥 REFACTOR: Removed workflowState dependency
+  // Simply navigate to preview page - PreviewView will load data from localStorage/backend
+  console.log('✅ 跳转到预览页面');
+  router.push('/preview');
 }
 
 function exportScene(scene) {
@@ -469,7 +381,7 @@ async function finishProject() {
     try {
       // 尝试调用后端 API 更新项目状态
       const { apiService } = await import('../services/index.ts');
-      await apiService.axiosInstance.put(`/projects/${projectId}/status`, {
+      await apiService.axiosInstance.put(`/project/${projectId}`, {
         status: 'completed'
       });
     } catch (error) {
@@ -480,8 +392,8 @@ async function finishProject() {
     projectStore.currentProject.status = 'completed';
   }
   
-  // 重置工作流状态
-  navigationStore.resetWorkflowState();
+  // 🔥 REFACTOR: Removed navigationStore.resetWorkflowState() call
+  // workflowState has been deleted as part of architecture cleanup
   
   // 清除当前项目，准备开始新项目
   projectStore.clearCurrentProject();

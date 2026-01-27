@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Moqui JWT 完整登录解决方案</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .step { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        #status { min-height: 100px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Moqui JWT 完整登录解决方案</h1>
+
+    <div class="step">
+        <h3>步骤 1: 自动获取JWT认证</h3>
+        <button onclick="autoLogin()">🚀 自动登录并注入JWT</button>
+        <p>点击此按钮将自动完成登录并注入JWT令牌到浏览器</p>
+    </div>
+
+    <div class="step">
+        <h3>步骤 2: 验证API访问</h3>
+        <button onclick="testAPI()">🧪 测试API连接</button>
+        <p>验证JWT认证是否正常工作</p>
+    </div>
+
+    <div class="step">
+        <h3>步骤 3: 打开Moqui应用</h3>
+        <button onclick="openMoqui()">📱 打开Moqui应用</button>
+        <p>在新标签页中打开Moqui应用界面</p>
+    </div>
+
+    <div class="step">
+        <h3>步骤 4: 直接访问链接</h3>
+        <a href="http://localhost:8080/qapps" target="_blank" style="color: #007bff; text-decoration: none;">
+            🔗 直接访问 http://localhost:8080/qapps
+        </a>
+        <p>完成上述步骤后，您可以直接访问此链接</p>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+    function log(message, isError = false) {
+        const status = document.getElementById('status');
+        const timestamp = new Date().toLocaleTimeString();
+        const className = isError ? 'error' : 'success';
+        status.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        status.scrollTop = status.scrollHeight;
+    }
+
+    async function autoLogin() {
+        try {
+            log('🔐 开始自动登录流程...');
+
+            // Step 1: 获取JWT token
+            const loginResponse = await fetch('http://localhost:8080/rest/s1/moqui/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'john.doe', password: 'moqui' })
+            });
+
+            if (!loginResponse.ok) {
+                throw new Error(`登录请求失败: ${loginResponse.status}`);
+            }
+
+            const loginData = await loginResponse.json();
+            log(`✅ 成功获取JWT Token: ${loginData.accessToken.substring(0, 30)}...`);
+
+            // Step 2: 存储token到所有可能的位置
+            localStorage.setItem('jwt_access_token', loginData.accessToken);
+            localStorage.setItem('jwt_refresh_token', loginData.refreshToken || '');
+            sessionStorage.setItem('jwt_access_token', loginData.accessToken);
+
+            // 设置cookie
+            document.cookie = `jwt_access_token=${loginData.accessToken}; path=/; max-age=7200; SameSite=Lax`;
+
+            log('✅ JWT tokens已存储到 localStorage, sessionStorage 和 cookie');
+
+            // Step 3: 测试API访问
+            const testResponse = await fetch('http://localhost:8080/qapps/menuData', {
+                headers: { 'Authorization': `Bearer ${loginData.accessToken}` }
+            });
+
+            if (testResponse.ok) {
+                const menuData = await testResponse.json();
+                log(`✅ API测试成功 - 获取到 ${menuData.length} 个菜单项`);
+                log('🎉 JWT认证设置完成！现在可以访问Moqui应用了');
+            } else {
+                log(`⚠️ API测试失败: ${testResponse.status}`, true);
+            }
+
+        } catch (error) {
+            log(`❌ 自动登录失败: ${error.message}`, true);
+        }
+    }
+
+    async function testAPI() {
+        try {
+            const token = localStorage.getItem('jwt_access_token');
+            if (!token) {
+                log('❌ 未找到JWT token，请先执行自动登录', true);
+                return;
+            }
+
+            log('🧪 测试API连接...');
+
+            const response = await fetch('http://localhost:8080/qapps/menuData', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                log(`✅ API连接成功 - 状态码: ${response.status}, 菜单数量: ${data.length}`);
+            } else {
+                log(`❌ API连接失败 - 状态码: ${response.status}`, true);
+            }
+
+        } catch (error) {
+            log(`❌ API测试错误: ${error.message}`, true);
+        }
+    }
+
+    function openMoqui() {
+        const token = localStorage.getItem('jwt_access_token');
+        if (!token) {
+            log('❌ 未找到JWT token，请先执行自动登录', true);
+            return;
+        }
+
+        log('📱 正在打开Moqui应用...');
+
+        // 创建一个带有JWT设置的新窗口
+        const moquiWindow = window.open('', '_blank');
+
+        // 注入JWT token到新窗口
+        moquiWindow.document.write(`
+            <html>
+            <head><title>Loading Moqui...</title></head>
+            <body>
+                <div style="text-align:center; margin-top:100px; font-family:Arial;">
+                    <h2>🔐 正在设置JWT认证...</h2>
+                    <p>即将跳转到Moqui应用</p>
+                </div>
+                <script>
+                    localStorage.setItem('jwt_access_token', '${token}');
+                    sessionStorage.setItem('jwt_access_token', '${token}');
+                    document.cookie = 'jwt_access_token=${token}; path=/; max-age=7200';
+                    setTimeout(() => {
+                        window.location.href = 'http://localhost:8080/qapps';
+                    }, 2000);
+                </script>
+            </body>
+            </html>
+        `);
+
+        log('✅ 已在新标签页中打开Moqui应用');
+    }
+
+    // 页面加载时检查JWT状态
+    window.onload = function() {
+        const token = localStorage.getItem('jwt_access_token');
+        if (token) {
+            log('📋 检测到已存储的JWT token');
+            log('✅ 您可以直接点击 "打开Moqui应用" 或访问链接');
+        } else {
+            log('📋 未检测到JWT token，请先执行自动登录');
+        }
+    }
+    </script>
+</body>
+</html>

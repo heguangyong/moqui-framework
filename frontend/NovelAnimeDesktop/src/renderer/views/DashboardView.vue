@@ -30,25 +30,11 @@
         <h2>最近打开</h2>
         <p>您最近打开的项目和文件</p>
       </div>
-      <div v-if="recentProjects.length > 0" class="recent-projects-section">
-        <div class="project-list">
-          <div 
-            v-for="project in recentProjects" 
-            :key="project.id"
-            class="project-item"
-            @click="openProject(project)"
-          >
-            <div class="project-icon-small">
-              <component :is="icons.fileText" :size="16" />
-            </div>
-            <div class="project-item-info">
-              <span class="project-name">{{ project.name }}</span>
-              <span class="project-date">{{ formatDate(project.updatedAt) }}</span>
-            </div>
-            <component :is="icons.chevronRight" :size="16" class="project-arrow" />
-          </div>
-        </div>
-      </div>
+      <QuickActions
+        v-if="recentProjects.length > 0"
+        :projects="recentProjects"
+        @open-project="openProject"
+      />
       <div v-else class="content-placeholder">
         <component :is="icons.clock" :size="48" />
         <span>暂无最近打开的项目</span>
@@ -74,7 +60,10 @@
         <h2>全部项目</h2>
         <p>管理您的所有项目</p>
       </div>
-      <ProjectList />
+      <ProjectList 
+        @open-project="openProject"
+        @project-deleted="handleProjectDeleted"
+      />
     </template>
     
     <!-- 默认仪表盘视图 - 向导式流程 -->
@@ -85,132 +74,31 @@
       </div>
       
       <!-- 向导式流程步骤 -->
-      <div class="workflow-guide">
-        <h3 class="section-title">快速开始</h3>
-        <div class="steps-container">
-          <div 
-            v-for="(step, index) in workflowSteps" 
-            :key="step.id"
-            class="step-card"
-            :class="{ 
-              'step-card--active': currentStep === index,
-              'step-card--completed': step.completed,
-              'step-card--disabled': !step.enabled
-            }"
-            @click="handleStepClick(step, index)"
-          >
-            <div class="step-number" :class="{ 'step-number--completed': step.completed }">
-              <component v-if="step.completed" :is="icons.check" :size="14" />
-              <span v-else>{{ index + 1 }}</span>
-            </div>
-            <div class="step-content">
-              <div class="step-icon">
-                <component :is="step.icon" :size="24" />
-              </div>
-              <div class="step-info">
-                <h4 class="step-title">{{ step.title }}</h4>
-                <p class="step-description">{{ step.description }}</p>
-              </div>
-            </div>
-            <div class="step-action">
-              <button 
-                v-if="step.actionLabel && (currentStep === index || step.completed)"
-                class="step-btn"
-                :class="{ 
-                  'step-btn--primary': currentStep === index && !step.completed,
-                  'step-btn--completed': step.completed
-                }"
-                @click.stop="handleStepAction(step)"
-                :disabled="!step.enabled || isImporting"
-              >
-                {{ getStepButtonLabel(step) }}
-              </button>
-              <span v-else-if="step.actionLabel" class="step-btn-placeholder">
-                {{ step.actionLabel }}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 导入进度显示 -->
-        <div v-if="isImporting" class="import-progress-section">
-          <div class="progress-header">
-            <span class="progress-message">{{ importMessage }}</span>
-            <span class="progress-percent">{{ importProgress }}%</span>
-          </div>
-          <div class="progress-bar-container">
-            <div class="progress-bar-fill" :style="{ width: importProgress + '%' }"></div>
-          </div>
-        </div>
-        
-        <!-- 错误提示 -->
-        <div v-if="importError" class="import-error">
-          <component :is="icons.alertCircle" :size="16" />
-          <span>{{ importError }}</span>
-          <button class="error-close" @click="importError = ''">×</button>
-        </div>
-      </div>
+      <WorkflowSteps
+        :steps="workflowSteps"
+        :current-step="currentStep"
+        :is-importing="isImporting"
+        :import-progress="importProgress"
+        :import-message="importMessage"
+        :import-error="importError"
+        @step-click="handleStepClick"
+        @step-action="handleStepAction"
+      />
 
       <!-- 当前进行中的项目 -->
-      <div v-if="activeProject" class="active-project-section">
-        <h3 class="section-title">当前项目</h3>
-        <div class="active-project-card" :class="{ 'active-project-card--completed': activeProject.status === 'completed' }">
-          <div class="project-info">
-            <div class="project-icon" :class="{ 'project-icon--completed': activeProject.status === 'completed' }">
-              <component :is="activeProject.status === 'completed' ? icons.check : icons.folder" :size="24" />
-            </div>
-            <div class="project-details">
-              <h4>{{ activeProject.name }}</h4>
-              <p>{{ getStatusText(activeProject.status) }} · {{ activeProject.progress }}% 完成</p>
-            </div>
-          </div>
-          <div class="project-progress">
-            <div class="progress-bar" :class="{ 'progress-bar--completed': activeProject.status === 'completed' }">
-              <div class="progress-fill" :class="{ 'progress-fill--completed': activeProject.status === 'completed' }" :style="{ width: activeProject.progress + '%' }"></div>
-            </div>
-          </div>
-          <!-- 已完成：显示查看结果和新建项目按钮 -->
-          <template v-if="activeProject.status === 'completed'">
-            <button class="continue-btn continue-btn--success" @click="viewResults">
-              查看结果
-              <component :is="icons.eye" :size="16" />
-            </button>
-            <button class="continue-btn continue-btn--secondary" @click="startNewProject">
-              新建项目
-              <component :is="icons.plus" :size="16" />
-            </button>
-          </template>
-          <!-- 未完成：显示继续处理按钮 -->
-          <template v-else>
-            <button class="continue-btn" @click="continueProject">
-              继续处理
-              <component :is="icons.arrowRight" :size="16" />
-            </button>
-          </template>
-        </div>
-      </div>
+      <ProjectOverview
+        v-if="activeProject"
+        :project="activeProject"
+        @continue="continueProject"
+        @view-results="viewResults"
+        @new-project="startNewProject"
+      />
       
       <!-- 最近项目 -->
-      <div v-if="recentProjects.length > 0" class="recent-projects-section">
-        <h3 class="section-title">最近项目</h3>
-        <div class="project-list">
-          <div 
-            v-for="project in recentProjects" 
-            :key="project.id"
-            class="project-item"
-            @click="openProject(project)"
-          >
-            <div class="project-icon-small">
-              <component :is="icons.fileText" :size="16" />
-            </div>
-            <div class="project-item-info">
-              <span class="project-name">{{ project.name }}</span>
-              <span class="project-date">{{ formatDate(project.updatedAt) }}</span>
-            </div>
-            <component :is="icons.chevronRight" :size="16" class="project-arrow" />
-          </div>
-        </div>
-      </div>
+      <QuickActions
+        :projects="recentProjects"
+        @open-project="openProject"
+      />
       
       <!-- 系统状态 -->
       <div class="status-section">
@@ -237,14 +125,23 @@
 <script setup>
 import { ref, computed, onMounted, watch, h } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNavigationStore } from '../stores/navigation.js';
-import { useProjectStore } from '../stores/project.js';
+import { useNavigationStore } from '../stores/navigation';
+import { useProjectStore } from '../stores/project';
+import { useUIStore } from '../stores/ui.js';
+import { useAuthStore } from '../stores/auth.ts';
 import { icons } from '../utils/icons.js';
 import { apiService, novelApi, pipelineApi } from '../services/index.ts';
+import SessionManager from '../utils/SessionManager.ts';
+import ProjectList from './dashboard/ProjectList.vue';
+import WorkflowSteps from './dashboard/WorkflowSteps.vue';
+import ProjectOverview from './dashboard/ProjectOverview.vue';
+import QuickActions from './dashboard/QuickActions.vue';
 
 const router = useRouter();
 const navigationStore = useNavigationStore();
 const projectStore = useProjectStore();
+const uiStore = useUIStore();
+const authStore = useAuthStore();
 
 // 从 panelContext 获取当前视图状态
 const dashboardContext = computed(() => navigationStore.panelContext.dashboard);
@@ -326,9 +223,66 @@ watch(dashboardContext, (newVal) => {
 
 onMounted(async () => {
   console.log('📊 DashboardView mounted');
+  
+  // Check authentication status
+  const token = localStorage.getItem('novel_anime_access_token');
+  console.log('🔐 Auth token:', token ? 'Present ✅' : 'Missing ❌');
+  
+  // Development environment: Auto-login if no token
+  if (!token && import.meta.env.DEV) {
+    console.log('🔐 Development mode: Attempting auto-login...');
+    await attemptAutoLogin();
+  } else if (!token) {
+    console.warn('⚠️ User not authenticated - some operations (like delete) may fail');
+    // Show warning notification
+    uiStore.addNotification({
+      type: 'warning',
+      title: '提示',
+      message: '当前未登录，部分功能（如删除项目）需要登录后使用',
+      timeout: 5000
+    });
+  }
+  
   await checkSystemStatus();
   await loadActiveProject();
 });
+
+// Auto-login for development environment
+async function attemptAutoLogin() {
+  try {
+    // Use auth store's login method to properly set user state
+    const result = await authStore.login({
+      email: 'test@example.com',
+      password: 'test123'
+    });
+    
+    if (result.success && result.user) {
+      console.log('✅ Auto-login successful, user:', result.user);
+      uiStore.addNotification({
+        type: 'success',
+        title: '自动登录成功',
+        message: `开发环境已自动登录: ${result.user.username || result.user.email}`,
+        timeout: 3000
+      });
+    } else {
+      console.warn('⚠️ Auto-login failed:', result.error);
+      uiStore.addNotification({
+        type: 'warning',
+        title: '未登录',
+        message: '自动登录失败，请手动登录。部分功能需要登录后使用。',
+        timeout: 5000
+      });
+    }
+  } catch (error) {
+    console.error('❌ Auto-login error:', error);
+    uiStore.addNotification({
+      type: 'warning',
+      title: '未登录',
+      message: '当前未登录，部分功能（如删除项目）需要登录后使用',
+      timeout: 5000
+    });
+  }
+}
 
 // 检查系统状态
 async function checkSystemStatus() {
@@ -353,11 +307,10 @@ async function checkSystemStatus() {
 
 // 加载当前进行中的项目
 async function loadActiveProject() {
-  // 检查是否处于"新建项目"模式
-  // 如果 workflowState.stage 是 idle 且 projectStore 中没有当前项目，说明用户想新建项目
-  // 此时不应该从后端加载旧项目
-  if (navigationStore.workflowState.stage === 'idle' && !projectStore.currentProject) {
-    console.log('📊 New project mode detected, skipping project load');
+  // 🔥 REFACTOR: Removed workflowState check - use project.status instead
+  // 检查是否有当前项目
+  if (!projectStore.currentProject) {
+    console.log('📊 No current project, skipping project load');
     activeProject.value = null;
     currentNovelId.value = null;
     // 确保步骤状态正确
@@ -393,7 +346,43 @@ async function loadActiveProject() {
   if (current) {
     const projectId = current.id || current.projectId;
     
-    // 首先从后端获取项目的最新状态
+    // 🔥 REFACTOR: Use SessionManager to validate project data
+    // Verify project still exists in the project list
+    await projectStore.fetchProjects();
+    const projectExists = projectStore.projects.find(
+      p => (p.id || p.projectId) === projectId
+    );
+    
+    if (!projectExists) {
+      console.warn('⚠️ Current project no longer exists (deleted), clearing...');
+      projectStore.clearCurrentProject();
+      activeProject.value = null;
+      currentNovelId.value = null;
+      
+      // 🔥 REFACTOR: Use SessionManager to clean up
+      SessionManager.cleanupProjectData(projectId);
+      
+      // 重置步骤状态
+      workflowSteps.value.forEach((step, index) => {
+        step.completed = false;
+        step.enabled = index === 0;
+      });
+      currentStep.value = 0;
+      
+      // 尝试加载下一个可用项目
+      const nextProject = projectStore.projects[0];
+      if (nextProject) {
+        console.log('🔄 Loading next available project:', nextProject.name);
+        current = nextProject;
+        projectStore.setCurrentProject(current);
+        // 继续执行后续逻辑
+      } else {
+        console.log('📊 No projects available');
+        return; // 没有项目了，直接返回
+      }
+    }
+    
+    // 从后端获取项目的最新状态
     if (projectId) {
       try {
         console.log('📊 Fetching latest project status from backend for:', projectId);
@@ -416,7 +405,8 @@ async function loadActiveProject() {
     activeProject.value = {
       ...current,
       id: projectId,
-      progress: calculateProgress(current),
+      // 🔥 DELETED: progress: calculateProgress(current)
+      // Progress should come from backend
     };
 
     // 尝试加载项目的小说列表，获取 novelId
@@ -431,124 +421,53 @@ async function loadActiveProject() {
           currentNovelId.value = result.novels[0].novelId;
           console.log('📚 Loaded novelId from project:', currentNovelId.value);
 
-          // 只有当项目状态不是 completed 时，才用小说状态更新
-          // 项目状态 completed 优先级最高，不应被覆盖
-          const novelStatus = result.novels[0].status;
-          if (novelStatus && activeProject.value.status !== 'completed') {
-            activeProject.value.status = novelStatus;
-            // 重新计算进度
-            activeProject.value.progress = calculateProgress(activeProject.value);
-          }
+          // 🔥 DELETED: Update project status from novel status
+          // This was causing new projects to inherit status from OTHER projects' novels
+          // Project status should ONLY come from backend
         }
       } catch (error) {
         console.warn('Failed to load novels for project:', error);
       }
     }
 
-    // 如果还是没有 novelId，尝试从 localStorage 恢复
+    // 🔥 REFACTOR: Use SessionManager to validate localStorage data
+    // If still no novelId, try to restore from SessionManager
     if (!currentNovelId.value) {
-      const storedNovelId = localStorage.getItem('novel_anime_current_novel_id');
-      if (storedNovelId) {
-        currentNovelId.value = storedNovelId;
-        console.log('📚 Restored novelId from localStorage:', currentNovelId.value);
-        // 只有当项目状态不是 completed 且状态不明确时，才设置为 imported
-        if (activeProject.value.status !== 'completed' && 
-            (!activeProject.value.status || activeProject.value.status === 'active')) {
-          activeProject.value.status = 'imported';
-          // 重新计算进度
-          activeProject.value.progress = calculateProgress(activeProject.value);
-        }
+      // Validate that session data belongs to current project
+      if (!SessionManager.validateProjectData(projectId)) {
+        console.warn('⚠️ Session data does not match current project, cleaning up...');
+        SessionManager.cleanupProjectData(projectId);
+        console.log('✅ Old session data cleared, starting fresh');
       }
     }
 
-    // 优先检查 workflowState.stage
-    // 如果工作流已完成，强制更新项目状态
-    if (navigationStore.workflowState.stage === 'completed') {
-      console.log('📊 Workflow completed in workflowState, forcing status to completed');
-      activeProject.value.status = 'completed';
-      activeProject.value.progress = 100;
-    }
-    // 如果角色已确认但工作流未完成，显示 75% 进度
-    else if (navigationStore.workflowState.charactersConfirmed) {
-      console.log('📊 Characters already confirmed in workflowState, forcing status to characters_confirmed');
-      activeProject.value.status = 'characters_confirmed';
-      activeProject.value.progress = 75;
-    }
+    // 🔥 DELETED: Removed hardcoded progress settings
+    // Progress should come from backend, not be inferred from workflowState
+    // This was causing new projects to show 50% progress incorrectly
     
     // 根据项目状态更新步骤
     updateStepsFromProject(activeProject.value);
     
-    // 根据项目状态同步工作流状态
-    syncWorkflowStateFromProject(activeProject.value);
+    // 🔥 REFACTOR: Removed syncWorkflowStateFromProject - use project.status directly
   }
 
   console.log(
     '📊 Active project loaded:',
     activeProject.value,
     'novelId:',
-    currentNovelId.value,
-    'workflowState:',
-    navigationStore.workflowState
+    currentNovelId.value
   );
 }
 
-// 计算项目进度
-function calculateProgress(project) {
-  if (!project) return 0;
-
-  // 状态到进度百分比的映射
-  const progressMap = {
-    active: 25, // 活跃状态（已导入）
-    importing: 10,
-    imported: 25,
-    analyzing: 35, // 分析中
-    analyzed: 50, // 已分析（等同于 parsed）
-    parsing: 35,
-    parsed: 50,
-    characters_confirmed: 75,
-    generating: 85,
-    completed: 100,
-  };
-
-  return progressMap[project.status] || 0;
-}
+// 🔥 DELETED: calculateProgress() function
+// This function was hardcoding progress values based on status
+// Progress should come from backend, not be calculated on frontend
 
 // 根据项目状态更新步骤
 function updateStepsFromProject(project) {
   if (!project) return;
 
-  // 优先检查 workflowState.stage === 'completed'
-  if (navigationStore.workflowState.stage === 'completed') {
-    console.log('📊 Workflow completed in workflowState, setting all steps completed');
-    workflowSteps.value.forEach((step) => {
-      step.completed = true;
-      step.enabled = true;
-    });
-    currentStep.value = 3;
-    // 同时更新项目进度显示
-    if (activeProject.value) {
-      activeProject.value.progress = 100;
-      activeProject.value.status = 'completed';
-    }
-    return;
-  }
-
-  // 检查 navigationStore.workflowState.charactersConfirmed
-  if (navigationStore.workflowState.charactersConfirmed) {
-    console.log('📊 Characters confirmed in workflowState, setting step to 3');
-    workflowSteps.value.forEach((step, index) => {
-      step.completed = index < 3;
-      step.enabled = index <= 3;
-    });
-    currentStep.value = 3;
-    // 同时更新项目进度显示
-    if (activeProject.value) {
-      activeProject.value.progress = 75;
-      activeProject.value.status = 'characters_confirmed';
-    }
-    return;
-  }
-
+  // 🔥 REFACTOR: Removed workflowState checks - use project.status only
   // 状态到当前步骤的映射
   const statusMap = {
     active: 1, // 活跃状态（已导入）-> 步骤1（解析）
@@ -574,50 +493,12 @@ function updateStepsFromProject(project) {
   currentStep.value = Math.min(currentStepIndex, workflowSteps.value.length - 1);
 }
 
-// 根据项目状态同步工作流状态
-function syncWorkflowStateFromProject(project) {
-  if (!project) return;
-  
-  const status = project.status;
-  console.log('🔄 Syncing workflow state from project status:', status);
-  
-  // 根据项目状态设置工作流阶段
-  if (status === 'analyzed' || status === 'parsed') {
-    // 解析完成，进入角色审核阶段
-    if (navigationStore.workflowState.stage !== 'character-review' && 
-        navigationStore.workflowState.stage !== 'workflow-ready' &&
-        navigationStore.workflowState.stage !== 'executing' &&
-        navigationStore.workflowState.stage !== 'completed') {
-      navigationStore.setParseResult({
-        chaptersCreated: 0,
-        scenesCreated: 0,
-        charactersExtracted: 0
-      });
-      console.log('🔄 Set workflow stage to character-review');
-    }
-  } else if (status === 'characters_confirmed') {
-    // 角色已确认，进入工作流就绪阶段
-    if (!navigationStore.workflowState.charactersConfirmed) {
-      navigationStore.confirmCharacters();
-      console.log('🔄 Set workflow stage to workflow-ready');
-    }
-  } else if (status === 'generating') {
-    // 生成中
-    if (navigationStore.workflowState.stage !== 'executing') {
-      navigationStore.startExecution();
-      console.log('🔄 Set workflow stage to executing');
-    }
-  } else if (status === 'completed') {
-    // 已完成
-    if (navigationStore.workflowState.stage !== 'completed') {
-      navigationStore.setExecutionResult({});
-      console.log('🔄 Set workflow stage to completed');
-    }
-  }
-}
+// 🔥 DELETED: syncWorkflowStateFromProject() function
+// This function was causing state synchronization issues
+// Now we use project.status directly without syncing to workflowState
 
 // 步骤点击处理
-function handleStepClick(step, index) {
+function handleStepClick({ step, index }) {
   if (step.enabled || step.completed) {
     currentStep.value = index;
   }
@@ -764,34 +645,70 @@ async function uploadNovelToBackend(title, content, fileName) {
     
     if (!projectId) {
       importMessage.value = '正在创建项目...';
-      const projectResult = await apiService.createProject({
-        name: title,
+      
+      // 检查是否存在同名项目
+      let projectName = title;
+      const existingProjects = await apiService.getProjects();
+      if (existingProjects.success && existingProjects.projects) {
+        const duplicateNames = existingProjects.projects
+          .filter(p => p.name && p.name.startsWith(title))
+          .map(p => p.name);
+        
+        if (duplicateNames.length > 0) {
+          // 找到同名项目，自动添加编号
+          let counter = 2;
+          while (duplicateNames.includes(`${title} (${counter})`)) {
+            counter++;
+          }
+          projectName = `${title} (${counter})`;
+          console.log(`⚠️ 项目名称重复，自动重命名为: ${projectName}`);
+        }
+      }
+      
+      // 🔧 FIX: Use projectStore.createProject() instead of apiService.createProject()
+      // This ensures the project is added to the store and the list is refreshed
+      console.log('📝 DashboardView: Creating project via store:', projectName);
+      projectData = await projectStore.createProject({
+        name: projectName,
         description: `从文件 ${fileName} 导入的小说项目`
       });
       
-      if (projectResult.success && projectResult.project) {
-        projectId = projectResult.project.projectId || projectResult.project.id;
-        projectData = {
-          id: projectId,
-          name: title,
-          status: 'imported',
-          ...projectResult.project
-        };
-        // 将项目添加到 store 并设置为当前项目
-        projectStore.setCurrentProject(projectData);
+      if (projectData) {
+        // 🔧 FIX: Extract backend projectId - this is the authoritative ID
+        projectId = projectData.projectId || projectData.id;
+        
+        // 🔧 FIX: Validate that we have a valid backend projectId
+        if (!projectId) {
+          throw new Error('后端未返回有效的项目ID，无法继续导入');
+        }
+        
+        console.log('✅ Backend returned projectId:', projectId);
+        console.log('✅ Project created successfully with backend projectId:', projectId, 'name:', projectName);
+        
+        // Note: projectStore.createProject() now automatically:
+        // 1. Adds project to store's projects array
+        // 2. Calls fetchProjects() to refresh the list
+        // 3. Sets the project as current project
+        // So we don't need to manually do these steps
       } else {
-        // 使用默认项目ID
-        projectId = 'default-project';
-        projectData = { id: projectId, name: title, status: 'imported' };
+        // 创建项目失败，抛出错误
+        throw new Error(projectStore.error || '创建项目失败，无法导入小说');
       }
     }
+    
+    // 🔧 FIX: Validate projectId before proceeding to novel import
+    if (!projectId) {
+      throw new Error('项目ID无效，无法导入小说');
+    }
+    
+    console.log('📤 Importing novel with projectId:', projectId);
     
     importProgress.value = 50;
     importMessage.value = '正在导入小说...';
     
     // 调用后端 API 导入小说
     const result = await novelApi.importText({
-      projectId,
+      projectId,      // 🔧 FIX: Use the backend projectId
       title,
       content
     });
@@ -834,11 +751,9 @@ async function uploadNovelToBackend(title, content, fileName) {
         id: projectId,
         name: title,
         status: 'imported',
-        progress: 25,
+        // 🔥 DELETED: Removed hardcoded progress: 25
+        // Progress should come from backend
       };
-
-      // 存储到 navigation store
-      navigationStore.startImport(fileName);
 
       // 短暂延迟后重置导入状态
       setTimeout(() => {
@@ -851,7 +766,7 @@ async function uploadNovelToBackend(title, content, fileName) {
     }
   } catch (error) {
     console.error('Upload failed:', error);
-    importError.value = '导入失败: ' + (error.message || '未知错误');
+    importError.value = '小说导入失败: ' + (error.message || '未知错误');
     isImporting.value = false;
   }
 }
@@ -946,15 +861,14 @@ async function startParsing() {
     // 更新当前活动项目状态
     if (activeProject.value) {
       activeProject.value.status = 'parsed';
-      activeProject.value.progress = 50;
+      // 🔥 DELETED: Removed hardcoded progress: 50
+      // This was the root cause of new projects showing 50% progress
+      // Progress should come from backend
     }
     
-    // 存储解析结果
-    navigationStore.setParseResult({
-      chaptersCreated: structureResult.chaptersCreated,
-      scenesCreated: structureResult.scenesCreated,
-      charactersExtracted: characterResult.data?.charactersExtracted || 0
-    });
+    // 🔥 DELETED: Removed navigationStore.setParseResult() call
+    // This method was deleted in Phase 1 refactoring
+    // Parse results are already stored in the project/novel data
     
     setTimeout(() => {
       isImporting.value = false;
@@ -1024,25 +938,11 @@ function getStatusText(status) {
     parsing: '解析中',
     parsed: '已解析',
     characters_confirmed: '角色已确认',
+    characters_continue: '角色确认中',
     generating: '生成中',
     completed: '已完成'
   };
   return statusTexts[status] || status || '进行中';
-}
-
-// 获取步骤按钮文字 - 完成后显示不同文字
-function getStepButtonLabel(step) {
-  if (step.completed) {
-    // 完成后的按钮文字
-    const completedLabels = {
-      import: '重新导入',
-      parse: '重新解析',
-      characters: '查看角色',
-      generate: '查看结果'
-    };
-    return completedLabels[step.id] || step.actionLabel;
-  }
-  return step.actionLabel;
 }
 
 // 查看结果 - 项目完成后查看生成内容
@@ -1084,8 +984,7 @@ async function viewResults() {
 // 新建项目 - 重置状态开始新项目
 function startNewProject() {
   console.log('➕ startNewProject called');
-  // 重置工作流状态
-  navigationStore.resetWorkflowState();
+  // 🔥 REFACTOR: Removed resetWorkflowState - no longer needed
   // 清除当前项目
   projectStore.setCurrentProject(null);
   activeProject.value = null;
@@ -1104,7 +1003,7 @@ function startNewProject() {
 // 继续处理项目 - 根据项目状态跳转到对应的向导步骤
 async function continueProject() {
   console.log('🔄 continueProject called, activeProject:', activeProject.value);
-  console.log('🔄 workflowState:', navigationStore.workflowState);
+  // 🔥 REFACTOR: Removed workflowState logging - use project.status only
   
   if (!activeProject.value) {
     console.warn('No active project found');
@@ -1122,11 +1021,8 @@ async function continueProject() {
           currentNovelId.value = result.novels[0].novelId;
           console.log('📚 Loaded novelId:', currentNovelId.value);
           
-          // 同时更新项目状态（从小说状态推断）
-          const novelStatus = result.novels[0].status;
-          if (novelStatus) {
-            activeProject.value.status = novelStatus;
-          }
+          // 🔥 DELETED: Update project status from novel status
+          // Project status should ONLY come from backend
         }
       }
     } catch (error) {
@@ -1134,30 +1030,8 @@ async function continueProject() {
     }
   }
   
-  // 优先检查 navigationStore.workflowState
-  // 如果角色已确认，直接跳转到步骤 3
-  if (navigationStore.workflowState.charactersConfirmed) {
-    console.log('🎯 Characters confirmed, going to step 3 (generate)');
-    currentStep.value = 3;
-    workflowSteps.value.forEach((step, index) => {
-      step.completed = index < 3;
-      step.enabled = index <= 3;
-    });
-    // 设置 panelContext，让 WorkflowEditor 自动选择模板视图
-    navigationStore.updatePanelContext('workflow', {
-      viewType: 'template',
-      templateId: 't1', // 默认选择"标准转换流程"模板
-      selectedWorkflow: null,
-      statusFilter: null,
-      executionId: null,
-      // 传递项目信息
-      projectId: activeProject.value.id || activeProject.value.projectId,
-      novelId: currentNovelId.value,
-      projectName: activeProject.value.name
-    });
-    router.push('/workflow');
-    return;
-  }
+  // 🔥 REFACTOR: Removed workflowState.charactersConfirmed check
+  // Use project.status directly instead
   
   // 根据项目状态确定当前步骤
   // 状态映射：状态 -> 当前应该在哪个步骤
@@ -1252,7 +1126,8 @@ async function openProject(project) {
   activeProject.value = {
     ...latestProject,
     id: projectId,
-    progress: calculateProgress(latestProject)
+    // 🔥 DELETED: progress: calculateProgress(latestProject)
+    // Progress should come from backend
   };
   
   // 尝试加载项目的小说列表，获取 novelId
@@ -1273,16 +1148,9 @@ async function openProject(project) {
           localStorage.setItem('novel_anime_current_novel_title', result.novels[0].title);
         }
 
-        // 如果项目状态不是 completed，则根据小说状态更新
-        // 但如果项目已经是 completed，保持 completed 状态
-        if (activeProject.value.status !== 'completed') {
-          const novelStatus = result.novels[0].status;
-          if (novelStatus) {
-            activeProject.value.status = novelStatus;
-            activeProject.value.progress = calculateProgress(activeProject.value);
-            console.log('📚 Updated project status from novel:', novelStatus);
-          }
-        }
+        // 🔥 DELETED: Update project status from novel status
+        // This was causing new projects to inherit status from OTHER projects' novels
+        // Project status should ONLY come from backend, not be inferred from novel status
       }
     } catch (error) {
       console.warn('Failed to load novels for project:', error);
@@ -1292,8 +1160,7 @@ async function openProject(project) {
   // 根据项目状态更新步骤
   updateStepsFromProject(activeProject.value);
   
-  // 根据项目状态同步工作流状态
-  syncWorkflowStateFromProject(activeProject.value);
+  // 🔥 REFACTOR: Removed syncWorkflowStateFromProject - use project.status directly
   
   // 重置 panelContext 回到仪表盘主视图
   navigationStore.updatePanelContext('dashboard', {
@@ -1312,19 +1179,27 @@ async function openProject(project) {
   console.log('📂 Project opened, status:', activeProject.value.status, 'progress:', activeProject.value.progress);
 }
 
-// 格式化日期
-function formatDate(date) {
-  if (!date) return '';
-  const d = new Date(date);
-  const now = new Date();
-  const diff = now - d;
+// 处理项目删除事件 - 从 ProjectList 组件触发
+async function handleProjectDeleted(projectId) {
+  console.log('🗑️ handleProjectDeleted called for projectId:', projectId);
   
-  if (diff < 86400000) {
-    return '今天';
-  } else if (diff < 172800000) {
-    return '昨天';
+  // 如果删除的是当前活动项目，清除并重新加载
+  if (activeProject.value && 
+      (activeProject.value.id === projectId || activeProject.value.projectId === projectId)) {
+    console.log('🔄 Deleted project was active project, clearing and reloading...');
+    activeProject.value = null;
+    currentNovelId.value = null;
+    
+    // 重置步骤状态
+    workflowSteps.value.forEach((step, index) => {
+      step.completed = false;
+      step.enabled = index === 0;
+    });
+    currentStep.value = 0;
+    
+    // 重新加载活动项目（会自动选择下一个项目）
+    await loadActiveProject();
   }
-  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
 // 占位组件 - 使用渲染函数
@@ -1333,98 +1208,6 @@ const ProcessingTaskList = {
     return () => h('div', { class: 'content-placeholder' }, [
       h('span', '处理中的任务列表')
     ]);
-  }
-};
-
-// 项目列表组件 - 显示用户的所有项目
-const ProjectList = {
-  setup() {
-    const projectStore = useProjectStore();
-    const router = useRouter();
-    
-    const projects = computed(() => projectStore.projects);
-    const isLoading = computed(() => projectStore.isLoading);
-    
-    // 组件挂载时从 API 加载项目
-    onMounted(async () => {
-      console.log('📋 ProjectList mounted, fetching projects...');
-      await projectStore.fetchProjects();
-      console.log('📋 Projects loaded:', projectStore.projects.length);
-      console.log('📋 Projects data:', JSON.stringify(projectStore.projects));
-    });
-    
-    function getStatusLabel(status) {
-      const labels = { 
-        draft: '草稿', 
-        processing: '处理中', 
-        completed: '已完成',
-        active: '进行中',
-        imported: '已导入',
-        parsed: '已解析',
-        analyzing: '分析中',
-        generating: '生成中'
-      };
-      return labels[status] || status || '草稿';
-    }
-    
-    function formatProjectDate(date) {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('zh-CN');
-    }
-    
-    // 点击项目时调用外部的 openProject 函数
-    async function handleProjectClick(project) {
-      console.log('📋 ProjectList: handleProjectClick', project);
-      // 调用外部定义的 openProject 函数
-      await openProject(project);
-    }
-    
-    // 渲染函数
-    return () => {
-      // 加载中状态
-      if (isLoading.value) {
-        return h('div', { class: 'project-loading-state' }, [
-          h('div', { class: 'project-loading-spinner' }),
-          h('span', '加载中...')
-        ]);
-      }
-      
-      // 有项目时显示列表
-      if (projects.value.length > 0) {
-        return h('div', { class: 'project-grid' }, 
-          projects.value.map(project => 
-            h('div', { 
-              class: 'project-card-item',
-              key: project.id || project.projectId,
-              onClick: () => handleProjectClick(project)
-            }, [
-              h('div', { class: 'project-card-header' }, [
-                h('div', { class: 'project-card-icon' }, [
-                  h(icons.folder, { size: 20 })
-                ]),
-                h('div', { class: ['project-status-badge', `project-status-badge--${project.status || 'draft'}`] }, 
-                  getStatusLabel(project.status))
-              ]),
-              h('div', { class: 'project-card-name' }, project.name || '未命名项目'),
-              h('div', { class: 'project-card-desc' }, project.description || '暂无描述'),
-              h('div', { class: 'project-card-footer' }, [
-                h('span', { class: 'project-card-date' }, formatProjectDate(project.updatedAt || project.createdAt))
-              ])
-            ])
-          )
-        );
-      }
-      
-      // 空状态
-      return h('div', { class: 'project-empty-state' }, [
-        h('div', { class: 'project-empty-icon' }, [
-          h(icons.folder, { size: 48 })
-        ]),
-        h('div', { class: 'project-empty-title' }, '暂无项目'),
-        h('div', { class: 'project-empty-desc' }, '返回仪表盘创建您的第一个项目')
-      ]);
-    };
   }
 };
 </script>
@@ -1466,354 +1249,9 @@ const ProjectList = {
   margin: 0 0 12px 0;
 }
 
-/* 向导式流程步骤 */
-.workflow-guide {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  padding: 16px;
-}
+/* 完成状态的项目卡片 - DELETED (moved to ProjectOverview.vue) */
 
-.steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.step-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.step-card:hover:not(.step-card--disabled) {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.step-card--active {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(100, 140, 120, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.step-card--completed {
-  background: rgba(100, 160, 130, 0.1);
-  border-color: rgba(100, 160, 130, 0.2);
-}
-
-.step-card--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.step-number {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #8a8a8c;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step-card--active .step-number {
-  background: rgba(100, 140, 120, 0.2);
-  border-color: rgba(100, 140, 120, 0.3);
-  color: #4a6a52;
-}
-
-.step-number--completed {
-  background: rgba(100, 160, 130, 0.3) !important;
-  border-color: rgba(100, 160, 130, 0.4) !important;
-  color: #3a6a4a !important;
-}
-
-.step-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.step-icon {
-  color: #7a7a7c;
-}
-
-.step-card--active .step-icon {
-  color: #5a6a5e;
-}
-
-.step-card--completed .step-icon {
-  color: #4a7a5a;
-}
-
-.step-info {
-  flex: 1;
-}
-
-.step-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #2c2c2e;
-  margin: 0 0 2px 0;
-}
-
-.step-description {
-  font-size: 12px;
-  color: #7a7a7c;
-  margin: 0;
-}
-
-.step-action {
-  flex-shrink: 0;
-}
-
-.step-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  padding: 0 16px;
-  background-color: #c8c8c8;
-  border: none;
-  border-radius: 6px;
-  color: #2c2c2e;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.step-btn:hover:not(:disabled) {
-  background-color: #d8d8d8;
-}
-
-.step-btn--primary {
-  background-color: #7a9188;
-  color: #ffffff;
-}
-
-.step-btn--primary:hover:not(:disabled) {
-  background-color: #6a8178;
-}
-
-.step-btn--completed {
-  background-color: #5ab05e;
-  color: #ffffff;
-}
-
-.step-btn--completed:hover:not(:disabled) {
-  background-color: #4a9a4e;
-}
-
-.step-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.step-btn-placeholder {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 16px;
-  color: #a0a0a2;
-  font-size: 12px;
-}
-
-/* 当前项目卡片 */
-.active-project-section {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.active-project-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.project-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.project-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: rgba(100, 140, 120, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #5a7a62;
-}
-
-.project-details h4 {
-  font-size: 15px;
-  font-weight: 600;
-  color: #2c2c2e;
-  margin: 0 0 2px 0;
-}
-
-.project-details p {
-  font-size: 12px;
-  color: #7a7a7c;
-  margin: 0;
-}
-
-.project-progress {
-  padding: 0 4px;
-}
-
-.progress-bar {
-  height: 6px;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #7aa88a;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.continue-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  background-color: #7a9188;
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.continue-btn:hover {
-  background-color: #6a8178;
-}
-
-/* 完成状态的按钮样式 */
-.continue-btn--success {
-  background-color: #5ab05e;
-  color: #ffffff;
-}
-
-.continue-btn--success:hover {
-  background-color: #4a9a4e;
-}
-
-.continue-btn--secondary {
-  background-color: #c8c8c8;
-  color: #2c2c2e;
-}
-
-.continue-btn--secondary:hover {
-  background-color: #d8d8d8;
-}
-
-/* 完成状态的项目卡片 */
-.active-project-card--completed {
-  border-color: rgba(76, 175, 80, 0.3);
-  background: rgba(76, 175, 80, 0.05);
-}
-
-.project-icon--completed {
-  background: rgba(76, 175, 80, 0.2);
-  color: #2e7d32;
-}
-
-.progress-bar--completed {
-  background: rgba(76, 175, 80, 0.15);
-}
-
-.progress-fill--completed {
-  background: #5ab05e;
-}
-
-/* 最近项目列表 */
-.recent-projects-section {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.project-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.project-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.project-item:hover {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-.project-icon-small {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #7a7a7c;
-}
-
-.project-item-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.project-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #2c2c2e;
-}
-
-.project-date {
-  font-size: 11px;
-  color: #8a8a8c;
-}
-
-.project-arrow {
-  color: #b0b0b2;
-}
+/* 最近项目列表 - DELETED (moved to QuickActions.vue) */
 
 /* 系统状态 */
 .status-section {
@@ -1955,149 +1393,5 @@ const ProjectList = {
   color: #5a5a5c;
 }
 
-/* 项目列表组件样式 - 使用 :deep() 因为 ProjectList 是内联组件 */
-:deep(.project-list-container) {
-  padding: 0;
-}
 
-:deep(.project-grid) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-:deep(.project-card-item) {
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-:deep(.project-card-item:hover) {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-:deep(.project-card-header) {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-:deep(.project-card-icon) {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: rgba(100, 140, 120, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #5a7a62;
-}
-
-:deep(.project-status-badge) {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.06);
-  color: #6c6c6e;
-}
-
-:deep(.project-status-badge--draft) { background: rgba(100, 116, 139, 0.15); color: #64748b; }
-:deep(.project-status-badge--processing) { background: rgba(217, 119, 6, 0.15); color: #d97706; }
-:deep(.project-status-badge--completed) { background: rgba(5, 150, 105, 0.15); color: #059669; }
-:deep(.project-status-badge--active) { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
-:deep(.project-status-badge--imported) { background: rgba(79, 70, 229, 0.15); color: #4f46e5; }
-:deep(.project-status-badge--parsed) { background: rgba(219, 39, 119, 0.15); color: #db2777; }
-:deep(.project-status-badge--analyzing) { background: rgba(217, 119, 6, 0.15); color: #d97706; }
-:deep(.project-status-badge--generating) { background: rgba(234, 88, 12, 0.15); color: #ea580c; }
-
-:deep(.project-card-name) {
-  font-size: 15px;
-  font-weight: 600;
-  color: #2c2c2e;
-  margin-bottom: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-:deep(.project-card-desc) {
-  font-size: 12px;
-  color: #7a7a7c;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.4;
-}
-
-:deep(.project-card-footer) {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-:deep(.project-card-date) {
-  font-size: 11px;
-  color: #9a9a9c;
-}
-
-/* 空状态 */
-:deep(.project-empty-state) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-:deep(.project-empty-icon) {
-  color: #b0b0b2;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-:deep(.project-empty-title) {
-  font-size: 16px;
-  font-weight: 600;
-  color: #5a5a5c;
-  margin-bottom: 8px;
-}
-
-:deep(.project-empty-desc) {
-  font-size: 13px;
-  color: #8a8a8c;
-}
-
-/* 加载状态 */
-:deep(.project-loading-state) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  gap: 12px;
-  color: #6c6c6e;
-}
-
-:deep(.project-loading-spinner) {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(100, 140, 120, 0.2);
-  border-top-color: rgba(100, 140, 120, 0.8);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 </style>

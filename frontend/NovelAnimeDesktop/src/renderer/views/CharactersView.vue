@@ -312,8 +312,8 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
-import { useProjectStore } from '../stores/project.js';
-import { useNavigationStore } from '../stores/navigation.js';
+import { useProjectStore } from '../stores/project';
+import { useNavigationStore } from '../stores/navigation';
 import { CharacterSystem } from '../services/CharacterSystem.ts';
 import { characterApi, apiService } from '../services/index.ts';
 import { icons } from '../utils/icons.js';
@@ -564,27 +564,30 @@ const filteredCharacters = computed(() => {
 
 // 是否显示确认所有角色按钮 - 需求 5.3
 const showConfirmAllButton = computed(() => {
-  // 当有角色且未确认时显示
+  // 🔥 REFACTOR: Use project.status instead of workflowState
+  // 当有角色且项目状态为 analyzed 或 parsed 时显示
   const hasCharacters = characters.value.length > 0;
-  const notConfirmed = !navigationStore.workflowState.charactersConfirmed;
-  const inReviewStage = navigationStore.workflowState.stage === 'character-review';
+  const project = projectStore.currentProject;
+  const status = project?.status;
+  const inReviewStage = status === 'analyzed' || status === 'parsed';
   
   console.log('👥 showConfirmAllButton check:', {
     hasCharacters,
-    notConfirmed,
     inReviewStage,
-    stage: navigationStore.workflowState.stage,
-    charactersConfirmed: navigationStore.workflowState.charactersConfirmed,
+    status,
     charactersCount: characters.value.length
   });
   
-  // 只要有角色且未确认就显示按钮
-  return hasCharacters && notConfirmed;
+  // 只要有角色且在审核阶段就显示按钮
+  return hasCharacters && inReviewStage;
 });
 
 // 是否所有角色都已确认 - 需求 5.4
 const allCharactersConfirmed = computed(() => {
-  return navigationStore.workflowState.charactersConfirmed;
+  // 🔥 REFACTOR: Use project.status instead of workflowState
+  const project = projectStore.currentProject;
+  const status = project?.status;
+  return status === 'characters_confirmed' || status === 'generating' || status === 'completed';
 });
 
 // 监听选中角色变化
@@ -789,8 +792,7 @@ async function confirmAllCharacters() {
       projectStore.currentProject?.id || projectStore.currentProject?.projectId;
     console.log('👥 Updating project status, projectId:', projectId);
     if (projectId) {
-      const response = await apiService.axiosInstance.put('/projects', {
-        projectId: projectId,
+      const response = await apiService.axiosInstance.put(`/project/${projectId}`, {
         status: 'characters_confirmed',
       });
       console.log('👥 Project status update response:', response.data);
@@ -799,10 +801,9 @@ async function confirmAllCharacters() {
     console.warn('Failed to update project status:', error);
   }
 
-  // 更新导航状态 - 需求 5.4: 角色确认后启用工作流执行
-  console.log('👥 Calling navigationStore.confirmCharacters()');
-  navigationStore.confirmCharacters();
-  console.log('👥 After confirmCharacters, workflowState:', navigationStore.workflowState);
+  // 🔥 REFACTOR: Removed navigationStore.confirmCharacters() call
+  // Backend API call above already updated project status to 'characters_confirmed'
+  // No need for separate workflowState management
 
   uiStore.addNotification({
     type: 'success',
@@ -813,7 +814,6 @@ async function confirmAllCharacters() {
 
   // 延迟后返回仪表盘
   setTimeout(() => {
-    console.log('👥 Navigating to dashboard, workflowState:', navigationStore.workflowState);
     router.push('/');
   }, 1500);
 }

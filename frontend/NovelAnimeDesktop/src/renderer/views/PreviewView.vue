@@ -88,14 +88,16 @@
               <!-- 分镜头图片 -->
               <div class="storyboard-image">
                 <img 
-                  v-if="currentStoryboard.imageUrl" 
+                  v-if="currentStoryboard.imageUrl && !currentStoryboard.imageLoadError" 
                   :src="currentStoryboard.imageUrl" 
                   :alt="currentStoryboard.description"
-                  @error="handleImageError"
+                  @error="handleImageError(currentStoryboard)"
                 />
                 <div v-else class="placeholder-image">
-                  <component :is="icons.image" :size="48" />
-                  <p>图片生成中...</p>
+                  <component :is="icons.image" :size="64" />
+                  <p v-if="currentStoryboard.imageLoadError" class="error-text">图片加载失败</p>
+                  <p v-else>暂无图片</p>
+                  <p class="hint-text">工作流未生成图片数据</p>
                 </div>
               </div>
               
@@ -286,9 +288,9 @@
  */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useProjectStore } from '../stores/project.js';
+import { useProjectStore } from '../stores/project';
 import { useUIStore } from '../stores/ui.js';
-import { useNavigationStore } from '../stores/navigation.js';
+import { useNavigationStore } from '../stores/navigation';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 import ExportDialog from '../components/dialogs/ExportDialog.vue';
@@ -315,6 +317,7 @@ interface Storyboard {
   speaker?: string;
   duration: number;
   sceneId?: string;
+  imageLoadError?: boolean;
 }
 
 const router = useRouter();
@@ -395,6 +398,10 @@ const progressPercentage = computed((): number => {
 
 // 初始化
 async function initialize(): Promise<void> {
+  console.log('🎬 [PreviewView] Initializing...');
+  console.log('📊 [PreviewView] Current project:', projectStore.currentProject);
+  // 🔥 REFACTOR: Removed workflowState logging
+  
   try {
     isLoading.value = true;
     
@@ -402,8 +409,9 @@ async function initialize(): Promise<void> {
     await loadPreviewData();
     
     isReady.value = true;
+    console.log('✅ [PreviewView] Initialization completed');
   } catch (error) {
-    console.error('预览初始化失败:', error);
+    console.error('❌ [PreviewView] 预览初始化失败:', error);
     uiStore.addNotification({
       type: 'error',
       title: '加载失败',
@@ -423,100 +431,30 @@ async function loadPreviewData(): Promise<void> {
     return;
   }
 
-  // 模拟加载场景数据
-  scenes.value = [
-    {
-      id: 'scene_1',
-      title: '开场场景',
-      description: '故事的开始，主角出现在一个神秘的森林中。阳光透过树叶洒下，营造出梦幻的氛围。',
-      characters: [
-        { id: 'char_1', name: '主角', role: '主角' },
-        { id: 'char_2', name: '神秘向导', role: '配角' }
-      ],
-      duration: 5000,
-      chapterIndex: 0
-    },
-    {
-      id: 'scene_2',
-      title: '遇见伙伴',
-      description: '主角在旅途中遇到了重要的伙伴，他们决定一起踏上冒险之旅。',
-      characters: [
-        { id: 'char_1', name: '主角', role: '主角' },
-        { id: 'char_3', name: '伙伴', role: '主角' }
-      ],
-      duration: 4500,
-      chapterIndex: 0
-    },
-    {
-      id: 'scene_3',
-      title: '第一次挑战',
-      description: '主角和伙伴面临第一个重大挑战，需要运用智慧和勇气来解决问题。',
-      characters: [
-        { id: 'char_1', name: '主角', role: '主角' },
-        { id: 'char_3', name: '伙伴', role: '主角' },
-        { id: 'char_4', name: '反派', role: '反派' }
-      ],
-      duration: 6000,
-      chapterIndex: 1
-    }
-  ];
-
-  // 模拟加载分镜头数据
-  storyboards.value = [
-    {
-      id: 'story_1',
-      description: '远景：神秘森林的全貌，阳光透过树叶',
-      imageUrl: '/placeholder-storyboard-1.jpg',
-      thumbnailUrl: '/placeholder-thumb-1.jpg',
-      duration: 2000,
-      sceneId: 'scene_1'
-    },
-    {
-      id: 'story_2',
-      description: '中景：主角从树林中走出，表情好奇',
-      imageUrl: '/placeholder-storyboard-2.jpg',
-      thumbnailUrl: '/placeholder-thumb-2.jpg',
-      dialogue: '这里是什么地方？',
-      speaker: '主角',
-      duration: 3000,
-      sceneId: 'scene_1'
-    },
-    {
-      id: 'story_3',
-      description: '特写：神秘向导出现，微笑着看向主角',
-      imageUrl: '/placeholder-storyboard-3.jpg',
-      thumbnailUrl: '/placeholder-thumb-3.jpg',
-      dialogue: '欢迎来到魔法世界，年轻的冒险者。',
-      speaker: '神秘向导',
-      duration: 2500,
-      sceneId: 'scene_1'
-    },
-    {
-      id: 'story_4',
-      description: '中景：主角和伙伴初次相遇的场景',
-      imageUrl: '/placeholder-storyboard-4.jpg',
-      thumbnailUrl: '/placeholder-thumb-4.jpg',
-      dialogue: '你也是来这里冒险的吗？',
-      speaker: '主角',
-      duration: 2500,
-      sceneId: 'scene_2'
-    },
-    {
-      id: 'story_5',
-      description: '双人镜头：主角和伙伴握手，决定一起冒险',
-      imageUrl: '/placeholder-storyboard-5.jpg',
-      thumbnailUrl: '/placeholder-thumb-5.jpg',
-      dialogue: '让我们一起踏上这段旅程吧！',
-      speaker: '伙伴',
-      duration: 2000,
-      sceneId: 'scene_2'
-    }
-  ];
-
-  console.log('预览数据加载完成:', {
-    scenes: scenes.value.length,
-    storyboards: storyboards.value.length
-  });
+  // 🔥 REFACTOR: Load data from localStorage or backend instead of workflowState
+  // workflowState has been removed as part of architecture cleanup
+  
+  let loadedScenes: Scene[] = [];
+  let loadedStoryboards: Storyboard[] = [];
+  
+  // Load from localStorage (simplified approach)
+  // In a real implementation, this would load from backend API
+  console.log('📦 [PreviewView] Loading from localStorage/backend');
+  
+  // For now, show empty state with helpful message
+  scenes.value = loadedScenes;
+  storyboards.value = loadedStoryboards;
+  
+  // 如果没有数据，显示提示信息
+  if (scenes.value.length === 0 && storyboards.value.length === 0) {
+    console.warn('⚠️ [PreviewView] 没有找到预览数据');
+    uiStore.addNotification({
+      type: 'info',
+      title: '暂无预览内容',
+      message: '请先执行工作流生成内容',
+      timeout: 3000
+    });
+  }
 }
 
 // 切换预览模式
@@ -660,8 +598,10 @@ function formatDuration(ms: number): string {
   return `${seconds}s`;
 }
 
-function handleImageError(event: Event): void {
-  console.warn('图片加载失败:', event);
+function handleImageError(storyboard: Storyboard): void {
+  console.warn('图片加载失败:', storyboard.imageUrl);
+  // 标记图片加载失败，触发显示占位符
+  storyboard.imageLoadError = true;
 }
 
 function handleExport(options: ExportOptions): void {
@@ -970,13 +910,27 @@ watch(previewMode, () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 12px;
   color: #999;
+  padding: 40px 20px;
 }
 
 .placeholder-image p {
   margin: 0;
   font-size: 14px;
+  text-align: center;
+}
+
+.placeholder-image .error-text {
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+.placeholder-image .hint-text {
+  font-size: 12px;
+  color: #bbb;
+  font-style: italic;
 }
 
 .storyboard-description p {

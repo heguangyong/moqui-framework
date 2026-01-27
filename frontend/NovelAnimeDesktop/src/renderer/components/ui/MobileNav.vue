@@ -69,7 +69,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { icons } from '../../utils/icons.js'
-import { useNavigationStore } from '../../stores/navigation.js'
+import { useNavigationStore } from '../../stores/navigation'
 import { useUserStore } from '../../stores/user'
 
 const router = useRouter()

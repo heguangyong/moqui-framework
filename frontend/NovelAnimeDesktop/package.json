@@ -1,6 +1,6 @@
 {
   "name": "novel-anime-desktop",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "小说动漫生成器 - 独立桌面应用",
   "main": "src/main/main.js",
   "scripts": {
@@ -28,8 +28,9 @@
     "concurrently": "^8.0.0",
     "electron": "^28.0.0",
     "electron-builder": "^24.0.0",
-    "fast-check": "^3.15.0",
+    "fast-check": "^3.23.2",
     "jsdom": "^24.0.0",
+    "jwt-decode": "^4.0.0",
     "vite": "^5.0.0",
     "vitest": "^1.6.0"
   },
@@ -59,7 +60,9 @@
       {
         "from": "resources",
         "to": "resources",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -68,11 +71,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "hardenedRuntime": true,
@@ -103,11 +112,16 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "publisherName": "Novel Anime Generator",
@@ -131,11 +145,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Utility",

@@ -10,8 +10,26 @@
       <template v-if="currentViewType === 'workflow-detail' || currentViewType === 'new' || !currentViewType">
         <div class="header-content">
           <div class="workflow-title-group">
-            <h2 v-if="selectedWorkflowId">{{ selectedWorkflowName }}</h2>
-            <h2 v-else>选择或创建工作流</h2>
+            <!-- 工作流选择器 -->
+            <div class="workflow-selector">
+              <label for="workflow-select">工作流:</label>
+              <select 
+                id="workflow-select"
+                v-model="selectedWorkflowId" 
+                @change="onWorkflowSelect"
+                class="workflow-select"
+              >
+                <option value="">{{ workflows.length === 0 ? '暂无工作流' : '选择工作流' }}</option>
+                <option 
+                  v-for="wf in workflows" 
+                  :key="wf.id" 
+                  :value="wf.id"
+                >
+                  {{ wf.name }}
+                </option>
+              </select>
+            </div>
+            
             <div v-if="selectedWorkflowId" class="workflow-actions">
               <button 
                 @click="renameCurrentWorkflow" 
@@ -135,18 +153,19 @@
       </div>
     </div>
     
-    <!-- Execution Results Panel - Enhanced -->
-    <div v-if="showResultsPanel && executionResults" class="execution-results-panel">
-      <div class="results-header">
-        <h3>执行结果</h3>
-        <div class="results-actions">
-          <button @click="showExecutionHistory" class="btn btn-small btn-secondary">
-            查看历史
-          </button>
-          <button @click="showResultsPanel = false" class="btn btn-small">关闭</button>
-        </div>
-      </div>
+    <!-- Execution Results Panel - Enhanced - 全屏模态框 -->
+    <div v-if="showResultsPanel && executionResults" class="execution-results-panel" @click.self="showResultsPanel = false">
       <div class="results-content">
+        <div class="results-header">
+          <h3>执行结果</h3>
+          <div class="results-actions">
+            <button @click="showExecutionHistory" class="btn btn-small btn-secondary">
+              查看历史
+            </button>
+            <button @click="showResultsPanel = false" class="btn btn-small">关闭</button>
+          </div>
+        </div>
+        
         <div class="result-status" :class="executionResults.status">
           <component 
             :is="executionResults.status === 'completed' ? icons.check : icons.xCircle" 
@@ -603,9 +622,9 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkflowStore } from '../stores/workflowStore';
-import { useProjectStore } from '../stores/project.js';
+import { useProjectStore } from '../stores/project';
 import { useUIStore } from '../stores/ui.js';
-import { useNavigationStore } from '../stores/navigation.js';
+import { useNavigationStore } from '../stores/navigation';
 import { useAppInit } from '../composables/useAppInit';
 import { icons } from '../utils/icons.js';
 import InputDialog from '../components/dialogs/InputDialog.vue';
@@ -679,9 +698,9 @@ const selectedExecutionTime = computed(() => workflowContext.value?.executionTim
 
 // 模板数据
 const templates = ref([
-  { id: 't1', name: '标准转换流程', description: '完整的小说到视频转换流程', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'script-converter', 'video-generator'] },
-  { id: 't2', name: '快速预览流程', description: '快速生成预览视频', nodes: ['novel-parser', 'scene-generator', 'video-generator'] },
-  { id: 't3', name: '高质量输出', description: '高质量视频输出流程', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'script-converter', 'video-generator'] }
+  { id: 't1', name: '标准转换流程', description: '完整的小说到视频转换流程（含AI图片生成）', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'image-generator', 'script-converter', 'video-generator'] },
+  { id: 't2', name: '快速预览流程', description: '快速生成预览视频（含AI图片生成）', nodes: ['novel-parser', 'scene-generator', 'image-generator', 'video-generator'] },
+  { id: 't3', name: '高质量输出', description: '高质量视频输出流程（含AI图片生成）', nodes: ['novel-parser', 'character-analyzer', 'scene-generator', 'image-generator', 'script-converter', 'video-generator'] }
 ]);
 
 const selectedTemplate = computed(() => {
@@ -786,7 +805,13 @@ function formatLogTime(timestamp: number): string {
 
 // 格式化持续时间
 function formatDuration(ms: number): string {
-  if (!ms) return '0秒';
+  if (!ms || ms < 0) return '0秒';
+  
+  // 如果小于1秒，显示毫秒
+  if (ms < 1000) {
+    return `${ms}毫秒`;
+  }
+  
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -902,7 +927,8 @@ function viewWorkflowDetail(workflow) {
 
 // 刷新状态
 async function refreshStatus(): Promise<void> {
-  await workflowStore.loadWorkflows();
+  const currentProjectId = projectStore.currentProject?.id;
+  await workflowStore.loadWorkflows(currentProjectId);
   uiStore.addNotification({
     type: 'info',
     title: '刷新成功',
@@ -912,19 +938,30 @@ async function refreshStatus(): Promise<void> {
 }
 
 // 使用模板
+// Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 async function useTemplate(): Promise<void> {
   console.log('useTemplate called');
-  console.log('selectedTemplateId:', selectedTemplateId.value);
-  console.log('selectedTemplate:', selectedTemplate.value);
-  console.log('templates:', templates.value);
   
-  if (selectedTemplate.value) {
-    // 直接使用模板名称创建工作流，不再弹出 prompt
-    const defaultName = `${selectedTemplate.value.name}`;
-    console.log('Creating workflow with name:', defaultName);
-    
+  if (!selectedTemplate.value) {
+    console.log('No template selected!');
+    uiStore.addNotification({
+      type: 'warning',
+      title: '请选择模板',
+      message: '请先从左侧面板选择一个模板',
+      timeout: 3000
+    });
+    return;
+  }
+  
+  // 获取 projectId from context or projectStore
+  const context = navigationStore.panelContext.workflow;
+  const projectId = context?.projectId || projectStore.currentProject?.id;
+  
+  if (!projectId) {
+    console.warn('⚠️ useTemplate: no projectId available, creating workflow without project association');
+    // 如果没有 projectId，使用传统方式创建工作流
     const workflow = await workflowStore.createWorkflow({
-      name: defaultName,
+      name: selectedTemplate.value.name,
       description: selectedTemplate.value.description
     });
     
@@ -938,47 +975,77 @@ async function useTemplate(): Promise<void> {
       return;
     }
     
-    // 先设置为当前工作流
+    // 添加模板节点
+    await workflowStore.addTemplateNodesToWorkflow(workflow.id, selectedTemplate.value);
+    await workflowStore.saveWorkflow(workflow.id);
+    
+    // 选择工作流
     workflowStore.selectWorkflow(workflow.id);
     selectedWorkflowId.value = workflow.id;
-    
-    // 添加模板节点并自动连接
-    const nodeIds: string[] = [];
-    selectedTemplate.value.nodes.forEach((nodeType: string, index: number) => {
-      const node = workflowStore.addNode(
-        workflow.id,
-        nodeType as WorkflowNodeType, 
-        getNodeTitle(nodeType), 
-        { x: 100 + index * 220, y: 100 }
-      );
-      if (node) {
-        nodeIds.push(node.id);
-      }
-    });
-    
-    // 自动连接相邻节点
-    for (let i = 0; i < nodeIds.length - 1; i++) {
-      workflowStore.addConnection(workflow.id, nodeIds[i], nodeIds[i + 1]);
-    }
     
     navigationStore.updatePanelContext('workflow', {
       selectedWorkflow: workflow.id,
       viewType: 'workflow-detail',
       templateId: null
     });
+    
     uiStore.addNotification({
       type: 'success',
       title: '模板应用成功',
-      message: `已创建工作流 "${defaultName}"`,
+      message: `已创建工作流 "${workflow.name}"`,
       timeout: 3000
     });
-  } else {
-    console.log('No template selected!');
+    return;
+  }
+  
+  // 有 projectId，使用 createWorkflowForProject
+  console.log('✅ useTemplate: creating workflow for project:', projectId);
+  
+  const projectName = context?.projectName || projectStore.currentProject?.name || '未命名项目';
+  
+  try {
+    const workflow = await workflowStore.createWorkflowForProject(
+      projectId,
+      selectedTemplate.value,
+      projectName
+    );
+    
+    // 如果返回 null，说明已经在创建中
+    if (!workflow) {
+      console.log('⏳ useTemplate: workflow creation already in progress');
+      uiStore.addNotification({
+        type: 'info',
+        title: '请稍候',
+        message: '正在创建工作流...',
+        timeout: 2000
+      });
+      return;
+    }
+    
+    // 选择工作流
+    workflowStore.selectWorkflow(workflow.id);
+    selectedWorkflowId.value = workflow.id;
+    
+    navigationStore.updatePanelContext('workflow', {
+      selectedWorkflow: workflow.id,
+      viewType: 'workflow-detail',
+      templateId: null,
+      projectId: projectId
+    });
+    
     uiStore.addNotification({
-      type: 'warning',
-      title: '请选择模板',
-      message: '请先从左侧面板选择一个模板',
+      type: 'success',
+      title: '模板应用成功',
+      message: `已创建工作流 "${workflow.name}"`,
       timeout: 3000
+    });
+  } catch (error) {
+    console.error('❌ useTemplate failed:', error);
+    uiStore.addNotification({
+      type: 'error',
+      title: '创建失败',
+      message: error instanceof Error ? error.message : '创建工作流失败',
+      timeout: 5000
     });
   }
 }
@@ -1003,16 +1070,29 @@ const selectedWorkflowName = computed((): string => {
 });
 
 // Custom dropdown functions
-// 初始化函数 - Requirements: 3.4, 3.5
+// 初始化函数 - Requirements: 3.4, 3.5, 4.1, 4.5, 5.5
 async function initializeEditor(): Promise<void> {
   try {
     // 等待应用初始化完成
     await waitForInit();
     
-    // 加载工作流数据
-    await workflowStore.loadWorkflows();
+    // 加载项目-工作流映射（已在 store.initialize 中调用，这里是确保）
+    workflowStore.loadProjectWorkflowMap();
     
-    console.log('📂 WorkflowEditor initialized, workflows loaded:', workflowStore.workflows.length);
+    // 获取当前项目ID
+    const currentProjectId = projectStore.currentProject?.id;
+    
+    // 加载工作流数据（过滤当前项目的工作流）
+    await workflowStore.loadWorkflows(currentProjectId);
+    
+    // 清理空工作流
+    const cleanedCount = await workflowStore.cleanupEmptyWorkflows(currentProjectId);
+    if (cleanedCount > 0) {
+      console.log(`🧹 Cleaned up ${cleanedCount} empty workflow(s)`);
+    }
+    
+    console.log('📂 WorkflowEditor initialized, workflows loaded:', workflowStore.workflows.length, 
+                currentProjectId ? `for project ${currentProjectId}` : '(all projects)');
     
     // 检查是否需要自动应用模板（从 Dashboard 跳转过来）
     const context = navigationStore.panelContext.workflow;
@@ -1161,62 +1241,77 @@ onMounted(() => {
 });
 
 // 自动应用模板（从 Dashboard 继续处理跳转过来时）
+// Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2
 async function autoApplyTemplate(context: any): Promise<void> {
-  const template = templates.value.find(t => t.id === context.templateId);
-  if (!template) {
-    console.warn('Template not found:', context.templateId);
-    return;
-  }
-  
-  // 使用项目名称创建工作流
-  const workflowName = context.projectName ? `${context.projectName} - ${template.name}` : template.name;
-  console.log('📋 Creating workflow from template:', workflowName);
-  
-  const workflow = await workflowStore.createWorkflow({ name: workflowName, description: template.description });
-  if (!workflow) {
-    console.error('Failed to create workflow');
-    return;
-  }
-  
-  // 设置为当前工作流
-  workflowStore.selectWorkflow(workflow.id);
-  selectedWorkflowId.value = workflow.id;
-  
-  // 添加模板节点并自动连接
-  const nodeIds: string[] = [];
-  template.nodes.forEach((nodeType: string, index: number) => {
-    const node = workflowStore.addNode(
-      workflow.id,
-      nodeType as WorkflowNodeType, 
-      getNodeTitle(nodeType), 
-      { x: 100 + index * 220, y: 100 }
-    );
-    if (node) {
-      nodeIds.push(node.id);
+  try {
+    const template = templates.value.find(t => t.id === context.templateId);
+    if (!template) {
+      console.warn('Template not found:', context.templateId);
+      return;
     }
-  });
-  
-  // 自动连接相邻节点
-  for (let i = 0; i < nodeIds.length - 1; i++) {
-    workflowStore.addConnection(workflow.id, nodeIds[i], nodeIds[i + 1]);
+    
+    // 确保有 projectId
+    if (!context.projectId) {
+      console.error('❌ autoApplyTemplate: projectId is required');
+      uiStore.addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '缺少项目ID',
+        timeout: 3000
+      });
+      return;
+    }
+    
+    console.log('🚀 autoApplyTemplate: creating workflow for project:', context.projectId);
+    
+    // 使用 store 的 createWorkflowForProject 方法
+    const workflow = await workflowStore.createWorkflowForProject(
+      context.projectId,
+      template,
+      context.projectName || '未命名项目'
+    );
+    
+    // 如果返回 null，说明已经在创建中
+    if (!workflow) {
+      console.log('⏳ autoApplyTemplate: workflow creation already in progress');
+      uiStore.addNotification({
+        type: 'info',
+        title: '请稍候',
+        message: '正在创建工作流...',
+        timeout: 2000
+      });
+      return;
+    }
+    
+    // 选择工作流
+    workflowStore.selectWorkflow(workflow.id);
+    selectedWorkflowId.value = workflow.id;
+    
+    // 更新 panelContext 为工作流详情视图
+    navigationStore.updatePanelContext('workflow', {
+      selectedWorkflow: workflow.id,
+      viewType: 'workflow-detail',
+      templateId: null,  // 清除 templateId，避免重复创建
+      projectId: context.projectId,
+      novelId: context.novelId,
+      projectName: context.projectName
+    });
+    
+    uiStore.addNotification({
+      type: 'success',
+      title: '工作流已创建',
+      message: `已为项目 "${context.projectName}" 创建工作流，点击"运行工作流"开始生成`,
+      timeout: 5000
+    });
+  } catch (error) {
+    console.error('❌ autoApplyTemplate failed:', error);
+    uiStore.addNotification({
+      type: 'error',
+      title: '创建失败',
+      message: error instanceof Error ? error.message : '创建工作流失败',
+      timeout: 5000
+    });
   }
-  
-  // 更新 panelContext 为工作流详情视图
-  navigationStore.updatePanelContext('workflow', {
-    selectedWorkflow: workflow.id,
-    viewType: 'workflow-detail',
-    templateId: null,
-    projectId: context.projectId,
-    novelId: context.novelId,
-    projectName: context.projectName
-  });
-  
-  uiStore.addNotification({
-    type: 'success',
-    title: '工作流已创建',
-    message: `已为项目 "${context.projectName}" 创建工作流，点击"运行工作流"开始生成`,
-    timeout: 5000
-  });
 }
 
 onUnmounted(() => {
@@ -1232,6 +1327,28 @@ watch(() => workflowStore.executionStatus, (newStatus) => {
     handleExecutionFailed();
   }
 });
+
+// 监听当前项目变化 - 重新加载工作流列表
+watch(
+  () => projectStore.currentProject?.id,
+  async (newProjectId, oldProjectId) => {
+    if (!isReady.value) return; // 等待初始化完成
+    if (newProjectId === oldProjectId) return; // 项目未变化
+    
+    console.log('🔄 Project changed, reloading workflows for project:', newProjectId);
+    await workflowStore.loadWorkflows(newProjectId);
+    
+    // 清空当前选中的工作流（因为可能不属于新项目）
+    selectedWorkflowId.value = '';
+    
+    uiStore.addNotification({
+      type: 'info',
+      title: '项目已切换',
+      message: '工作流列表已更新',
+      timeout: 2000
+    });
+  }
+);
 
 // 监听 panelContext 变化 - 响应中间面板的点击
 watch(
@@ -1320,6 +1437,12 @@ const nodeTypes = {
     inputs: ['结构', '角色信息'],
     outputs: ['场景描述']
   },
+  'image-generator': {
+    icon: '🎨',
+    title: 'AI图片生成器',
+    inputs: ['场景描述'],
+    outputs: ['分镜图片']
+  },
   'script-converter': {
     icon: '📝',
     title: '脚本转换器',
@@ -1347,6 +1470,7 @@ const nodeCategories = [
     nodes: [
       { type: 'character-analyzer', icon: '👤', title: '角色分析器' },
       { type: 'scene-generator', icon: '🎬', title: '场景生成器' },
+      { type: 'image-generator', icon: '🎨', title: 'AI图片生成器' },
       { type: 'script-converter', icon: '📝', title: '脚本转换器' }
     ]
   },
@@ -1383,6 +1507,42 @@ const canvasTransformStyle = computed(() => ({
 }));
 
 // Workflow management
+// 工作流选择处理
+function onWorkflowSelect(): void {
+  console.log('📌 onWorkflowSelect called, selectedWorkflowId:', selectedWorkflowId.value);
+  
+  if (selectedWorkflowId.value) {
+    const success = workflowStore.selectWorkflow(selectedWorkflowId.value);
+    console.log('📌 selectWorkflow result:', success);
+    
+    if (success) {
+      // 更新 panelContext
+      navigationStore.updatePanelContext('workflow', {
+        selectedWorkflow: selectedWorkflowId.value,
+        viewType: 'workflow-detail'
+      });
+      
+      uiStore.addNotification({
+        type: 'info',
+        title: '工作流已选择',
+        message: `已切换到工作流 "${selectedWorkflowName.value}"`,
+        timeout: 2000
+      });
+    } else {
+      uiStore.addNotification({
+        type: 'error',
+        title: '选择失败',
+        message: '无法找到该工作流',
+        timeout: 3000
+      });
+      selectedWorkflowId.value = '';
+    }
+  } else {
+    // 清除选择
+    workflowStore.currentWorkflowId = null;
+  }
+}
+
 function createNewWorkflow(): void {
   inputDialogTitle.value = '新建工作流';
   inputDialogMessage.value = '';
@@ -1558,8 +1718,18 @@ async function runWorkflow() {
   // 准备初始数据（从当前项目获取）
   const initialData: Record<string, unknown> = {};
   if (projectStore.currentProject) {
-    initialData.projectId = projectStore.currentProject.id;
-    initialData.novelId = projectStore.currentProject.novelId;
+    initialData.projectId = projectStore.currentProject.id || projectStore.currentProject.projectId;
+    
+    // 🔧 快速修复：优先从 localStorage 获取最新的 novelId
+    let novelId = projectStore.currentProject.novelId;
+    if (!novelId) {
+      const storedNovelId = localStorage.getItem('novel_anime_current_novel_id');
+      if (storedNovelId) {
+        novelId = storedNovelId;
+        console.log('📦 [WorkflowEditor] 从 localStorage 获取 novelId:', novelId);
+      }
+    }
+    initialData.novelId = novelId;
     
     if (projectStore.currentProject.novel) {
       initialData.title = projectStore.currentProject.novel.title;
@@ -1569,6 +1739,12 @@ async function runWorkflow() {
     if (projectStore.currentProject.characters) {
       initialData.characters = projectStore.currentProject.characters;
     }
+    
+    console.log('📊 [WorkflowEditor] initialData:', { 
+      projectId: initialData.projectId, 
+      novelId: initialData.novelId,
+      hasChapters: !!(initialData.chapters && Array.isArray(initialData.chapters) && initialData.chapters.length > 0)
+    });
   }
 
   try {
@@ -1581,8 +1757,9 @@ async function runWorkflow() {
     addExecutionLog('info', `开始执行工作流: ${currentWorkflow.value.name}`);
     addExecutionLog('info', `节点数量: ${currentWorkflowNodes.value.length}`);
     
-    // 更新导航状态 - 需求 5.4: 开始执行工作流
-    navigationStore.startExecution();
+    // 🔥 DELETED: Removed navigationStore.startExecution() call
+    // This method was deleted in Phase 1 refactoring
+    // Execution state is tracked locally in WorkflowEditor
     
     uiStore.addNotification({
       type: 'info',
@@ -1610,7 +1787,7 @@ async function runWorkflow() {
 }
 
 // 处理执行完成 - 需求 5.5
-function handleExecutionComplete() {
+async function handleExecutionComplete() {
   const execution = workflowStore.getExecutionStatus(currentExecutionId.value);
   if (execution) {
     const duration = execution.endTime && execution.startTime 
@@ -1647,12 +1824,36 @@ function handleExecutionComplete() {
     
     console.log('✅ Execution completed, showing results panel:', results);
     
-    // 更新导航状态 - 需求 5.5: 执行完成后显示结果预览
-    navigationStore.setExecutionResult(results);
+    // 🔥 DELETED: Removed navigationStore.setExecutionResult() call
+    // This method was deleted in Phase 1 refactoring
+    // Execution results are stored locally in executionResults ref
     
-    // 更新项目状态为已完成
+    // 🔥 FIX: 更新项目状态为已完成（同步到后端）
     if (projectStore.currentProject) {
-      projectStore.currentProject.status = 'completed';
+      const projectId = projectStore.currentProject.id || projectStore.currentProject.projectId;
+      
+      try {
+        console.log('📝 Updating project status to completed for:', projectId);
+        
+        // 调用后端API更新状态
+        const response = await apiService.axiosInstance.patch(`/project/${projectId}`, {
+          status: 'completed'
+        });
+        
+        if (response.data && response.data.success) {
+          // 更新前端状态
+          projectStore.currentProject.status = 'completed';
+          console.log('✅ Project status updated to completed in backend');
+        } else {
+          console.warn('⚠️ Backend returned unsuccessful response:', response.data);
+          // 即使后端失败，也更新前端状态
+          projectStore.currentProject.status = 'completed';
+        }
+      } catch (error) {
+        console.error('❌ Failed to update project status to backend:', error);
+        // 即使后端失败，也更新前端状态
+        projectStore.currentProject.status = 'completed';
+      }
     }
   } else {
     console.warn('⚠️ Execution not found:', currentExecutionId.value);
@@ -1668,9 +1869,27 @@ function handleExecutionComplete() {
 
 // 查看生成内容
 function viewGeneratedContent() {
-  console.log('viewGeneratedContent called');
+  console.log('🔍 viewGeneratedContent called');
+  console.log('📊 Current executionResults:', executionResults.value);
+  // 🔥 REFACTOR: Removed workflowState logging
+  
   showResultsPanel.value = false;
-  router.push('/preview');
+  
+  // 🔥 REFACTOR: Removed workflowState dependency
+  // Simply navigate to preview/generated-content page
+  // Those pages will load data from localStorage/backend
+  console.log('✅ Navigating to /preview...');
+  router.push('/preview').then(() => {
+    console.log('✅ Navigation to /preview completed');
+  }).catch((error) => {
+    console.error('❌ Navigation to /preview failed:', error);
+    uiStore.addNotification({
+      type: 'error',
+      title: '导航失败',
+      message: '无法跳转到预览页面',
+      timeout: 3000
+    });
+  });
 }
 
 // 导出结果
@@ -1694,8 +1913,8 @@ function backToDashboard() {
     projectStore.currentProject.status = 'completed';
   }
   
-  // 重置工作流状态，准备下一次使用
-  navigationStore.resetWorkflowState();
+  // 🔥 REFACTOR: Removed navigationStore.resetWorkflowState() call
+  // workflowState has been deleted as part of architecture cleanup
   
   // 清除当前项目
   projectStore.clearCurrentProject();
@@ -1955,6 +2174,41 @@ function getConnectionY2(connection: WorkflowConnection): number {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+}
+
+/* 工作流选择器 */
+.workflow-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-selector label {
+  font-size: 14px;
+  color: #6a6a6c;
+  font-weight: 500;
+}
+
+.workflow-select {
+  min-width: 200px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  color: #2c2c2e;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.workflow-select:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.workflow-select:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .workflow-actions {
@@ -2249,7 +2503,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -2262,7 +2516,7 @@ function getConnectionY2(connection: WorkflowConnection): number {
   height: 24px;
   border: none;
   background: transparent;
-  color: #4a4a4c;
+  color: #2a2a2c;
   cursor: pointer;
   border-radius: 4px;
   display: flex;
@@ -2272,8 +2526,8 @@ function getConnectionY2(connection: WorkflowConnection): number {
 }
 
 .canvas-controls-fixed .control-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-  color: #2c2c2e;
+  background: rgba(0, 0, 0, 0.12);
+  color: #0a0a0c;
 }
 
 .canvas-controls-fixed .zoom-level {
@@ -3036,14 +3290,35 @@ function getConnectionY2(connection: WorkflowConnection): number {
   font-size: 12px;
 }
 
-/* 执行结果面板 - Enhanced */
+/* 执行结果面板 - Enhanced - 全屏模态框 */
 .execution-results-panel {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.execution-results-panel .results-content {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .execution-results-panel .results-header {
@@ -3051,11 +3326,13 @@ function getConnectionY2(connection: WorkflowConnection): number {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .execution-results-panel .results-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #2c2c2e;
 }
@@ -3065,18 +3342,12 @@ function getConnectionY2(connection: WorkflowConnection): number {
   gap: 8px;
 }
 
-.results-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .result-status {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
@@ -3084,12 +3355,14 @@ function getConnectionY2(connection: WorkflowConnection): number {
 
 .result-status.completed {
   color: #27ae60;
-  background: rgba(39, 174, 96, 0.1);
+  background: rgba(39, 174, 96, 0.15);
+  border: 1px solid rgba(39, 174, 96, 0.3);
 }
 
 .result-status.failed {
   color: #e74c3c;
-  background: rgba(231, 76, 60, 0.1);
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
 .result-stats {
@@ -3103,7 +3376,8 @@ function getConnectionY2(connection: WorkflowConnection): number {
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
 }
 
@@ -3138,14 +3412,89 @@ function getConnectionY2(connection: WorkflowConnection): number {
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .node-result-item {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   padding: 12px;
   transition: all 0.2s;
+}
+
+.node-result-item:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.node-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-result-item .node-icon {
+  font-size: 16px;
+}
+
+.node-result-item .node-name {
+  flex: 1;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.node-status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.node-status-badge.status-completed {
+  background: rgba(39, 174, 96, 0.15);
+  color: #27ae60;
+}
+
+.node-status-badge.status-running {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+.node-status-badge.status-error {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.node-status-badge.status-idle {
+  background: rgba(149, 165, 166, 0.15);
+  color: #95a5a6;
+}
+
+.node-result-data {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 11px;
+  overflow-x: auto;
+}
+
+.node-result-data pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* 后续操作按钮 */
+.result-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
 }
 
 .node-result-item.has-result {

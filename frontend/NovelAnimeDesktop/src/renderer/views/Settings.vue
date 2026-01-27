@@ -186,6 +186,90 @@
           <component :is="icons.zap" :size="16" />
           <span>测试连接</span>
         </button>
+
+        <!-- 图片生成配置 -->
+        <div class="setting-divider"></div>
+        <h3 class="setting-subtitle">图片生成配置</h3>
+        
+        <div class="setting-group">
+          <label class="setting-label">图片生成服务</label>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'imageProvider' }">
+            <div class="custom-select__trigger" @click="toggleSelect('imageProvider')">
+              <span>{{ getOptionLabel(imageProviderOptions, settings.imageGeneration.provider) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'imageProvider'" class="custom-select__options">
+              <div 
+                v-for="option in imageProviderOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.imageGeneration.provider === option.value }"
+                @click="selectOption('imageGeneration', 'provider', option.value)"
+              >
+                <div class="option-content">
+                  <span class="option-label">{{ option.label }}</span>
+                  <span class="option-desc">{{ option.description }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="setting-hint">{{ getImageProviderHint(settings.imageGeneration.provider) }}</p>
+        </div>
+
+        <!-- Stable Diffusion 配置 -->
+        <div v-if="settings.imageGeneration.provider === 'stable-diffusion'" class="setting-group">
+          <label class="setting-label">Stable Diffusion API地址</label>
+          <input 
+            type="text"
+            v-model="settings.imageGeneration.apiUrl"
+            class="setting-input"
+            placeholder="http://localhost:7860"
+          />
+          <p class="setting-hint">本地部署的Stable Diffusion WebUI地址</p>
+        </div>
+
+        <!-- DALL-E 配置 -->
+        <div v-if="settings.imageGeneration.provider === 'dalle'" class="setting-group">
+          <label class="setting-label">OpenAI API密钥</label>
+          <div class="input-with-action">
+            <input 
+              :type="showImageApiKey ? 'text' : 'password'"
+              v-model="settings.imageGeneration.apiKey"
+              class="setting-input"
+              placeholder="sk-..."
+            />
+            <button class="input-action" @click="showImageApiKey = !showImageApiKey">
+              <component :is="showImageApiKey ? icons.eyeOff : icons.eye" :size="16" />
+            </button>
+          </div>
+          <p class="setting-hint">用于DALL-E图片生成的API密钥</p>
+        </div>
+
+        <div v-if="settings.imageGeneration.provider === 'dalle'" class="setting-group">
+          <label class="setting-label">DALL-E模型</label>
+          <div class="custom-select" :class="{ 'custom-select--open': openSelect === 'dalleModel' }">
+            <div class="custom-select__trigger" @click="toggleSelect('dalleModel')">
+              <span>{{ getOptionLabel(dalleModelOptions, settings.imageGeneration.model) }}</span>
+              <component :is="icons.chevronDown" :size="16" class="select-arrow" />
+            </div>
+            <div v-if="openSelect === 'dalleModel'" class="custom-select__options">
+              <div 
+                v-for="option in dalleModelOptions" 
+                :key="option.value"
+                class="custom-select__option"
+                :class="{ 'custom-select__option--selected': settings.imageGeneration.model === option.value }"
+                @click="selectOption('imageGeneration', 'model', option.value)"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="test-btn" @click="testImageGeneration">
+          <component :is="icons.image" :size="16" />
+          <span>测试图片生成</span>
+        </button>
       </div>
       
       <!-- 生成参数 -->
@@ -436,7 +520,7 @@
             <component :is="icons.sparkles" :size="48" />
           </div>
           <h3>小说动漫生成器</h3>
-          <p class="version">版本 1.0.0</p>
+          <p class="version">版本 1.0.3</p>
           <p class="description">使用AI技术将小说转换为精美的动画视频</p>
         </div>
         
@@ -474,7 +558,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui.js';
-import { useNavigationStore } from '../stores/navigation.js';
+import { useNavigationStore } from '../stores/navigation';
 import { icons } from '../utils/icons.js';
 import ViewHeader from '../components/ui/ViewHeader.vue';
 import TutorialMenu from '../components/tutorial/TutorialMenu.vue';
@@ -613,13 +697,14 @@ async function loadUserInfo() {
 
 // 下拉框选项配置
 const providerOptions = [
-  { value: 'zhipu', label: '智谱AI (GLM-4)' },
+  { value: 'pollinations', label: 'Pollinations AI (免费)' },
   { value: 'openai', label: 'OpenAI (GPT-4)' },
   { value: 'anthropic', label: 'Anthropic (Claude)' },
   { value: 'local', label: '本地模型' }
 ];
 
 const modelOptions = [
+  { value: 'flux-anime', label: 'Flux Anime (Pollinations)' },
   { value: 'glm-4', label: 'GLM-4' },
   { value: 'glm-4v', label: 'GLM-4V (视觉)' },
   { value: 'gpt-4', label: 'GPT-4' },
@@ -674,6 +759,48 @@ const fontSizeOptions = [
   { value: 'large', label: '大' }
 ];
 
+// 图片生成选项
+const imageProviderOptions = [
+  { 
+    value: 'pollinations', 
+    label: 'Pollinations AI', 
+    description: '免费 AI 图片生成服务（推荐）' 
+  },
+  { 
+    value: 'placeholder', 
+    label: '占位符图片', 
+    description: '使用占位符服务（免费，立即可用）' 
+  },
+  { 
+    value: 'stable-diffusion', 
+    label: 'Stable Diffusion', 
+    description: '开源AI图片生成（需本地部署）' 
+  },
+  { 
+    value: 'dalle', 
+    label: 'DALL-E 3', 
+    description: 'OpenAI图片生成（高质量，收费）' 
+  }
+];
+
+const dalleModelOptions = [
+  { value: 'dall-e-3', label: 'DALL-E 3' },
+  { value: 'dall-e-2', label: 'DALL-E 2' }
+];
+
+const showImageApiKey = ref(false);
+
+// 获取图片生成服务提示
+function getImageProviderHint(provider) {
+  const hints = {
+    'pollinations': 'Pollinations AI 提供免费的 AI 图片生成服务，无需 API 密钥，推荐使用',
+    'placeholder': '使用占位符图片服务，免费且立即可用，但不是真实的AI生成图片',
+    'stable-diffusion': '需要本地部署Stable Diffusion WebUI，开源免费，质量高',
+    'dalle': '使用OpenAI的DALL-E服务，质量最高，但需要API密钥和费用'
+  };
+  return hints[provider] || '';
+}
+
 // 分类配置
 const categoryConfig = {
   profile: { label: '个人资料', description: '管理您的账户信息' },
@@ -705,10 +832,11 @@ const openSelect = ref(null);
 
 // 设置数据
 const settings = reactive({
-  ai: { provider: 'zhipu', apiKey: '', endpoint: '', model: 'glm-4' },
+  ai: { provider: 'pollinations', apiKey: '', endpoint: '', model: 'flux-anime' },
   generation: { style: 'anime', resolution: '1080p', fps: 30, episodeDuration: 5, enableVoice: true, voiceStyle: 'natural' },
   interface: { theme: 'light', language: 'zh-CN', fontSize: 'medium', animations: true },
-  storage: { projectDir: '~/Documents/NovelAnime/Projects', cacheDir: '~/Documents/NovelAnime/Cache', autoSave: true, autoSaveInterval: 5 }
+  storage: { projectDir: '~/Documents/NovelAnime/Projects', cacheDir: '~/Documents/NovelAnime/Cache', autoSave: true, autoSaveInterval: 5 },
+  imageGeneration: { provider: 'pollinations', apiKey: '', apiUrl: '', model: '', size: '800x450', quality: 'standard' }
 });
 
 // 下拉框方法
@@ -803,6 +931,18 @@ async function loadSettings() {
 async function testConnection() {
   if (isTesting.value) return;
   
+  // Pollinations AI 不需要 API 密钥
+  if (settings.ai.provider === 'pollinations') {
+    uiStore.addNotification({ 
+      type: 'success', 
+      title: '配置正确', 
+      message: 'Pollinations AI 无需 API 密钥，可以直接使用', 
+      timeout: 3000 
+    });
+    return;
+  }
+  
+  // 其他提供商需要 API 密钥
   if (!settings.ai.apiKey) {
     uiStore.addNotification({ 
       type: 'error', 
@@ -885,6 +1025,77 @@ async function testConnection() {
   }
 }
 
+// 测试图片生成
+async function testImageGeneration() {
+  if (isTesting.value) return;
+  
+  isTesting.value = true;
+  uiStore.addNotification({ 
+    type: 'info', 
+    title: '测试图片生成', 
+    message: '正在测试图片生成服务...', 
+    timeout: 2000 
+  });
+  
+  try {
+    // 先保存设置
+    localStorage.setItem('image_generation_config', JSON.stringify(settings.imageGeneration));
+    
+    // 动态导入 ImageGenerationService
+    const { imageGenerationService } = await import('../services/ImageGenerationService.ts');
+    
+    // 更新配置
+    imageGenerationService.saveConfig(settings.imageGeneration);
+    
+    // 测试连接
+    const testResult = await imageGenerationService.testConnection();
+    
+    if (testResult.success) {
+      uiStore.addNotification({ 
+        type: 'success', 
+        title: '连接成功', 
+        message: testResult.message, 
+        timeout: 3000 
+      });
+      
+      // 生成测试图片
+      uiStore.addNotification({ 
+        type: 'info', 
+        title: '生成测试图片', 
+        message: '正在生成测试图片...', 
+        timeout: 2000 
+      });
+      
+      const result = await imageGenerationService.generateImage({
+        prompt: 'anime style, beautiful landscape, sunset, mountains',
+        width: 400,
+        height: 300
+      });
+      
+      uiStore.addNotification({ 
+        type: 'success', 
+        title: '测试成功', 
+        message: '图片生成服务工作正常！', 
+        timeout: 3000 
+      });
+      
+      console.log('测试图片生成成功:', result);
+    } else {
+      throw new Error(testResult.message);
+    }
+  } catch (error) {
+    console.error('Image generation test failed:', error);
+    uiStore.addNotification({ 
+      type: 'error', 
+      title: '测试失败', 
+      message: error.message || '图片生成服务测试失败', 
+      timeout: 4000 
+    });
+  } finally {
+    isTesting.value = false;
+  }
+}
+
 function selectProjectDir() {
   uiStore.addNotification({ type: 'info', title: '选择目录', message: '请选择项目存储目录', timeout: 2000 });
 }
@@ -902,7 +1113,7 @@ function clearCache() {
 
 function resetSettings() {
   if (confirm('确定要重置所有设置为默认值吗？')) {
-    settings.ai = { provider: 'zhipu', apiKey: '', endpoint: '', model: 'glm-4' };
+    settings.ai = { provider: 'pollinations', apiKey: '', endpoint: '', model: 'flux-anime' };
     settings.generation = { style: 'anime', resolution: '1080p', fps: 30, episodeDuration: 5, enableVoice: true, voiceStyle: 'natural' };
     settings.interface = { theme: 'light', language: 'zh-CN', fontSize: 'medium', animations: true };
     settings.storage = { projectDir: '~/Documents/NovelAnime/Projects', cacheDir: '~/Documents/NovelAnime/Cache', autoSave: true, autoSaveInterval: 5 };
@@ -926,8 +1137,10 @@ async function saveSettings() {
       console.warn('Failed to sync user settings to backend:', syncError);
     }
     
-    // 如果有 AI 配置，尝试同步到MCP后端
-    if (settings.ai.apiKey) {
+    // 只有在使用需要 API 密钥的提供商时才同步到 MCP 后端
+    // Pollinations AI 不需要 API 密钥，所以跳过同步
+    const providersNeedingApiKey = ['openai', 'anthropic', 'local'];
+    if (settings.ai.apiKey && providersNeedingApiKey.includes(settings.ai.provider)) {
       try {
         // 调用MCP后端的AI配置接口
         const mcpResponse = await fetch('http://localhost:8080/rest/s1/mcp/user/ai-config', {
@@ -1208,6 +1421,39 @@ async function saveSettings() {
 
 .test-btn:hover {
   background-color: #6a8178;
+}
+
+/* 设置分隔线 */
+.setting-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 24px 0;
+}
+
+/* 设置副标题 */
+.setting-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2c2e;
+  margin: 0 0 16px 0;
+}
+
+/* 选项内容（带描述） */
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2e;
+}
+
+.option-desc {
+  font-size: 11px;
+  color: #8e8e93;
 }
 
 /* 存储信息 */

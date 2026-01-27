@@ -1,0 +1,14 @@
+{
+  "id": "conflict-2026-01-24-125628",
+  "type": "conflict",
+  "created": "2026-01-24T12:56:28.039Z",
+  "files": [
+    "steering/CORE_PRINCIPLES.md",
+    "steering/ENVIRONMENT.md",
+    "steering/CURRENT_CONTEXT.md",
+    "steering/RULES_GUIDE.md",
+    "README.md"
+  ],
+  "fileCount": 5,
+  "totalSize": 19352
+}

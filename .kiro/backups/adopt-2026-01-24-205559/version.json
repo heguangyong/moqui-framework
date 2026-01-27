@@ -1,0 +1,12 @@
+{
+  "kse": "1.7.0",
+  "adoptedAt": "2026-01-24T00:00:00.000Z",
+  "mode": "partial",
+  "preservedFiles": [
+    "steering/CORE_PRINCIPLES.md",
+    "steering/ENVIRONMENT.md",
+    "steering/CURRENT_CONTEXT.md",
+    "steering/RULES_GUIDE.md",
+    "README.md"
+  ]
+}
