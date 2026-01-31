@@ -38,16 +38,30 @@
 
 ## 📚 文档
 
-### 技术指南 (推荐)
+### 项目设置 (新项目)
+- **[ERP 项目设置指南](docs/setup/ERP_PROJECT_SETUP_GUIDE.md)**: 完整的新项目设置指南
+- **[快速设置摘要](docs/setup/ERP_PROJECT_SETUP_SUMMARY.md)**: 30-60分钟快速开始
+- **[KSE 1.18.1 新特性](docs/setup/KSE_1.18.1_NEW_FEATURES.md)**: Kiro Spec Engine 新特性详解
+
+### 技术指南 (当前项目)
 - **[项目概览](.kiro/steering/project-overview.md)**: 完整的项目技术栈和结构说明
 - **[Moqui开发指南](.kiro/steering/moqui-framework-guide.md)**: 基于官方文档+项目实践的完整指南
 - **[Quasar前端指南](.kiro/steering/quasar-framework-guide.md)**: Vue3+Quasar2跨平台开发指南
 - **[开发标准](.kiro/steering/moqui-standards.md)**: 认证配置、菜单配置等开发标准
 
+### 项目状态
+- **[项目状态报告](docs/status/PROJECT_STATUS_2026_01_28.md)**: 前端架构重构总结和遗留问题
+
 ### 传统文档
 - **[技术报告](docs/)**: 实施总结和架构分析
 - **[开发指南](CLAUDE.md)**: AI开发助手核心参考 ⚠️ 建议使用新的steering指南
 - **[调试工具](testing-tools/)**: Chrome MCP认证、JWT测试等
+
+### Kiro Spec 驱动开发
+- **[Spec 工作流指南](.kiro/specs/SPEC_WORKFLOW_GUIDE.md)**: Spec 驱动开发完整流程
+- **[核心开发原则](.kiro/steering/CORE_PRINCIPLES.md)**: 适用于所有 Spec 的基准规则
+- **[环境配置](.kiro/steering/ENVIRONMENT.md)**: 项目环境和配置信息
+- **[当前场景规则](.kiro/steering/CURRENT_CONTEXT.md)**: 当前 Spec 的场景规则
 
 ## 🚀 开发状态
 
